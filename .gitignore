@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+
+# TypeScript build info
+tsconfig.tsbuildinfo
+
+# Environment variables (local)
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment (generic)
+.env
+
+# Auto-generated dev data
+.autoclaw/
+
+# AI agent rules (dev-specific)
+.clinerules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vercel (deleted — kept for safety)
+.vercel
