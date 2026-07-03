@@ -35,10 +35,20 @@ export async function updateProfile(formData: FormData) {
 
   const updates: any = {};
 
-  const fields = ["full_name", "phone", "occupation", "province_id", "regency_id"];
-  for (const field of fields) {
-    const value = formData.get(field);
-    if (value) updates[field] = value as string;
+  // Map form field names (camelCase from client) → DB column names (snake_case)
+  const fieldMap: Record<string, string> = {
+    fullName: "full_name",
+    phone: "phone",
+    occupation: "occupation",
+    provinceId: "province_id",
+    regencyId: "regency_id",
+    districtId: "district_id",
+    villageId: "village_id",
+  };
+
+  for (const [formKey, dbField] of Object.entries(fieldMap)) {
+    const value = formData.get(formKey);
+    if (value) updates[dbField] = value as string;
   }
 
   const techInterest = formData.get("technology_interest");

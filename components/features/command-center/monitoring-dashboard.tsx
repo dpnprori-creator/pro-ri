@@ -254,17 +254,9 @@ export function MonitoringDashboard({
                     const maxMembers = topProvinces[0]?.total_members || 1;
                     const barWidth = (prov.total_members / maxMembers) * 100;
 
-                    // Count regencies/districts/villages for this province
+                    // Regency count (data sudah di-preload dari Supabase)
                     const provinceRegs = regencies.filter((r) => r.province_id === prov.id);
                     const activeRegs = provinceRegs.filter((r) => r.total_members > 0).length;
-                    const provinceDists = districts.filter((d) =>
-                      provinceRegs.some((r) => r.id === d.regency_id)
-                    );
-                    const activeDists = provinceDists.filter((d) => d.total_members > 0).length;
-                    const provinceVills = villages.filter((v) =>
-                      provinceDists.some((d) => d.id === v.district_id)
-                    );
-                    const activeVills = provinceVills.filter((v) => v.total_members > 0).length;
 
                     return (
                       <button
@@ -317,8 +309,6 @@ export function MonitoringDashboard({
                           </span>
                           <div className="flex items-center gap-2 text-[8px] text-pri-silver/50 font-mono truncate">
                             {activeRegs > 0 && <span>{activeRegs} kab</span>}
-                            {activeDists > 0 && <span>{activeDists} kec</span>}
-                            {activeVills > 0 && <span>{activeVills} desa</span>}
                           </div>
                         </div>
                       </button>
@@ -326,7 +316,7 @@ export function MonitoringDashboard({
                   })}
                 </div>
                 <p className="text-[10px] text-pri-silver/40 text-center pt-1 font-mono">
-                  Klik provinsi untuk detail hingga level desa
+                  Klik provinsi untuk lihat kab/kota, lalu klik kab/kota untuk lihat kecamatan & desa
                 </p>
               </div>
             )}

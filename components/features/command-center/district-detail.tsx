@@ -13,16 +13,17 @@ interface DistrictDetailProps {
 
 export function DistrictDetailPanel({
   district,
-  villages,
+  villages = [],
   onBack,
   onClose,
 }: DistrictDetailProps) {
+  const safeVillages = villages ?? [];
   const sortedVillages = useMemo(
-    () => [...villages].sort((a, b) => a.name.localeCompare(b.name)),
-    [villages]
+    () => [...safeVillages].sort((a, b) => a.name.localeCompare(b.name)),
+    [safeVillages]
   );
 
-  const totalVillages = villages.length;
+  const totalVillages = safeVillages.length;
 
   return (
     <div className="space-y-4">

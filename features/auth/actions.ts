@@ -60,6 +60,10 @@ export async function register(formData: FormData) {
     full_name: fullName,
     phone: phone || null,
     member_id: `PRI-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, "0")}`,
+    province_id: (formData.get("provinceId") as string) || null,
+    regency_id: (formData.get("regencyId") as string) || null,
+    district_id: (formData.get("districtId") as string) || null,
+    village_id: (formData.get("villageId") as string) || null,
     status: "active",
     role_id: (await supabase.from("roles").select("id").eq("name", "member").single()).data?.id,
   });

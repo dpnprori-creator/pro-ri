@@ -12,13 +12,14 @@ interface ProvinceDetailProps {
   onRegencySelect: (regency: RegencyStats) => void;
 }
 
-export function ProvinceDetailPanel({ province, regencies, onClose, onRegencySelect }: ProvinceDetailProps) {
+export function ProvinceDetailPanel({ province, regencies = [], onClose, onRegencySelect }: ProvinceDetailProps) {
+  const safeRegencies = regencies ?? [];
   const sortedRegencies = useMemo(
-    () => [...regencies].sort((a, b) => b.total_members - a.total_members),
-    [regencies]
+    () => [...safeRegencies].sort((a, b) => b.total_members - a.total_members),
+    [safeRegencies]
   );
 
-  const totalRegencies = regencies.length;
+  const totalRegencies = safeRegencies.length;
 
   return (
     <div className="space-y-4">

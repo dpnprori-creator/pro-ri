@@ -15,18 +15,19 @@ interface RegencyDetailProps {
 
 export function RegencyDetailPanel({
   regency,
-  districts,
+  districts = [],
   onBack,
   onClose,
   onDistrictSelect,
 }: RegencyDetailProps) {
+  const safeDistricts = districts ?? [];
   const sortedDistricts = useMemo(
-    () => [...districts].sort((a, b) => b.total_members - a.total_members),
-    [districts]
+    () => [...safeDistricts].sort((a, b) => b.total_members - a.total_members),
+    [safeDistricts]
   );
 
-  const totalDistricts = districts.length;
-  const maxMembers = Math.max(...districts.map((d) => d.total_members), 1);
+  const totalDistricts = safeDistricts.length;
+  const maxMembers = Math.max(...safeDistricts.map((d) => d.total_members), 1);
 
   return (
     <div className="space-y-4">

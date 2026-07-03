@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Target, Eye, Shield, Globe, Cpu, Quote, ArrowRight, MapPin, Calendar, Users } from "lucide-react";
+import { Target, Eye, Shield, Globe, Cpu, Quote, ArrowRight, Calendar, Users } from "lucide-react";
+import { OfficeLocation } from "./office-location";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -328,6 +329,9 @@ export default function AboutPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Office Location */}
+      <OfficeLocation />
 
       {/* Sister Organizations */}
       <section className="section-padding bg-pri-carbon relative">

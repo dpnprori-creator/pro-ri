@@ -39,7 +39,7 @@ function getColor(value: number, max: number): string {
 }
 
 export default function MapView({
-  provinces,
+  provinces = [],
   onProvinceSelect,
   selectedProvinceId,
 }: MapViewProps) {
@@ -47,7 +47,8 @@ export default function MapView({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const maxMembers = Math.max(...provinces.map((p) => p.total_members), 1);
+  const safeProvinces = provinces ?? [];
+  const maxMembers = Math.max(...safeProvinces.map((p) => p.total_members), 1);
 
   useEffect(() => {
     // Try to load Indonesia GeoJSON from CDN
@@ -82,7 +83,7 @@ export default function MapView({
       });
   }, []);
 
-  const provinceMap = new Map(provinces.map((p) => [p.name.toLowerCase(), p]));
+  const provinceMap = new Map(safeProvinces.map((p) => [p.name.toLowerCase(), p]));
 
   function onEachFeature(feature: any, layer: L.Layer) {
     const provinceName =
@@ -176,7 +177,7 @@ export default function MapView({
 
 // Fallback with circle markers when GeoJSON can't be loaded
 function CircleMarkerFallback({
-  provinces,
+  provinces = [],
   onProvinceSelect,
   selectedProvinceId,
 }: {
@@ -184,8 +185,9 @@ function CircleMarkerFallback({
   onProvinceSelect?: (province: ProvinceStats | null) => void;
   selectedProvinceId?: string | null;
 }) {
-  const hasCoords = provinces.filter((p) => p.latitude && p.longitude);
-  const maxMembers = Math.max(...provinces.map((p) => p.total_members), 1);
+  const safeProvinces = provinces ?? [];
+  const hasCoords = safeProvinces.filter((p) => p.latitude && p.longitude);
+  const maxMembers = Math.max(...safeProvinces.map((p) => p.total_members), 1);
 
   if (hasCoords.length === 0) {
     return (

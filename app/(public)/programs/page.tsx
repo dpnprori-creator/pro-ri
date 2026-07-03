@@ -8,7 +8,6 @@ async function getPrograms() {
   const { data: programs } = await supabase
     .from("programs")
     .select("*")
-    .eq("status", "active")
     .order("sort_order", { ascending: true });
 
   // Get user's registrations
@@ -38,14 +37,5 @@ async function getPrograms() {
 export default async function ProgramsPage() {
   const { programs, registrations, isLoggedIn } = await getPrograms();
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Program</h1>
-        <p className="text-pri-silver mt-1">Program-program PRO RI</p>
-      </div>
-
-      <ProgramsClient programs={programs} registrations={registrations} isLoggedIn={isLoggedIn} />
-    </div>
-  );
+  return <ProgramsClient programs={programs} registrations={registrations} isLoggedIn={isLoggedIn} />;
 }

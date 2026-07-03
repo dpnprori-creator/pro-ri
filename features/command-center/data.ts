@@ -85,7 +85,7 @@ export async function getProvinceStats() {
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("provinces")
-    .select("id, name, total_members, total_events, total_innovations")
+    .select("id, name, code, capital, latitude, longitude, total_members, total_trainers, total_mentors, total_events, total_innovations, created_at")
     .order("total_members", { ascending: false });
   return data ?? [];
 }
@@ -94,7 +94,7 @@ export async function getAllRegencyStats() {
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("regencies")
-    .select("id, name, province_id, total_members, total_events, total_innovations")
+    .select("id, name, province_id, code, latitude, longitude, total_members, total_trainers, total_events, total_innovations, created_at")
     .order("total_members", { ascending: false });
   return data ?? [];
 }
@@ -103,7 +103,7 @@ export async function getAllDistrictStats() {
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("districts")
-    .select("id, name, regency_id, total_members")
+    .select("id, name, regency_id, code, total_members, created_at")
     .order("total_members", { ascending: false });
   return data ?? [];
 }
@@ -112,9 +112,13 @@ export async function getAllVillageStats() {
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("villages")
-    .select("id, name, district_id")
+    .select("id, name, district_id, code, created_at")
     .order("name", { ascending: true });
-  return data ?? [];
+  // Map to include total_members (default 0) since column doesn't exist on villages table
+  return (data ?? []).map((v) => ({
+    ...v,
+    total_members: 0 as number,
+  })) as VillageStats[];
 }
 
 export async function getMonthlyGrowth(months: number = 12) {
