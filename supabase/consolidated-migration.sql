@@ -616,30 +616,97 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION recalculate_province_counters()
 RETURNS void AS $$
 BEGIN
+  -- Update total_members for provinces
+  UPDATE provinces p
+  SET total_members = (
+    SELECT COUNT(*)::INTEGER
+    FROM members m
+    WHERE m.province_id = p.id AND m.status = 'active'
+  )
+  WHERE TRUE;
+
+  -- Update total_trainers for provinces
   UPDATE provinces p
   SET total_trainers = (
-    SELECT COUNT(DISTINCT m.id)
+    SELECT COUNT(DISTINCT m.id)::INTEGER
     FROM members m
     JOIN member_designations md ON md.member_id = m.id
     WHERE m.province_id = p.id AND m.status = 'active' AND md.designation = 'trainer'
   )
   WHERE TRUE;
 
+  -- Update total_mentors for provinces
   UPDATE provinces p
   SET total_mentors = (
-    SELECT COUNT(DISTINCT m.id)
+    SELECT COUNT(DISTINCT m.id)::INTEGER
     FROM members m
     JOIN member_designations md ON md.member_id = m.id
     WHERE m.province_id = p.id AND m.status = 'active' AND md.designation = 'mentor'
   )
   WHERE TRUE;
 
+  -- Update total_events for provinces
+  UPDATE provinces p
+  SET total_events = (
+    SELECT COUNT(*)::INTEGER
+    FROM events e
+    WHERE e.province_id = p.id AND e.status IN ('published', 'ongoing', 'completed')
+  )
+  WHERE TRUE;
+
+  -- Update total_innovations for provinces
+  UPDATE provinces p
+  SET total_innovations = (
+    SELECT COUNT(*)::INTEGER
+    FROM innovations i
+    WHERE i.province_id = p.id AND i.status IN ('published', 'featured')
+  )
+  WHERE TRUE;
+
+  -- Update total_members for regencies
+  UPDATE regencies r
+  SET total_members = (
+    SELECT COUNT(*)::INTEGER
+    FROM members m
+    WHERE m.regency_id = r.id AND m.status = 'active'
+  )
+  WHERE TRUE;
+
+  -- Update total_trainers for regencies
   UPDATE regencies r
   SET total_trainers = (
-    SELECT COUNT(DISTINCT m.id)
+    SELECT COUNT(DISTINCT m.id)::INTEGER
     FROM members m
     JOIN member_designations md ON md.member_id = m.id
     WHERE m.regency_id = r.id AND m.status = 'active' AND md.designation = 'trainer'
+  )
+  WHERE TRUE;
+
+  -- Update total_members for regencies
+  UPDATE regencies r
+  SET total_members = (
+    SELECT COUNT(*)::INTEGER
+    FROM members m
+    WHERE m.regency_id = r.id AND m.status = 'active'
+  )
+  WHERE TRUE;
+
+  -- Update total_trainers for regencies
+  UPDATE regencies r
+  SET total_trainers = (
+    SELECT COUNT(DISTINCT m.id)::INTEGER
+    FROM members m
+    JOIN member_designations md ON md.member_id = m.id
+    WHERE m.regency_id = r.id AND m.status = 'active' AND md.designation = 'trainer'
+  )
+  WHERE TRUE;
+
+  -- Update total_members for districts
+  UPDATE districts d
+  SET total_members = (
+    SELECT COUNT(*)::INTEGER
+    FROM members m
+    WHERE m.district_id = d.id AND m.status = 'active'
   )
   WHERE TRUE;
 END;
