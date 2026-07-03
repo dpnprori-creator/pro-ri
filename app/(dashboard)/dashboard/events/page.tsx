@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { DashboardEventsClient } from "@/components/features/dashboard/dashboard-events-client";
+import { Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 async function getEvents() {
   const supabase = await createClient();
@@ -21,7 +23,6 @@ async function getEvents() {
     .neq("status", "cancelled")
     .order("created_at", { ascending: false });
 
-  // Flatten nested event data for DashboardEventsClient
   return (registrations ?? []).map((reg: any) => ({
     ...reg.events,
     registration_id: reg.id,
@@ -32,12 +33,36 @@ async function getEvents() {
 
 export default async function DashboardEventsPage() {
   const events = await getEvents();
+  const upcoming = events.filter((e: any) => new Date(e.start_date) > new Date()).length;
+  const past = events.length - upcoming;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Events Saya</h1>
-        <p className="text-pri-silver mt-1">{events.length} pendaftaran event</p>
+      {/* Header */}
+      <div className="relative overflow-hidden rounded-xl p-6 circuit-border">
+        <div className="absolute inset-0 circuit-pattern opacity-[0.05]" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="flex items-center gap-1.5 text-[10px] text-green-400/80 font-mono">
+              <span className="status-dot" />
+              EVENTS SAYA
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold text-white">Events Saya</h1>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-pri-silver text-sm">{events.length} pendaftaran event</p>
+            {upcoming > 0 && (
+              <Badge variant="success" className="text-[10px]">
+                {upcoming} mendatang
+              </Badge>
+            )}
+            {past > 0 && (
+              <Badge variant="secondary" className="text-[10px]">
+                {past} selesai
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
 
       <DashboardEventsClient events={events as any} />
