@@ -69,7 +69,12 @@ export async function register(formData: FormData) {
     });
 
     if (authError) {
-      return { error: authError.message };
+      console.error("Auth signup error:", authError);
+      const message = authError?.message || authError?.status || "Kesalahan autentikasi dari server";
+      if (!message || message === "{}" || message === "undefined") {
+        return { error: "Gagal terhubung ke server autentikasi. Periksa konfigurasi Supabase." };
+      }
+      return { error: message };
     }
 
     if (!authData.user) {
@@ -103,7 +108,8 @@ export async function register(formData: FormData) {
         .eq("auth_id", authData.user.id);
 
       if (updateError) {
-        return { error: updateError.message };
+        console.error("Member update error:", updateError);
+        return { error: updateError?.message || "Gagal memperbarui data anggota" };
       }
     } else {
       // 3b. Trigger didn't create the member — insert directly
@@ -129,7 +135,8 @@ export async function register(formData: FormData) {
         .insert(insertFields);
 
       if (insertError) {
-        return { error: insertError.message };
+        console.error("Member insert error:", insertError);
+        return { error: insertError?.message || "Gagal membuat data anggota" };
       }
     }
 
