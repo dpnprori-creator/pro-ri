@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Mail, Phone, MapPin, Send, MessageSquare } from "lucide-react";
+import { Mail, MapPin, Send, MessageSquare, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,9 +13,9 @@ import { submitContactMessage } from "@/features/admin/actions";
 import { toast } from "sonner";
 
 const contactInfo = [
-  { icon: Mail, label: "Email", value: "info@prori.id" },
-  { icon: Phone, label: "Telepon", value: "(data akan dilengkapi)" },
-  { icon: MapPin, label: "Alamat", value: "(data akan dilengkapi)" },
+  { icon: Mail, label: "Email", value: "dpn.prori@gmail.com" },
+  { icon: Globe, label: "Website", value: "pro-ri.online" },
+  { icon: MapPin, label: "Alamat", value: "Jl. Sultan Agung No.9, Guntur, Kec. Setiabudi, Jakarta Selatan 12980" },
 ];
 
 const faqs = [

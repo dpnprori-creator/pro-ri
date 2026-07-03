@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Target, TrendingUp, MapIcon, BarChart3 } from "lucide-react";
+import Link from "next/link";
+import { Target, TrendingUp, MapIcon, BarChart3, LineChart, PieChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IndonesiaMap } from "./indonesia-map";
 import { ProvinceDetailPanel } from "./province-detail";
@@ -341,7 +342,19 @@ export function MonitoringDashboard({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <GrowthBarChart data={growth} />
+            {growth.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="h-16 w-16 rounded-full bg-pri-red/10 flex items-center justify-center mb-4">
+                  <BarChart3 className="h-8 w-8 text-pri-red/40" />
+                </div>
+                <h4 className="text-sm font-semibold text-white mb-1">Belum Ada Data Pertumbuhan</h4>
+                <p className="text-xs text-pri-silver/60 max-w-xs">
+                  Grafik pertumbuhan anggota akan muncul setelah anggota mulai mendaftar. Data diambil real-time dari database.
+                </p>
+              </div>
+            ) : (
+              <GrowthBarChart data={growth} />
+            )}
           </CardContent>
         </Card>
         <Card className="glass-tech overflow-visible">
@@ -356,7 +369,19 @@ export function MonitoringDashboard({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <GrowthAreaChart data={growth} />
+            {growth.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="h-16 w-16 rounded-full bg-pri-red/10 flex items-center justify-center mb-4">
+                  <LineChart className="h-8 w-8 text-pri-red/40" />
+                </div>
+                <h4 className="text-sm font-semibold text-white mb-1">Belum Ada Data Kumulatif</h4>
+                <p className="text-xs text-pri-silver/60 max-w-xs">
+                  Grafik kumulatif akan menampilkan total anggota dari waktu ke waktu. Data otomatis terisi dari database saat anggota baru mendaftar.
+                </p>
+              </div>
+            ) : (
+              <GrowthAreaChart data={growth} />
+            )}
           </CardContent>
         </Card>
       </div>
@@ -372,7 +397,7 @@ export function MonitoringDashboard({
         <div className="corner-bracket corner-bracket-br" />
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2 text-sm">
-            <BarChart3 className="h-4 w-4 text-pri-red" />
+            <PieChart className="h-4 w-4 text-pri-red" />
             Distribusi Minat Teknologi
           </CardTitle>
         </CardHeader>
@@ -386,26 +411,37 @@ export function MonitoringDashboard({
                 </h3>
                 <div className="h-px flex-1 bg-gradient-to-r from-pri-red/20 to-transparent" />
               </div>
-              {techDist.slice(0, 10).map((item, i) => {
-                const maxCount = techDist[0]?.count || 1;
-                const barWidth = (item.count / maxCount) * 100;
-                return (
-                  <div key={item.category} className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-white">{item.category}</span>
-                      <span className="text-pri-silver font-mono">
-                        {item.count}
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-pri-dark overflow-hidden progress-tech">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-pri-red to-red-400"
-                        style={{ width: `${barWidth}%` }}
-                      />
-                    </div>
+              {techDist.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="h-12 w-12 rounded-full bg-pri-red/10 flex items-center justify-center mb-3">
+                    <PieChart className="h-6 w-6 text-pri-red/40" />
                   </div>
-                );
-              })}
+                  <p className="text-xs text-pri-silver/60 max-w-xs">
+                    Distribusi minat teknologi akan muncul setelah anggota mendaftar dan memilih minat teknologi mereka.
+                  </p>
+                </div>
+              ) : (
+                techDist.slice(0, 10).map((item, i) => {
+                  const maxCount = techDist[0]?.count || 1;
+                  const barWidth = (item.count / maxCount) * 100;
+                  return (
+                    <div key={item.category} className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-white">{item.category}</span>
+                        <span className="text-pri-silver font-mono">
+                          {item.count}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-pri-dark overflow-hidden progress-tech">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-pri-red to-red-400"
+                          style={{ width: `${barWidth}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </CardContent>

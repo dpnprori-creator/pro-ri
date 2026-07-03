@@ -87,7 +87,7 @@ export function OfficeLocation() {
 
                   <div className="flex items-center gap-3">
                     <Globe className="h-4 w-4 text-pri-red shrink-0" />
-                    <span className="text-sm text-pri-silver">prori.id</span>
+                    <span className="text-sm text-pri-silver">pro-ri.online</span>
                   </div>
                 </div>
               </CardContent>

@@ -5,7 +5,7 @@ async function getPrograms() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("programs")
-    .select("id, title, status, label, sort_order, max_participants, start_date, created_at")
+    .select("id, title, slug, status, label, sort_order, max_participants, start_date, created_at")
     .order("sort_order", { ascending: true });
 
   return data ?? [];

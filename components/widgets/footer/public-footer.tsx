@@ -98,15 +98,15 @@ export function PublicFooter() {
                 <div className="h-7 w-7 rounded-md bg-pri-red/10 flex items-center justify-center">
                   <Mail className="h-3.5 w-3.5 text-pri-red" />
                 </div>
-                <span>info@prori.id</span>
+                <span>dpn.prori@gmail.com</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <div className="h-7 w-7 rounded-md bg-pri-red/10 flex items-center justify-center">
                   <Globe className="h-3.5 w-3.5 text-pri-red" />
                 </div>
                 <div>
-                  <p>prori.id</p>
-                  <p className="text-xs text-pri-silver/40">academy.prori.id</p>
+                  <p>pro-ri.online</p>
+                  <p className="text-xs text-pri-silver/40">academy.pro-ri.online</p>
                 </div>
               </li>
               <li className="flex items-start gap-2.5">
@@ -114,7 +114,7 @@ export function PublicFooter() {
                   <MapPin className="h-3.5 w-3.5 text-pri-red" />
                 </div>
                 <span className="text-xs leading-relaxed">
-                  DPP PRI — Jakarta
+                  DPN PRO RI — Jl. Sultan Agung No.9, Guntur, Setiabudi, Jakarta Selatan 12980
                 </span>
               </li>
             </ul>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Eye, UserCheck } from "lucide-react";
+import { Plus, Eye, UserCheck, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ import { toast } from "sonner";
 interface ProgramRow {
   id: string;
   title: string;
+  slug: string;
   status: string;
   label: string;
   sort_order: number;
@@ -191,6 +192,15 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
         emptyMessage="Belum ada program"
         actions={(item) => (
           <div className="flex items-center gap-2 justify-end">
+            <a
+              href={`/programs/${item.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Lihat di Frontend"
+              className="inline-flex items-center justify-center h-8 px-2 text-xs text-pri-silver hover:text-white hover:bg-white/5 rounded transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
             <Button
               variant="ghost"
               size="sm"

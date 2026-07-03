@@ -92,6 +92,9 @@ export default function RegisterPage() {
     if (!formData.districtId) {
       newErrors.districtId = "Pilih kecamatan";
     }
+    if (!formData.villageId) {
+      newErrors.villageId = "Pilih desa/kelurahan";
+    }
     if (formData.technologyInterest.length === 0) {
       newErrors.technologyInterest = "Pilih minimal 1 minat teknologi";
     }

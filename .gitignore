@@ -32,3 +32,11 @@ Thumbs.db
 
 # Vercel (deleted — kept for safety)
 .vercel
+
+# Project-specific scripts (not for deployment)
+scripts/
+
+# Supabase migration temp files (individual fix/seed only)
+supabase/migrations/fix_duplicate_*.sql
+supabase/migrations/seed_*.sql
+supabase/migrations/alter_*.sql

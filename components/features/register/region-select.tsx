@@ -1,197 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { MapPin, Search, X, Loader2 } from "lucide-react";
+import { MapPin, Loader2, ChevronDown } from "lucide-react";
 
 interface Region {
   id: string;
   name: string;
-}
-
-interface LocationInputProps {
-  label: string;
-  value: string;
-  placeholder: string;
-  onSelect: (id: string) => void;
-  onChange: (value: string) => void;
-  fetchResults: (query: string) => Promise<Region[]>;
-  disabled?: boolean;
-  error?: string;
-}
-
-function LocationInput({
-  label,
-  value,
-  placeholder,
-  onSelect,
-  onChange,
-  fetchResults,
-  disabled,
-  error,
-}: LocationInputProps) {
-  const [query, setQuery] = useState(value ? "" : "");
-  const [results, setResults] = useState<Region[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const [selectedLabel, setSelectedLabel] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
-
-  // When value (id) changes externally, clear selected label to force re-fetch
-  useEffect(() => {
-    if (!value) {
-      setSelectedLabel("");
-      setQuery("");
-    }
-  }, [value]);
-
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const q = e.target.value;
-      setQuery(q);
-      onChange(q);
-      setSelectedLabel("");
-      if (q.length >= 1) {
-        setIsOpen(true);
-        // Debounce search
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(async () => {
-          setIsSearching(true);
-          try {
-            const data = await fetchResults(q);
-            setResults(data);
-          } catch {
-            setResults([]);
-          }
-          setIsSearching(false);
-        }, 200);
-      } else {
-        setIsOpen(false);
-        setResults([]);
-      }
-    },
-    [fetchResults, onChange]
-  );
-
-  const handleSelect = (item: Region) => {
-    setSelectedLabel(item.name);
-    setQuery(item.name);
-    onSelect(item.id);
-    onChange(item.id);
-    setIsOpen(false);
-    setResults([]);
-  };
-
-  const handleClear = () => {
-    setQuery("");
-    setSelectedLabel("");
-    onChange("");
-    onSelect("");
-    inputRef.current?.focus();
-  };
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  // Show the name if we have a value but no label yet (load on mount)
-  useEffect(() => {
-    if (value && !selectedLabel && !query) {
-      // Try to fetch the name from the DB
-      fetchResults("").then((all) => {
-        const found = all.find((r) => r.id === value);
-        if (found) {
-          setSelectedLabel(found.name);
-          setQuery(found.name);
-        }
-      });
-    }
-  }, [value]);
-
-  return (
-    <div className="relative">
-      <label className="block text-sm font-medium text-pri-silver mb-1">
-        {label}
-      </label>
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pri-silver/50" />
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={handleInputChange}
-          onFocus={() => {
-            if (query.length >= 1 || results.length > 0) setIsOpen(true);
-          }}
-          placeholder={placeholder}
-          disabled={disabled}
-          className="w-full bg-pri-navy border border-pri-gold/20 rounded-lg pl-9 pr-8 py-2 text-sm text-white placeholder:text-pri-silver/50 focus:outline-none focus:border-pri-red/50 transition-colors disabled:opacity-40"
-          autoComplete="off"
-        />
-        {isSearching && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pri-red animate-spin" />
-        )}
-        {!isSearching && query && (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-pri-silver/50 hover:text-pri-silver transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-
-      {/* Dropdown suggestions */}
-      {isOpen && (
-        <div
-          ref={dropdownRef}
-          className="absolute z-50 mt-1 w-full rounded-lg border border-white/10 bg-pri-navy shadow-xl max-h-48 overflow-y-auto"
-        >
-          {results.length === 0 && query.length >= 1 ? (
-            <div className="px-3 py-2 text-xs text-pri-silver/50 flex items-center gap-2">
-              <MapPin className="h-3 w-3" />
-              {isSearching ? "Mencari..." : "Ketik untuk mencari..."}
-            </div>
-          ) : (
-            results.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => handleSelect(item)}
-                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10 transition-colors flex items-center gap-2"
-              >
-                <MapPin className="h-3.5 w-3.5 text-pri-silver/50 shrink-0" />
-                {item.name}
-              </button>
-            ))
-          )}
-          {query.length >= 1 && results.length === 0 && !isSearching && (
-            <div className="px-3 py-2 text-xs text-pri-silver/50 flex items-center gap-2">
-              <MapPin className="h-3 w-3" />
-              Tidak ditemukan. Lanjutkan mengetik...
-            </div>
-          )}
-        </div>
-      )}
-
-      {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
-    </div>
-  );
 }
 
 interface RegionSelectProps {
@@ -209,6 +24,54 @@ interface RegionSelectProps {
   defaultRegency?: string;
   defaultDistrict?: string;
   defaultVillage?: string;
+}
+
+// Native select-based region dropdown component
+function NativeSelect({
+  label,
+  value,
+  options,
+  onChange,
+  disabled,
+  placeholder,
+  error,
+}: {
+  label: string;
+  value: string;
+  options: Region[];
+  onChange: (id: string) => void;
+  disabled?: boolean;
+  placeholder: string;
+  error?: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="block text-sm font-medium text-pri-silver">
+        {label}
+      </label>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className="w-full appearance-none bg-pri-navy border border-pri-gold/20 rounded-lg px-3 py-2.5 pr-8 text-sm text-white 
+            focus:outline-none focus:border-pri-red/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+            [&>option]:bg-pri-navy [&>option]:text-white"
+        >
+          <option value="" className="text-pri-silver/50">
+            {placeholder}
+          </option>
+          {options.map((opt) => (
+            <option key={opt.id} value={opt.id}>
+              {opt.name}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-pri-silver/50 pointer-events-none" />
+      </div>
+      {error && <p className="text-xs text-red-400">{error}</p>}
+    </div>
+  );
 }
 
 export function RegionSelect(props: RegionSelectProps) {
@@ -231,59 +94,114 @@ export function RegionSelect(props: RegionSelectProps) {
 
   const supabase = createClient();
 
-  const [selectedProvince, setSelectedProvince] = useState(
-    provinceId || defaultProvince || ""
-  );
-  const [selectedRegency, setSelectedRegency] = useState(
-    regencyId || defaultRegency || ""
-  );
-  const [selectedDistrict, setSelectedDistrict] = useState(
-    districtId || defaultDistrict || ""
-  );
-  const [selectedVillage, setSelectedVillage] = useState(
-    villageId || defaultVillage || ""
-  );
+  // State for selections
+  const [selectedProvince, setSelectedProvince] = useState(provinceId || defaultProvince || "");
+  const [selectedRegency, setSelectedRegency] = useState(regencyId || defaultRegency || "");
+  const [selectedDistrict, setSelectedDistrict] = useState(districtId || defaultDistrict || "");
+  const [selectedVillage, setSelectedVillage] = useState(villageId || defaultVillage || "");
 
-  // Cache Supabase responses to avoid repeated fetches on every keystroke
-  const distCacheRef = useRef<Map<string, Region[]>>(new Map());
-  const villageCacheRef = useRef<Map<string, Region[]>>(new Map());
+  // State for options
+  const [provinces, setProvinces] = useState<Region[]>([]);
+  const [regencies, setRegencies] = useState<Region[]>([]);
+  const [districts, setDistricts] = useState<Region[]>([]);
+  const [villages, setVillages] = useState<Region[]>([]);
+  const [loading, setLoading] = useState({ provinces: false, regencies: false, districts: false, villages: false });
 
-  // Reset caches when parent selection changes
+  // Fetch provinces on mount
   useEffect(() => {
-    distCacheRef.current.clear();
-  }, [selectedRegency]);
-  
+    setLoading((p) => ({ ...p, provinces: true }));
+    supabase
+      .from("provinces")
+      .select("id, name")
+      .order("name")
+      .then(({ data }) => {
+        setProvinces(data ?? []);
+        setLoading((p) => ({ ...p, provinces: false }));
+      });
+  }, [supabase]);
+
+  // Fetch regencies when province changes
   useEffect(() => {
-    villageCacheRef.current.clear();
-  }, [selectedDistrict]);
+    if (!selectedProvince) {
+      setRegencies([]);
+      return;
+    }
+    setLoading((p) => ({ ...p, regencies: true }));
+    supabase
+      .from("regencies")
+      .select("id, name")
+      .eq("province_id", selectedProvince)
+      .order("name")
+      .then(({ data }) => {
+        setRegencies(data ?? []);
+        setLoading((p) => ({ ...p, regencies: false }));
+      });
+  }, [supabase, selectedProvince]);
+
+  // Fetch districts when regency changes
+  useEffect(() => {
+    if (!selectedRegency) {
+      setDistricts([]);
+      return;
+    }
+    setLoading((p) => ({ ...p, districts: true }));
+    supabase
+      .from("districts")
+      .select("id, name")
+      .eq("regency_id", selectedRegency)
+      .order("name")
+      .then(({ data }) => {
+        setDistricts(data ?? []);
+        setLoading((p) => ({ ...p, districts: false }));
+      });
+  }, [supabase, selectedRegency]);
+
+  // Fetch villages when district changes
+  useEffect(() => {
+    if (!selectedDistrict) {
+      setVillages([]);
+      return;
+    }
+    setLoading((p) => ({ ...p, villages: true }));
+    supabase
+      .from("villages")
+      .select("id, name")
+      .eq("district_id", selectedDistrict)
+      .order("name")
+      .then(({ data }) => {
+        setVillages(data ?? []);
+        setLoading((p) => ({ ...p, villages: false }));
+      });
+  }, [supabase, selectedDistrict]);
 
   // Sync external changes
   useEffect(() => {
     if (provinceId !== undefined) setSelectedProvince(provinceId);
   }, [provinceId]);
-
   useEffect(() => {
     if (regencyId !== undefined) setSelectedRegency(regencyId);
   }, [regencyId]);
-
   useEffect(() => {
     if (districtId !== undefined) setSelectedDistrict(districtId);
   }, [districtId]);
-
   useEffect(() => {
     if (villageId !== undefined) setSelectedVillage(villageId);
   }, [villageId]);
 
-  // Handlers
   const handleProvinceChange = (value: string) => {
     setSelectedProvince(value);
     onProvinceChange?.(value);
     onChange?.("provinceId", value);
-    // Reset child selections
     if (value !== selectedProvince) {
       setSelectedRegency("");
       setSelectedDistrict("");
       setSelectedVillage("");
+      onRegencyChange?.("");
+      onDistrictChange?.("");
+      onVillageChange?.("");
+      onChange?.("regencyId", "");
+      onChange?.("districtId", "");
+      onChange?.("villageId", "");
     }
   };
 
@@ -294,6 +212,10 @@ export function RegionSelect(props: RegionSelectProps) {
     if (value !== selectedRegency) {
       setSelectedDistrict("");
       setSelectedVillage("");
+      onDistrictChange?.("");
+      onVillageChange?.("");
+      onChange?.("districtId", "");
+      onChange?.("villageId", "");
     }
   };
 
@@ -303,6 +225,8 @@ export function RegionSelect(props: RegionSelectProps) {
     onChange?.("districtId", value);
     if (value !== selectedDistrict) {
       setSelectedVillage("");
+      onVillageChange?.("");
+      onChange?.("villageId", "");
     }
   };
 
@@ -311,95 +235,6 @@ export function RegionSelect(props: RegionSelectProps) {
     onVillageChange?.(value);
     onChange?.("villageId", value);
   };
-
-  // Data fetching functions
-  const fetchProvinces = useCallback(
-    async (query: string) => {
-      const { data } = await supabase
-        .from("provinces")
-        .select("id, name")
-        .ilike("name", `%${query}%`)
-        .order("name")
-        .limit(10);
-      return (data ?? []) as Region[];
-    },
-    [supabase]
-  );
-
-  const fetchRegencies = useCallback(
-    async (query: string) => {
-      if (!selectedProvince) return [];
-      const { data } = await supabase
-        .from("regencies")
-        .select("id, name")
-        .eq("province_id", selectedProvince)
-        .ilike("name", `%${query}%`)
-        .order("name")
-        .limit(10);
-      return (data ?? []) as Region[];
-    },
-    [supabase, selectedProvince]
-  );
-
-  const fetchDistricts = useCallback(
-    async (query: string) => {
-      if (!selectedRegency) return [];
-
-      const cacheKey = `districts-${selectedRegency}`;
-      const cached = distCacheRef.current.get(cacheKey);
-
-      if (cached) {
-        return cached
-          .filter((d) => d.name.toLowerCase().includes(query.toLowerCase()))
-          .slice(0, 10);
-      }
-
-      // Fetch from Supabase
-      const { data } = await supabase
-        .from("districts")
-        .select("id, name")
-        .eq("regency_id", selectedRegency)
-        .ilike("name", `%${query}%`)
-        .order("name")
-        .limit(10);
-
-      const mapped = (data ?? []) as Region[];
-      distCacheRef.current.set(cacheKey, mapped);
-
-      return mapped;
-    },
-    [supabase, selectedRegency]
-  );
-
-  const fetchVillages = useCallback(
-    async (query: string) => {
-      if (!selectedDistrict) return [];
-
-      const cacheKey = `villages-${selectedDistrict}`;
-      const cached = villageCacheRef.current.get(cacheKey);
-
-      if (cached) {
-        return cached
-          .filter((v) => v.name.toLowerCase().includes(query.toLowerCase()))
-          .slice(0, 10);
-      }
-
-      // Fetch from Supabase
-      const { data } = await supabase
-        .from("villages")
-        .select("id, name")
-        .eq("district_id", selectedDistrict)
-        .ilike("name", `%${query}%`)
-        .order("name")
-        .limit(10);
-
-      const mapped = (data ?? []) as Region[];
-      villageCacheRef.current.set(cacheKey, mapped);
-
-      return mapped;
-    },
-    [supabase, selectedDistrict]
-  );
 
   return (
     <div className="space-y-4">
@@ -410,78 +245,56 @@ export function RegionSelect(props: RegionSelectProps) {
         </span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <LocationInput
+        {/* Province */}
+        <NativeSelect
           label="Provinsi"
           value={selectedProvince}
-          placeholder="Ketik nama provinsi..."
-          onSelect={(id) => {
-            setSelectedProvince(id);
-            onProvinceChange?.(id);
-            onChange?.("provinceId", id);
-            setSelectedRegency("");
-            setSelectedDistrict("");
-            setSelectedVillage("");
-          }}
-          onChange={() => {}}
-          fetchResults={fetchProvinces}
+          options={provinces}
+          onChange={handleProvinceChange}
+          placeholder="Pilih provinsi..."
           error={errors?.provinceId}
         />
 
-        <LocationInput
+        {/* Regency */}
+        <NativeSelect
           label="Kota / Kabupaten"
           value={selectedRegency}
-          placeholder={
-            selectedProvince ? "Ketik nama kota..." : "Pilih provinsi dulu"
-          }
-          onSelect={(id) => {
-            setSelectedRegency(id);
-            onRegencyChange?.(id);
-            onChange?.("regencyId", id);
-            setSelectedDistrict("");
-            setSelectedVillage("");
-          }}
-          onChange={() => {}}
-          fetchResults={fetchRegencies}
+          options={regencies}
+          onChange={handleRegencyChange}
           disabled={!selectedProvince}
+          placeholder={selectedProvince ? "Pilih kota/kab..." : "Pilih provinsi dulu"}
           error={errors?.regencyId}
         />
 
-        <LocationInput
+        {/* District */}
+        <NativeSelect
           label="Kecamatan"
           value={selectedDistrict}
-          placeholder={
-            selectedRegency ? "Ketik nama kecamatan..." : "Pilih kota dulu"
-          }
-          onSelect={(id) => {
-            setSelectedDistrict(id);
-            onDistrictChange?.(id);
-            onChange?.("districtId", id);
-            setSelectedVillage("");
-          }}
-          onChange={() => {}}
-          fetchResults={fetchDistricts}
+          options={districts}
+          onChange={handleDistrictChange}
           disabled={!selectedRegency}
+          placeholder={selectedRegency ? "Pilih kecamatan..." : "Pilih kota dulu"}
           error={errors?.districtId}
         />
 
-        <LocationInput
+        {/* Village */}
+        <NativeSelect
           label="Desa / Kelurahan"
           value={selectedVillage}
-          placeholder={
-            selectedDistrict
-              ? "Ketik nama desa..."
-              : "Pilih kecamatan dulu"
-          }
-          onSelect={(id) => {
-            setSelectedVillage(id);
-            onVillageChange?.(id);
-            onChange?.("villageId", id);
-          }}
-          onChange={() => {}}
-          fetchResults={fetchVillages}
+          options={villages}
+          onChange={handleVillageChange}
           disabled={!selectedDistrict}
+          placeholder={selectedDistrict ? "Pilih desa..." : "Pilih kecamatan dulu"}
+          error={errors?.villageId}
         />
       </div>
+      {/* Loading indicator */}
+      {(loading.provinces || loading.regencies || loading.districts || loading.villages) && (
+        <div className="flex items-center gap-2 text-xs text-pri-silver/60">
+          <Loader2 className="h-3 w-3 animate-spin text-pri-red" />
+          Memuat data wilayah...
+        </div>
+      )}
     </div>
   );
 }
