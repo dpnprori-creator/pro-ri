@@ -4,9 +4,11 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { registerSchema } from "./schemas";
 import type { Database } from "@/lib/types/database";
 
 type MemberUpdate = Database["public"]["Tables"]["members"]["Update"];
+type MemberInsert = Database["public"]["Tables"]["members"]["Insert"];
 
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
@@ -28,60 +30,115 @@ export async function login(formData: FormData) {
 }
 
 export async function register(formData: FormData) {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  const fullName = formData.get("fullName") as string;
-  const phone = formData.get("phone") as string;
-  const occupation = formData.get("occupation") as string;
+  try {
+    const supabase = await createServerClient();
+    const adminSupabase = createAdminClient();
 
-  const supabase = await createServerClient();
+    // 1. Validate form data with Zod
+    const rawData = {
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+      fullName: formData.get("fullName") as string,
+      phone: formData.get("phone") as string,
+      occupation: formData.get("occupation") as string,
+      provinceId: formData.get("provinceId") as string,
+      regencyId: formData.get("regencyId") as string,
+      districtId: formData.get("districtId") as string,
+      villageId: formData.get("villageId") as string,
+      technologyInterest: formData.getAll("technologyInterest") as string[],
+      confirmPassword: formData.get("confirmPassword") as string,
+    };
 
-  // 1. Register auth user — trigger on_auth_user_created will auto-create member
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        full_name: fullName,
+    const parsed = registerSchema.safeParse(rawData);
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0];
+      return { error: firstError.message };
+    }
+
+    const { email, password, fullName, phone, occupation, provinceId, regencyId, districtId, villageId, technologyInterest } = parsed.data;
+
+    // 2. Register auth user — trigger on_auth_user_created will auto-create member
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
       },
-    },
-  });
+    });
 
-  if (authError) {
-    return { error: authError.message };
+    if (authError) {
+      return { error: authError.message };
+    }
+
+    if (!authData.user) {
+      return { error: "Gagal membuat akun. Silakan coba lagi." };
+    }
+
+    // 3. Check if the trigger created the member record
+    const { data: existingMember } = await adminSupabase
+      .from("members")
+      .select("id")
+      .eq("auth_id", authData.user.id)
+      .maybeSingle();
+
+    if (existingMember) {
+      // 3a. Trigger created the member — update with additional fields
+      const updateFields: MemberUpdate = {
+        phone,
+        occupation,
+        province_id: provinceId,
+        regency_id: regencyId,
+        district_id: districtId,
+        village_id: villageId,
+      };
+      if (technologyInterest.length > 0) {
+        updateFields.technology_interest = technologyInterest;
+      }
+
+      const { error: updateError } = await adminSupabase
+        .from("members")
+        .update(updateFields)
+        .eq("auth_id", authData.user.id);
+
+      if (updateError) {
+        return { error: updateError.message };
+      }
+    } else {
+      // 3b. Trigger didn't create the member — insert directly
+      const insertFields: MemberInsert = {
+        auth_id: authData.user.id,
+        member_id: `PRI-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, "0")}`,
+        full_name: fullName,
+        email,
+        phone,
+        occupation,
+        province_id: provinceId,
+        regency_id: regencyId,
+        district_id: districtId,
+        village_id: villageId,
+        status: "active",
+      };
+      if (technologyInterest.length > 0) {
+        insertFields.technology_interest = technologyInterest;
+      }
+
+      const { error: insertError } = await adminSupabase
+        .from("members")
+        .insert(insertFields);
+
+      if (insertError) {
+        return { error: insertError.message };
+      }
+    }
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (err) {
+    console.error("Registration error:", err);
+    return { error: "Terjadi kesalahan saat mendaftar. Silakan coba lagi." };
   }
-
-  if (!authData.user) {
-    return { error: "Gagal membuat akun" };
-  }
-
-  // 2. Update the trigger-created member with additional registration fields
-  // Use admin client to bypass RLS (user not yet authenticated if email confirmation is on)
-  const adminSupabase = createAdminClient();
-
-  const technologyInterest = formData.getAll("technologyInterest") as string[];
-
-  // Collect fields to update (only non-empty values)
-  const updateFields: MemberUpdate = {};
-  if (phone) updateFields.phone = phone;
-  if (occupation) updateFields.occupation = occupation;
-  if (technologyInterest.length > 0) updateFields.technology_interest = technologyInterest;
-  updateFields.province_id = (formData.get("provinceId") as string) || null;
-  updateFields.regency_id = (formData.get("regencyId") as string) || null;
-  updateFields.district_id = (formData.get("districtId") as string) || null;
-  updateFields.village_id = (formData.get("villageId") as string) || null;
-
-  const { error: memberError } = await adminSupabase
-    .from("members")
-    .update(updateFields)
-    .eq("auth_id", authData.user.id);
-
-  if (memberError) {
-    return { error: memberError.message };
-  }
-
-  revalidatePath("/", "layout");
-  return { success: true };
 }
 
 export async function logout() {
