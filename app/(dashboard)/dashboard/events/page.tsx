@@ -14,27 +14,33 @@ async function getEvents() {
 
   if (!member) return [];
 
-  const { data } = await supabase
+  const { data: registrations } = await supabase
     .from("event_registrations")
-    .select("*, event_id!inner(id, title, slug, start_date, end_date, category, status, location)")
+    .select("*, events!inner(id, title, slug, start_date, end_date, category, type, status, location, max_participants, description, province_id(name))")
     .eq("member_id", member.id)
     .neq("status", "cancelled")
     .order("created_at", { ascending: false });
 
-  return data ?? [];
+  // Flatten nested event data for DashboardEventsClient
+  return (registrations ?? []).map((reg: any) => ({
+    ...reg.events,
+    registration_id: reg.id,
+    registration_status: reg.status,
+    created_at: reg.created_at,
+  }));
 }
 
 export default async function DashboardEventsPage() {
-  const registrations = await getEvents();
+  const events = await getEvents();
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Events Saya</h1>
-        <p className="text-pri-silver mt-1">{registrations.length} pendaftaran event</p>
+        <p className="text-pri-silver mt-1">{events.length} pendaftaran event</p>
       </div>
 
-      <DashboardEventsClient {...({ registrations } as any)} />
+      <DashboardEventsClient events={events as any} />
     </div>
   );
 }

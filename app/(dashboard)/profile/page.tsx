@@ -8,7 +8,7 @@ async function getProfile() {
 
   const { data: member } = await supabase
     .from("members")
-    .select("*, province_id!inner(name), regency_id!inner(name)")
+    .select("*, province_id(name), regency_id(name)")
     .eq("auth_id", user.id)
     .single();
 

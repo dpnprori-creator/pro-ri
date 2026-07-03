@@ -16,8 +16,9 @@ async function getMembershipData() {
 
   if (!member) return { member: null, card: null, certificates: [] };
 
+  // Note: member_cards.user_id references auth.users(id), not members(id)
   const [{ data: card }, { data: certificates }] = await Promise.all([
-    supabase.from("member_cards").select("*").eq("user_id", member.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("member_cards").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("certificates").select("*").eq("member_id", member.id).order("issued_at", { ascending: false }),
   ]);
 

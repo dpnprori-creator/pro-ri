@@ -5,8 +5,7 @@ async function getMembers() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("members")
-    .select("id, full_name, member_id, occupation, province_id!inner(name)")
-    .eq("status", "active")
+    .select("id, full_name, member_id, occupation, status, province_id(name)")
     .order("full_name", { ascending: true });
 
   return data ?? [];

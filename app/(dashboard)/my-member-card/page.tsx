@@ -14,10 +14,11 @@ async function getMemberCard() {
 
   if (!member) return { member: null, card: null };
 
+  // Note: member_cards.user_id references auth.users(id), not members(id)
   const { data: card } = await supabase
     .from("member_cards")
     .select("*")
-    .eq("user_id", member.id)
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
