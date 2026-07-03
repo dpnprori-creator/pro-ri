@@ -10,9 +10,10 @@ export async function getProfile() {
 
   if (!user) return null;
 
+  // Jangan pakai !inner join — bisa null untuk member tanpa region
   const { data: member } = await supabase
     .from("members")
-    .select("*, province_id!inner(name), regency_id!inner(name)")
+    .select("*")
     .eq("auth_id", user.id)
     .single();
 

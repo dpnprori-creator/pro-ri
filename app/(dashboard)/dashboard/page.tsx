@@ -8,7 +8,7 @@ async function getDashboardData() {
 
   const { data: member } = await supabase
     .from("members")
-    .select("*, role_id!inner(name)")
+    .select("*")
     .eq("auth_id", user.id)
     .single();
 

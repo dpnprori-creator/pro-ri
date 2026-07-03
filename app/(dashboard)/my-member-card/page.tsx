@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { MemberCardView } from "@/components/features/membership/member-card-view";
+import { CreditCard } from "lucide-react";
 
 async function getMemberCard() {
   const supabase = await createClient();
@@ -40,7 +41,17 @@ export default async function MyMemberCardPage() {
         <p className="text-pri-silver mt-1">Kartu identitas anggota PRO RI</p>
       </div>
 
-      <MemberCardView card={card as any ?? undefined} />
+      {card ? (
+        <MemberCardView card={card as any} />
+      ) : (
+        <div className="text-center py-20 glass-card rounded-xl">
+          <CreditCard className="h-16 w-16 text-pri-silver/30 mx-auto mb-4" />
+          <p className="text-pri-silver">Belum ada kartu anggota</p>
+          <p className="text-xs text-pri-silver/60 mt-1">
+            Kartu anggota akan tersedia setelah diverifikasi oleh admin
+          </p>
+        </div>
+      )}
     </div>
   );
 }

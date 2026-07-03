@@ -126,6 +126,16 @@ export async function register(formData: FormData) {
         village_id: villageId,
         status: "active",
       };
+
+      // Look up 'member' role_id for the fallback insert
+      const { data: memberRole } = await adminSupabase
+        .from("roles")
+        .select("id")
+        .eq("name", "member")
+        .single();
+      if (memberRole) {
+        insertFields.role_id = memberRole.id;
+      }
       if (technologyInterest.length > 0) {
         insertFields.technology_interest = technologyInterest;
       }
@@ -171,9 +181,10 @@ export async function getCurrentUserRole(): Promise<{ role: string | null }> {
 
   const { data: member } = await supabase
     .from("members")
-    .select("role_id!inner(name)")
+    .select("role_id(name)")
     .eq("auth_id", user.id)
     .single();
 
-  return { role: member?.role_id?.name ?? null };
+  const roleObj = member?.role_id as { name: string } | null;
+  return { role: roleObj?.name ?? null };
 }

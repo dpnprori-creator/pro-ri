@@ -6,9 +6,11 @@ async function getProfile() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
+  // Note: Jangan pakai province_id(name) join karena akan override UUID dengan object.
+  // Province name diambil dari data regions yang sudah di-fetch terpisah.
   const { data: member } = await supabase
     .from("members")
-    .select("*, province_id(name), regency_id(name)")
+    .select("*")
     .eq("auth_id", user.id)
     .single();
 
