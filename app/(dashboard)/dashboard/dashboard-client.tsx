@@ -74,160 +74,58 @@ const item = {
 export function DashboardClient({ stats, myStats, member }: DashboardClientProps) {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-      {/* ===== KPI STATS CARDS ===== */}
+      {/* ===== KPI STATS CARDS — Consistent height, robotic theme ===== */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-        <motion.div variants={item}>
-          <Card className="glass-tech">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="relative h-9 w-9 rounded-lg bg-pri-red/10 flex items-center justify-center flex-shrink-0">
-                  <Users className="h-4 w-4 text-pri-red" />
-                  <div className="data-pulse-ring rounded-lg" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] text-pri-silver font-mono uppercase tracking-wider truncate">
-                    Anggota Aktif
-                  </p>
-                  <p className="text-lg font-bold text-white tabular-nums">
-                    {stats.totalMembers.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-2 h-1 rounded-full bg-white/5 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-pri-red progress-tech"
-                  style={{ width: `${stats.memberProgress}%` }}
-                />
-              </div>
-              <p className="text-[9px] text-pri-silver/60 mt-1 font-mono">
-                Target: {TARGET_MEMBERS.toLocaleString()} ({stats.memberProgress.toFixed(0)}%)
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+        {[
+          { icon: Users, label: 'Anggota Aktif', value: stats.totalMembers, bg: 'bg-pri-red/10', iconColor: 'text-pri-red', progress: stats.memberProgress, target: TARGET_MEMBERS, barColor: 'bg-pri-red', barBg: 'bg-pri-red' },
+          { icon: Calendar, label: 'Event Aktif', value: stats.totalEvents, bg: 'bg-blue-500/10', iconColor: 'text-blue-400' },
+          { icon: Lightbulb, label: 'Inovasi', value: stats.totalInnovations, bg: 'bg-yellow-500/10', iconColor: 'text-yellow-400' },
+          { icon: Award, label: 'Trainer', value: stats.totalTrainers, bg: 'bg-green-500/10', iconColor: 'text-green-400', progress: stats.trainerProgress, target: TARGET_TRAINERS, barColor: 'bg-green-500', barBg: 'bg-green-500' },
+          { icon: TrendingUp, label: 'Mentor', value: stats.totalMentors, bg: 'bg-purple-500/10', iconColor: 'text-purple-400', progress: stats.mentorProgress, target: TARGET_MENTORS, barColor: 'bg-purple-500', barBg: 'bg-purple-500' },
+          { icon: Globe, label: 'Provinsi', value: stats.totalProvinces, bg: 'bg-cyan-500/10', iconColor: 'text-cyan-400' },
+        ].map((card, i) => {
+          const Icon = card.icon;
+          const hasProgress = 'progress' in card;
+          const barColor = card.barBg || 'bg-pri-red';
 
-        <motion.div variants={item}>
-          <Card className="glass-tech">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="relative h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                  <Calendar className="h-4 w-4 text-blue-400" />
-                  <div className="data-pulse-ring rounded-lg" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] text-pri-silver font-mono uppercase tracking-wider truncate">
-                    Event Aktif
-                  </p>
-                  <p className="text-lg font-bold text-white tabular-nums">
-                    {stats.totalEvents.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={item}>
-          <Card className="glass-tech">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="relative h-9 w-9 rounded-lg bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
-                  <Lightbulb className="h-4 w-4 text-yellow-400" />
-                  <div className="data-pulse-ring rounded-lg" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] text-pri-silver font-mono uppercase tracking-wider truncate">
-                    Inovasi
-                  </p>
-                  <p className="text-lg font-bold text-white tabular-nums">
-                    {stats.totalInnovations.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={item}>
-          <Card className="glass-tech">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="relative h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                  <Award className="h-4 w-4 text-green-400" />
-                  <div className="data-pulse-ring rounded-lg" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] text-pri-silver font-mono uppercase tracking-wider truncate">
-                    Trainer
-                  </p>
-                  <p className="text-lg font-bold text-white tabular-nums">
-                    {stats.totalTrainers.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-2 h-1 rounded-full bg-white/5 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-green-500 progress-tech"
-                  style={{ width: `${stats.trainerProgress}%` }}
-                />
-              </div>
-              <p className="text-[9px] text-pri-silver/60 mt-1 font-mono">
-                Target: {TARGET_TRAINERS.toLocaleString()} ({stats.trainerProgress.toFixed(0)}%)
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={item}>
-          <Card className="glass-tech">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="relative h-9 w-9 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="h-4 w-4 text-purple-400" />
-                  <div className="data-pulse-ring rounded-lg" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] text-pri-silver font-mono uppercase tracking-wider truncate">
-                    Mentor
-                  </p>
-                  <p className="text-lg font-bold text-white tabular-nums">
-                    {stats.totalMentors.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-2 h-1 rounded-full bg-white/5 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-purple-500 progress-tech"
-                  style={{ width: `${stats.mentorProgress}%` }}
-                />
-              </div>
-              <p className="text-[9px] text-pri-silver/60 mt-1 font-mono">
-                Target: {TARGET_MENTORS.toLocaleString()} ({stats.mentorProgress.toFixed(0)}%)
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={item}>
-          <Card className="glass-tech">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="relative h-9 w-9 rounded-lg bg-cyan-500/10 flex items-center justify-center flex-shrink-0">
-                  <Globe className="h-4 w-4 text-cyan-400" />
-                  <div className="data-pulse-ring rounded-lg" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] text-pri-silver font-mono uppercase tracking-wider truncate">
-                    Provinsi
-                  </p>
-                  <p className="text-lg font-bold text-white tabular-nums">
-                    {stats.totalProvinces.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+          return (
+            <motion.div key={i} variants={item} className="min-h-[120px]">
+              <Card className="glass-tech h-full relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-1 h-0 bg-gradient-to-b from-pri-red/40 to-transparent group-hover:h-full transition-all duration-500" />
+                <CardContent className="p-4 flex flex-col h-full">
+                  <div className="flex items-center gap-3 mb-auto">
+                    <div className={`relative h-9 w-9 rounded-lg ${card.bg} flex items-center justify-center flex-shrink-0 overflow-hidden`}>
+                      <div className={`absolute inset-0 ${card.bg} opacity-10`} />
+                      <Icon className={`h-4 w-4 relative z-10 ${card.iconColor}`} />
+                      <div className="data-pulse-ring rounded-lg" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] text-pri-silver font-mono uppercase tracking-wider truncate">
+                        {card.label}
+                      </p>
+                      <p className="text-lg font-bold text-white tabular-nums tracking-tight">
+                        {card.value.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  {hasProgress && (
+                    <div className="mt-auto pt-3">
+                      <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${card.barColor} progress-tech transition-all duration-1000`}
+                          style={{ width: `${card.progress}%` }}
+                        />
+                      </div>
+                      <p className="text-[9px] text-pri-silver/60 mt-1.5 font-mono">
+                        Target: {(card.target ?? 0).toLocaleString()} ({(card.progress ?? 0).toFixed(0)}%)
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* ===== PERSONAL STATS + QUICK ACTIONS ===== */}

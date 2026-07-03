@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "./profile-form";
-import { User, MapPin, Briefcase, Calendar, Shield } from "lucide-react";
+import { User, MapPin, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 async function getProfile() {
@@ -10,35 +10,15 @@ async function getProfile() {
 
   const { data: member } = await supabase
     .from("members")
-    .select("*")
+    .select("*, province_id(name)")
     .eq("auth_id", user.id)
     .single();
 
   return member;
 }
 
-async function getRegions() {
-  const supabase = await createClient();
-  const [provinces, regencies, districts, villages] = await Promise.all([
-    supabase.from("provinces").select("id, name").order("name"),
-    supabase.from("regencies").select("id, name, province_id").order("name"),
-    supabase.from("districts").select("id, name, regency_id").order("name"),
-    supabase.from("villages").select("id, name, district_id").order("name"),
-  ]);
-
-  return {
-    provinces: provinces ?? [],
-    regencies: regencies ?? [],
-    districts: districts ?? [],
-    villages: villages ?? [],
-  };
-}
-
 export default async function ProfilePage() {
-  const [member, regions] = await Promise.all([
-    getProfile(),
-    getRegions(),
-  ]);
+  const member = await getProfile();
 
   if (!member) {
     return (
@@ -51,13 +31,8 @@ export default async function ProfilePage() {
     );
   }
 
-  // Get province/regency names for display
-  const provinceName = member.province_id
-    ? (regions as any).provinces?.find((p: any) => p.id === member.province_id)?.name
-    : null;
-  const regencyName = member.regency_id
-    ? (regions as any).regencies?.find((r: any) => r.id === member.regency_id)?.name
-    : null;
+  // Extract province name from the join data (province_id(name))
+  const provinceData = member.province_id as { name: string } | null;
 
   return (
     <div className="space-y-6">
@@ -88,10 +63,10 @@ export default async function ProfilePage() {
                     {member.occupation}
                   </span>
                 )}
-                {provinceName && (
+                {provinceData?.name && (
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
-                    {provinceName}{regencyName ? `, ${regencyName}` : ""}
+                    {provinceData.name}
                   </span>
                 )}
               </div>
@@ -100,7 +75,7 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      <ProfileForm member={member as any} regions={regions as any} />
+      <ProfileForm member={member as any} regions={{} as any} />
     </div>
   );
 }
