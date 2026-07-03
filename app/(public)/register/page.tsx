@@ -113,31 +113,36 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    // Create FormData for the server action
-    const form = new FormData();
-    form.append("fullName", formData.fullName);
-    form.append("email", formData.email);
-    form.append("phone", formData.phone);
-    form.append("password", formData.password);
-    form.append("confirmPassword", formData.confirmPassword);
-    form.append("provinceId", formData.provinceId);
-    form.append("regencyId", formData.regencyId);
-    form.append("districtId", formData.districtId);
-    form.append("villageId", formData.villageId);
-    form.append("occupation", formData.occupation);
-    formData.technologyInterest.forEach((t) =>
-      form.append("technologyInterest", t)
-    );
+    try {
+      // Create FormData for the server action
+      const form = new FormData();
+      form.append("fullName", formData.fullName);
+      form.append("email", formData.email);
+      form.append("phone", formData.phone);
+      form.append("password", formData.password);
+      form.append("confirmPassword", formData.confirmPassword);
+      form.append("provinceId", formData.provinceId);
+      form.append("regencyId", formData.regencyId);
+      form.append("districtId", formData.districtId);
+      form.append("villageId", formData.villageId);
+      form.append("occupation", formData.occupation);
+      formData.technologyInterest.forEach((t) =>
+        form.append("technologyInterest", t)
+      );
 
-    const result = await register(form);
+      const result = await register(form);
 
-    setLoading(false);
-
-    if (result.error) {
-      toast.error(result.error);
-    } else {
-      toast.success("Pendaftaran berhasil! Silakan cek email untuk verifikasi.");
-      router.push("/login");
+      if (result.error) {
+        toast.error(String(result.error));
+      } else {
+        toast.success("Pendaftaran berhasil! Silakan cek email untuk verifikasi.");
+        router.push("/login");
+      }
+    } catch (err) {
+      console.error("Register client error:", err);
+      toast.error("Terjadi kesalahan. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
     }
   }
 
