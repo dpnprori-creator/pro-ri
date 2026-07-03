@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/types/database";
 
-type MemberRow = Database["public"]["Tables"]["members"]["Row"];
+type MemberUpdate = Database["public"]["Tables"]["members"]["Update"];
 
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
@@ -29,12 +30,13 @@ export async function login(formData: FormData) {
 export async function register(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const fullName = formData.get("full_name") as string;
+  const fullName = formData.get("fullName") as string;
   const phone = formData.get("phone") as string;
+  const occupation = formData.get("occupation") as string;
 
   const supabase = await createServerClient();
 
-  // 1. Register auth user
+  // 1. Register auth user — trigger on_auth_user_created will auto-create member
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
@@ -53,20 +55,26 @@ export async function register(formData: FormData) {
     return { error: "Gagal membuat akun" };
   }
 
-  // 2. Create member profile
-  const { error: memberError } = await supabase.from("members").insert({
-    auth_id: authData.user.id,
-    email,
-    full_name: fullName,
-    phone: phone || null,
-    member_id: `PRI-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, "0")}`,
-    province_id: (formData.get("provinceId") as string) || null,
-    regency_id: (formData.get("regencyId") as string) || null,
-    district_id: (formData.get("districtId") as string) || null,
-    village_id: (formData.get("villageId") as string) || null,
-    status: "active",
-    role_id: (await supabase.from("roles").select("id").eq("name", "member").single()).data?.id,
-  });
+  // 2. Update the trigger-created member with additional registration fields
+  // Use admin client to bypass RLS (user not yet authenticated if email confirmation is on)
+  const adminSupabase = createAdminClient();
+
+  const technologyInterest = formData.getAll("technologyInterest") as string[];
+
+  // Collect fields to update (only non-empty values)
+  const updateFields: MemberUpdate = {};
+  if (phone) updateFields.phone = phone;
+  if (occupation) updateFields.occupation = occupation;
+  if (technologyInterest.length > 0) updateFields.technology_interest = technologyInterest;
+  updateFields.province_id = (formData.get("provinceId") as string) || null;
+  updateFields.regency_id = (formData.get("regencyId") as string) || null;
+  updateFields.district_id = (formData.get("districtId") as string) || null;
+  updateFields.village_id = (formData.get("villageId") as string) || null;
+
+  const { error: memberError } = await adminSupabase
+    .from("members")
+    .update(updateFields)
+    .eq("auth_id", authData.user.id);
 
   if (memberError) {
     return { error: memberError.message };
