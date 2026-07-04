@@ -109,20 +109,22 @@ export async function updateSession(request: NextRequest) {
   if (user) {
     // Redirect admin/super_admin from /dashboard to /admin
     if (pathname.startsWith("/dashboard")) {
-      const { data: member } = await supabase
-        .from("members")
-        .select("role_id!inner(name)")
-        .eq("auth_id", user.id)
-        .single();
+      try {
+        const { data: member } = await supabase
+          .from("members")
+          .select("role_id(name)")
+          .eq("auth_id", user.id)
+          .maybeSingle();
 
-      const roleData = member?.role_id as { name: string } | undefined;
-      const roleName = roleData?.name;
+        const roleObj = member?.role_id as { name: string } | null | undefined;
+        const roleName = roleObj?.name;
 
-      if (roleName === "admin" || roleName === "super_admin") {
-        const url = request.nextUrl.clone();
-        url.pathname = "/admin";
-        return NextResponse.redirect(url);
-      }
+        if (roleName === "admin" || roleName === "super_admin") {
+          const url = request.nextUrl.clone();
+          url.pathname = "/admin";
+          return NextResponse.redirect(url);
+        }
+      } catch {}
     }
 
     // Redirect to dashboard if already logged in and on auth page
