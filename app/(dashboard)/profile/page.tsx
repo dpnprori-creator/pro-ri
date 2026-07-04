@@ -10,11 +10,24 @@ async function getProfile() {
 
   const { data: member } = await supabase
     .from("members")
-    .select("*, province_id(name)")
+    .select("*")
     .eq("auth_id", user.id)
     .single();
 
-  return member;
+  if (!member) return null;
+
+  // Fetch province name separately so province_id stays as UUID string
+  let provinceName: string | null = null;
+  if (member.province_id) {
+    const { data: province } = await supabase
+      .from("provinces")
+      .select("name")
+      .eq("id", member.province_id)
+      .single();
+    provinceName = province?.name || null;
+  }
+
+  return { ...member, province_name: provinceName };
 }
 
 export default async function ProfilePage() {
@@ -31,8 +44,7 @@ export default async function ProfilePage() {
     );
   }
 
-  // Extract province name from the join data (province_id(name))
-  const provinceData = member.province_id as { name: string } | null;
+  const provinceName = (member as any).province_name;
 
   return (
     <div className="space-y-6">
@@ -63,10 +75,10 @@ export default async function ProfilePage() {
                     {member.occupation}
                   </span>
                 )}
-                {provinceData?.name && (
+                {provinceName && (
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
-                    {provinceData.name}
+                    {provinceName}
                   </span>
                 )}
               </div>

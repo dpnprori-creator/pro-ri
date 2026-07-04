@@ -106,11 +106,31 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect to dashboard if already logged in and on auth page
-  if (user && isAuthPage) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+  if (user) {
+    // Redirect admin/super_admin from /dashboard to /admin
+    if (pathname.startsWith("/dashboard")) {
+      const { data: member } = await supabase
+        .from("members")
+        .select("role_id!inner(name)")
+        .eq("auth_id", user.id)
+        .single();
+
+      const roleData = member?.role_id as { name: string } | undefined;
+      const roleName = roleData?.name;
+
+      if (roleName === "admin" || roleName === "super_admin") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/admin";
+        return NextResponse.redirect(url);
+      }
+    }
+
+    // Redirect to dashboard if already logged in and on auth page
+    if (isAuthPage) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
   }
 
   // Check admin role for /admin routes
