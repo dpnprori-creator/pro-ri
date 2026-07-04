@@ -57,9 +57,8 @@ export async function updateSession(request: NextRequest) {
   const isAuthPage = authPaths.some((p) => pathname.startsWith(p));
   const isPublicAsset = publicPaths.some((p) => pathname.startsWith(p));
 
-  // Skip maintenance check for static assets
+  // ============= MAINTENANCE MODE CHECK =============
   if (!isPublicAsset && !isAdmin && !isProtected) {
-    // Check maintenance mode from system_settings
     try {
       const { data: maintenanceSetting } = await supabase
         .from("system_settings")
@@ -68,22 +67,29 @@ export async function updateSession(request: NextRequest) {
         .single();
 
       if (maintenanceSetting) {
-        const maintenance = maintenanceSetting.value as { enabled?: boolean; message?: string; allowed_roles?: string[] };
+        const maintenance = maintenanceSetting.value as {
+          enabled?: boolean;
+          message?: string;
+          allowed_roles?: string[];
+        };
         if (maintenance.enabled === true) {
           const allowedRoles = maintenance.allowed_roles || ["super_admin", "admin"];
-          
-          // Check if user has an allowed role
+
           let isAllowed = false;
           if (user) {
-            const { data: member } = await supabase
-              .from("members")
-              .select("role_id!inner(name)")
-              .eq("auth_id", user.id)
-              .single();
-            const roleData = member?.role_id as { name: string } | undefined;
-            const roleName = roleData?.name;
-            if (roleName && allowedRoles.includes(roleName)) {
-              isAllowed = true;
+            try {
+              const { data: member } = await supabase
+                .from("members")
+                .select("role_id(name)")
+                .eq("auth_id", user.id)
+                .maybeSingle();
+              const roleObj = member?.role_id as { name: string } | null | undefined;
+              const roleName = roleObj?.name;
+              if (roleName && allowedRoles.includes(roleName)) {
+                isAllowed = true;
+              }
+            } catch {
+              // If query fails, treat as not allowed
             }
           }
 
@@ -107,7 +113,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
-    // Redirect admin/super_admin from /dashboard to /admin
+    // ============= REDIRECT ADMIN from /dashboard to /admin =============
     if (pathname.startsWith("/dashboard")) {
       try {
         const { data: member } = await supabase
@@ -124,7 +130,9 @@ export async function updateSession(request: NextRequest) {
           url.pathname = "/admin";
           return NextResponse.redirect(url);
         }
-      } catch {}
+      } catch {
+        // If query fails, let them stay on dashboard
+      }
     }
 
     // Redirect to dashboard if already logged in and on auth page
@@ -135,24 +143,33 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Check admin role for /admin routes
+  // ============= CHECK ADMIN ROLE for /admin routes =============
   if (user && (isAdmin || isSuperAdmin)) {
-    const { data: member } = await supabase
-      .from("members")
-      .select("role_id!inner(name)")
-      .eq("auth_id", user.id)
-      .single();
+    try {
+      const { data: member } = await supabase
+        .from("members")
+        .select("role_id(name)")
+        .eq("auth_id", user.id)
+        .maybeSingle();
 
-    const roleData = member?.role_id as { name: string } | undefined;
-    const roleName = roleData?.name;
+      const roleObj = member?.role_id as { name: string } | null | undefined;
+      const roleName = roleObj?.name;
 
-    if (isSuperAdmin && roleName !== "super_admin") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/admin";
-      return NextResponse.redirect(url);
-    }
+      // Super admin mencoba akses super_admin-only pages
+      if (isSuperAdmin && roleName !== "super_admin") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/admin";
+        return NextResponse.redirect(url);
+      }
 
-    if (roleName !== "admin" && roleName !== "super_admin") {
+      // Non-admin mencoba akses /admin
+      if (roleName !== "admin" && roleName !== "super_admin") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/dashboard";
+        return NextResponse.redirect(url);
+      }
+    } catch {
+      // Jika query gagal, redirect ke dashboard untuk safety
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);
