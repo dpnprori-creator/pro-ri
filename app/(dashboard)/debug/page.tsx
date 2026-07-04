@@ -53,6 +53,13 @@ export default async function DebugPage() {
     .eq("auth_id", user.id)
     .maybeSingle();
 
+  // Get member using ADMIN client with join (perbandingan)
+  const { data: memberWithJoinAdmin, error: errJoinAdmin } = await adminSupabase
+    .from("members")
+    .select("id, role_id(name)")
+    .eq("auth_id", user.id)
+    .maybeSingle();
+
   return (
     <div className="p-8 max-w-3xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-white">🔍 Debug: User &amp; Role Info</h1>
@@ -83,6 +90,12 @@ export default async function DebugPage() {
       <Section title="Regular Client Join - role_id(name)" status={errJoin ? `❌ ${errJoin.message}` : memberWithJoin ? "✅ Found" : "⚠️ No data"}>
         {errJoin && <p className="text-red-400 text-sm">Error: {errJoin.message}</p>}
         <pre className="text-xs">{JSON.stringify(memberWithJoin, null, 2)}</pre>
+      </Section>
+
+      {/* Role Join (admin client) */}
+      <Section title="Admin Client Join - role_id(name)" status={errJoinAdmin ? `❌ ${errJoinAdmin.message}` : memberWithJoinAdmin ? "✅ Found" : "⚠️ No data"}>
+        {errJoinAdmin && <p className="text-red-400 text-sm">Error: {errJoinAdmin.message}</p>}
+        <pre className="text-xs">{JSON.stringify(memberWithJoinAdmin, null, 2)}</pre>
       </Section>
 
       {/* All Roles */}
