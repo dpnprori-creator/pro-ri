@@ -6,7 +6,7 @@ async function getEvents() {
   const [events, provinces] = await Promise.all([
     supabase
       .from("events")
-      .select("id, title, slug, category, type, start_date, end_date, status, max_participants, province_id!inner(name)")
+      .select("id, title, slug, category, type, start_date, end_date, status, max_participants, location, description, banner_url, province_id!inner(name)")
       .order("start_date", { ascending: false }),
     supabase.from("provinces").select("id, name").order("name"),
   ]);

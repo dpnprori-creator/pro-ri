@@ -61,6 +61,29 @@ const DEFAULT_CONTENT = {
   about_description: "PRO RI (Pusat Robotika Rakyat Indonesia) adalah organisasi di bawah naungan PRI yang bergerak di bidang pengembangan sumber daya manusia Indonesia dalam bidang robotika, kecerdasan buatan, dan teknologi tepat guna. Didirikan pada 6 Juni 2026, PRO RI berkomitmen untuk mempercepat penguasaan teknologi dari tingkat akar rumput hingga nasional.",
   cta_title: "Indonesia Emas 2045 Dimulai dari Sekarang",
   cta_description: "Jadilah bagian dari gerakan robotika nasional. Bersama PRO RI, kita wujudkan kedaulatan teknologi Indonesia.",
+  trust_provinsi_label: "Provinsi Tersebar",
+  trust_program_label: "Program Strategis",
+  trust_tahun_label: "Tahun Berdiri",
+  programs_section_title: "Program Unggulan PRO RI",
+  programs_section_subtitle: "Program strategis membangun SDM Indonesia unggul di bidang robotika dan AI",
+  programs_button_text: "Lihat Detail Program",
+  impact_section_title: "Dampak Nasional PRO RI",
+  impact_section_subtitle: "Ekosistem teknologi yang tersebar di seluruh Indonesia",
+  video_section_title: "Robotika & ",
+  video_section_highlight: "AI",
+  video_section_suffix: " dalam Aksi",
+  video_section_subtitle: "Saksikan bagaimana teknologi robotika dan AI mengubah masa depan Indonesia",
+  video_button_text: "Lihat Galeri Kegiatan",
+  events_section_title: "Kegiatan Terbaru",
+  events_section_subtitle: "Event dan kegiatan PRO RI terbaru",
+  events_link_text: "Lihat Semua",
+  innovations_section_title: "Inovasi Terkini",
+  innovations_section_subtitle: "Karya inovasi teknologi dari talenta Indonesia",
+  innovations_link_text: "Lihat Semua",
+  news_section_title: "Informasi Terkini",
+  news_section_subtitle: "Berita terbaru tentang PRO RI",
+  news_link_text: "Lihat Semua",
+  featured_news_label: "Featured News",
 };
 
 export default async function HomePage() {
@@ -182,7 +205,7 @@ export default async function HomePage() {
             <div className="flex items-center gap-2 mb-3">
               <span className="h-1.5 w-1.5 rounded-full bg-pri-red animate-pulse" />
               <span className="text-[10px] font-mono text-pri-red uppercase tracking-wider">
-                Featured News
+                {content.featured_news_label}
               </span>
             </div>
             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 snap-x snap-mandatory">
@@ -223,15 +246,15 @@ export default async function HomePage() {
           <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-white font-mono mb-1">38</div>
-              <div className="text-sm text-pri-silver">Provinsi Tersebar</div>
+              <div className="text-sm text-pri-silver">{content.trust_provinsi_label}</div>
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-white font-mono mb-1">6</div>
-              <div className="text-sm text-pri-silver">Program Strategis</div>
+              <div className="text-sm text-pri-silver">{content.trust_program_label}</div>
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-white font-mono mb-1">2026</div>
-              <div className="text-sm text-pri-silver">Tahun Berdiri</div>
+              <div className="text-sm text-pri-silver">{content.trust_tahun_label}</div>
             </div>
           </div>
         </div>
@@ -305,10 +328,10 @@ export default async function HomePage() {
         <div className="container-wide relative z-10">
           <AnimatedSection className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Dampak Nasional <span className="text-gradient">PRO RI</span>
+              {content.impact_section_title} <span className="text-gradient">PRO RI</span>
             </h2>
             <p className="text-pri-silver max-w-xl mx-auto">
-              Ekosistem teknologi yang tersebar di seluruh Indonesia
+              {content.impact_section_subtitle}
             </p>
           </AnimatedSection>
 
@@ -331,10 +354,10 @@ export default async function HomePage() {
               <span className="text-xs text-pri-silver tracking-wider uppercase font-mono">Program Unggulan</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Program Unggulan <span className="text-gradient">PRO RI</span>
+              {content.programs_section_title} <span className="text-gradient">PRO RI</span>
             </h2>
             <p className="text-pri-silver max-w-xl mx-auto">
-              Program strategis membangun SDM Indonesia unggul di bidang robotika dan AI
+              {content.programs_section_subtitle}
             </p>
           </AnimatedSection>
 
@@ -360,7 +383,7 @@ export default async function HomePage() {
           <AnimatedSection className="text-center mt-10">
             <Link href="/programs">
               <Button variant="outline" className="border-white/10 text-pri-silver hover:text-white">
-                Lihat Detail Program <ChevronRight className="ml-1 h-4 w-4" />
+                {content.programs_button_text} <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
           </AnimatedSection>
@@ -391,10 +414,10 @@ export default async function HomePage() {
               </span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Robotika & <span className="text-gradient">AI</span> dalam Aksi
+              {content.video_section_title}<span className="text-gradient">{content.video_section_highlight}</span>{content.video_section_suffix}
             </h2>
             <p className="text-pri-silver max-w-xl mx-auto">
-              Saksikan bagaimana teknologi robotika dan AI mengubah masa depan Indonesia
+              {content.video_section_subtitle}
             </p>
           </AnimatedSection>
 
@@ -404,7 +427,7 @@ export default async function HomePage() {
             <Link href="/gallery">
               <Button variant="outline" className="border-white/10 text-pri-silver hover:text-white">
                 <ExternalLink className="h-4 w-4 mr-2 text-pri-red" />
-                Lihat Galeri Kegiatan
+                {content.video_button_text}
               </Button>
             </Link>
           </AnimatedSection>
@@ -435,12 +458,12 @@ export default async function HomePage() {
             <div className="flex items-center justify-between mb-12">
               <AnimatedTitle>
                 <h2 className="text-3xl md:text-4xl font-bold text-white">
-                  Kegiatan <span className="text-gradient">Terbaru</span>
+                  {content.events_section_title} <span className="text-gradient">Terbaru</span>
                 </h2>
-                <p className="text-pri-silver mt-1">Event dan kegiatan PRO RI terbaru</p>
+                <p className="text-pri-silver mt-1">{content.events_section_subtitle}</p>
               </AnimatedTitle>
               <Link href="/events" className="text-sm text-pri-red hover:underline hidden sm:block">
-                Lihat Semua →
+                {content.events_link_text} →
               </Link>
             </div>
 
@@ -482,12 +505,12 @@ export default async function HomePage() {
             <div className="flex items-center justify-between mb-12">
               <AnimatedTitle>
                 <h2 className="text-3xl md:text-4xl font-bold text-white">
-                  Inovasi <span className="text-gradient">Terkini</span>
+                  {content.innovations_section_title} <span className="text-gradient">Terkini</span>
                 </h2>
-                <p className="text-pri-silver mt-1">Karya inovasi teknologi dari talenta Indonesia</p>
+                <p className="text-pri-silver mt-1">{content.innovations_section_subtitle}</p>
               </AnimatedTitle>
               <Link href="/innovations" className="text-sm text-pri-red hover:underline hidden sm:block">
-                Lihat Semua →
+                {content.innovations_link_text} →
               </Link>
             </div>
 
@@ -527,12 +550,12 @@ export default async function HomePage() {
             <div className="flex items-center justify-between mb-12">
               <AnimatedTitle>
                 <h2 className="text-3xl md:text-4xl font-bold text-white">
-                  Informasi <span className="text-gradient">Terkini</span>
+                  {content.news_section_title} <span className="text-gradient">Terkini</span>
                 </h2>
-                <p className="text-pri-silver mt-1">Berita terbaru tentang PRO RI</p>
+                <p className="text-pri-silver mt-1">{content.news_section_subtitle}</p>
               </AnimatedTitle>
               <Link href="/news" className="text-sm text-pri-red hover:underline hidden sm:block">
-                Lihat Semua →
+                {content.news_link_text} →
               </Link>
             </div>
 

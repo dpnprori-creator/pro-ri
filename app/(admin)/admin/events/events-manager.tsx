@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Upload, X, UserCheck } from "lucide-react";
+import { Plus, Upload, X, UserCheck, Download } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { createEvent, updateEvent, deleteEvent } from "@/features/admin/actions";
 import { updateEventRegistrationStatus, getEventRegistrations } from "@/features/events/actions";
+import { downloadCSV, formatEventsCSV } from "@/lib/export-utils";
 import { toast } from "sonner";
 
 interface EventRow {
@@ -234,9 +235,24 @@ export function EventsManager({
     }
   };
 
+  const handleExportCSV = () => {
+    const rows = formatEventsCSV(events);
+    downloadCSV(rows, "data-event");
+    toast.success("Data event diexpor ke CSV");
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportCSV}
+          className="border-white/10 text-pri-silver hover:text-white"
+        >
+          <Download className="h-3.5 w-3.5 mr-1" />
+          Export CSV
+        </Button>
         <Button onClick={openCreate} className="bg-pri-red hover:bg-red-700">
           <Plus className="h-4 w-4 mr-2" />
           Tambah Event

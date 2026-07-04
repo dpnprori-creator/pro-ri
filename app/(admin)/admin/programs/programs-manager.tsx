@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Eye, UserCheck, ExternalLink } from "lucide-react";
+import { Plus, Eye, UserCheck, ExternalLink, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { createProgram, updateProgram, deleteProgram } from "@/features/admin/programs-actions";
+import { downloadCSV, formatProgramsCSV } from "@/lib/export-utils";
 import { toast } from "sonner";
 
 interface ProgramRow {
@@ -174,9 +175,24 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
     }
   };
 
+  const handleExportCSV = () => {
+    const rows = formatProgramsCSV(programs);
+    downloadCSV(rows, "data-program");
+    toast.success("Data program diexpor ke CSV");
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportCSV}
+          className="border-white/10 text-pri-silver hover:text-white"
+        >
+          <Download className="h-3.5 w-3.5 mr-1" />
+          Export CSV
+        </Button>
         <Button onClick={openCreate} className="bg-pri-red hover:bg-red-700">
           <Plus className="h-4 w-4 mr-2" />
           Tambah Program

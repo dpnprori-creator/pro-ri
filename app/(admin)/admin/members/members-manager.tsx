@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, UserX } from "lucide-react";
+import { Eye, UserX, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { deleteMember, updateMemberStatus } from "@/features/admin/actions";
+import { downloadCSV, formatMembersCSV } from "@/lib/export-utils";
 import { toast } from "sonner";
 
 interface MemberItem {
@@ -97,8 +98,25 @@ export function MembersManager({ members }: { members: MemberItem[] }) {
     }
   };
 
+  const handleExportCSV = () => {
+    const rows = formatMembersCSV(members);
+    downloadCSV(rows, "data-member");
+    toast.success("Data member diexpor ke CSV");
+  };
+
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportCSV}
+          className="border-white/10 text-pri-silver hover:text-white"
+        >
+          <Download className="h-3.5 w-3.5 mr-1" />
+          Export CSV
+        </Button>
+      </div>
       <DataTable
         columns={columns}
         data={members}
