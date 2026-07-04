@@ -1,5 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+
+// Admin client — uses service_role key, bypasses RLS
+const adminSupabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -78,7 +86,7 @@ export async function updateSession(request: NextRequest) {
           let isAllowed = false;
           if (user) {
             try {
-              const { data: member } = await supabase
+              const { data: member } = await adminSupabase
                 .from("members")
                 .select("role_id(name)")
                 .eq("auth_id", user.id)
@@ -116,7 +124,7 @@ export async function updateSession(request: NextRequest) {
     // ============= REDIRECT ADMIN from /dashboard to /admin =============
     if (pathname.startsWith("/dashboard")) {
       try {
-        const { data: member } = await supabase
+        const { data: member } = await adminSupabase
           .from("members")
           .select("role_id(name)")
           .eq("auth_id", user.id)
@@ -146,7 +154,7 @@ export async function updateSession(request: NextRequest) {
   // ============= CHECK ADMIN ROLE for /admin routes =============
   if (user && (isAdmin || isSuperAdmin)) {
     try {
-      const { data: member } = await supabase
+      const { data: member } = await adminSupabase
         .from("members")
         .select("role_id(name)")
         .eq("auth_id", user.id)
