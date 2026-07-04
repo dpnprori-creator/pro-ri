@@ -38,6 +38,7 @@ const adminNavItems = [
   { label: "Verifikasi", href: "/admin/verification", icon: UserCheck },
   { label: "Berita", href: "/admin/news", icon: Newspaper },
   { label: "Monitoring", href: "/admin/monitoring", icon: Activity },
+  { label: "Content Editor", href: "/admin/content-editor", icon: Newspaper },
   { label: "Hero Gallery", href: "/admin/gallery", icon: Images },
   { label: "Galeri Kegiatan", href: "/admin/gallery-kegiatan", icon: Images },
   { label: "Video Galeri", href: "/admin/videos", icon: Video },

@@ -89,7 +89,7 @@ export default async function DashboardProgramsPage() {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Program Unggulan</h1>
+              <h1 className="text-2xl font-bold text-white">Program PRO RI</h1>
               <p className="text-pri-silver text-sm mt-1">
                 {programs.length} program tersedia • Anda terdaftar di {totalMyRegistrations} program
               </p>

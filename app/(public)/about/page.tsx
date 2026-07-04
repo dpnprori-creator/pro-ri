@@ -89,7 +89,7 @@ const sisterOrgs = ["MURI", "PERI", "LBH RI", "AMRI", "PATRIOT RI", "PERISAI RI 
 
 const stats = [
   { value: 38, suffix: "+", label: "Provinsi" },
-  { value: 6, suffix: "", label: "Program Unggulan" },
+  { value: 6, suffix: "", label: "Program Strategis" },
   { value: 2026, suffix: "", label: "Tahun Berdiri" },
   { value: 10000, suffix: "+", label: "Target Anggota" },
 ];
@@ -659,7 +659,7 @@ export default function AboutPage() {
               </Link>
               <Link href="/programs">
                 <Button size="lg" variant="outline" className="border-white/10 text-pri-silver hover:text-white px-8">
-                  Lihat Program Unggulan
+                  Lihat Program PRO RI
                 </Button>
               </Link>
             </motion.div>

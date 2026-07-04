@@ -487,7 +487,7 @@ export default async function ProgramDetailPage(props: { params: Promise<{ slug:
                   <Sparkles className="h-5 w-5 text-pri-red" />
                   Program Lainnya
                 </h2>
-                <p className="text-sm text-pri-silver mt-1">Jelajahi program unggulan PRO RI lainnya</p>
+                <p className="text-sm text-pri-silver mt-1">Jelajahi program PRO RI lainnya</p>
               </div>
               <Link href="/programs">
                 <Button variant="outline" size="sm" className="border-white/10 text-pri-silver hover:text-white">
@@ -546,7 +546,7 @@ export default async function ProgramDetailPage(props: { params: Promise<{ slug:
             Siap Bergabung dengan <span className="text-gradient">PRO RI</span>?
           </h2>
           <p className="text-pri-silver max-w-lg mx-auto mb-8">
-            Jadilah bagian dari gerakan robotika nasional. Daftar sekarang dan nikmati akses ke seluruh program unggulan PRO RI.
+            Jadilah bagian dari gerakan robotika nasional. Daftar sekarang dan nikmati akses ke seluruh program PRO RI.
           </p>
           <Link href="/register">
             <Button size="lg" className="bg-pri-red hover:bg-red-700 text-white px-8 text-base glow-red">

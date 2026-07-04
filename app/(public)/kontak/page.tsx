@@ -21,7 +21,7 @@ const contactInfo = [
 const faqs = [
   { q: "Bagaimana cara mendaftar anggota?", a: "Kunjungi halaman Daftar Anggota, isi formulir, dan tim kami akan menghubungi Anda." },
   { q: "Apakah ada biaya pendaftaran?", a: "Informasi biaya akan diumumkan kemudian. Pantau terus informasi terbaru." },
-  { q: "Apa saja program PRO RI?", a: "PRO RI memiliki 6 program unggulan — lihat detail di halaman Program." },
+  { q: "Apa saja program PRO RI?", a: "PRO RI memiliki program unggulan — lihat detail di halaman Program." },
   { q: "Bagaimana cara menjadi mitra/kolaborator?", a: "Silakan hubungi kami melalui formulir kontak ini." },
   { q: "Apakah PRO RI ada di provinsi saya?", a: "PRO RI menargetkan pembentukan DPD (tingkat provinsi) di seluruh Indonesia." },
 ];

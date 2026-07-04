@@ -21,13 +21,34 @@ export async function getSystemSettings() {
 export async function updateSystemSetting(key: string, value: Record<string, unknown>) {
   const supabase = await createServerClient();
 
-  const { error } = await (supabase as any)
+  // Try update first
+  const { data: existing, error: checkError } = await (supabase as any)
     .from("system_settings")
-    .update({ value, updated_at: new Date().toISOString() })
-    .eq("key", key);
+    .select("id")
+    .eq("key", key)
+    .maybeSingle();
+
+  if (checkError) return { error: checkError.message };
+
+  let error;
+  if (existing) {
+    // Update existing
+    const result = await (supabase as any)
+      .from("system_settings")
+      .update({ value, updated_at: new Date().toISOString() })
+      .eq("key", key);
+    error = result.error;
+  } else {
+    // Insert new
+    const result = await (supabase as any)
+      .from("system_settings")
+      .insert({ key, value, label: key.replace(/_/g, " "), category: "custom" });
+    error = result.error;
+  }
 
   if (error) return { error: error.message };
   revalidatePath("/admin/settings");
+  revalidatePath("/", "layout");
   return { success: true };
 }
 

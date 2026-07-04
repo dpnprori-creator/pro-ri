@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Pusat Robotika Rakyat Indonesia — Gerakan Robotika Nasional",
   description:
-    "PRO RI — Pusat Robotika Rakyat Indonesia: gerakan nasional robotika untuk kedaulatan teknologi Indonesia. Daftar anggota, 6 program unggulan, jaringan 38 provinsi.",
+    "PRO RI — Pusat Robotika Rakyat Indonesia: gerakan nasional robotika untuk kedaulatan teknologi Indonesia. Daftar anggota, ikuti program unggulan, jaringan 38 provinsi.",
   openGraph: {
     title: "Pusat Robotika Rakyat Indonesia — PRO RI",
     description:
-      "Gerakan nasional robotika untuk kedaulatan teknologi Indonesia. Daftar anggota, 6 program unggulan, jaringan 38 provinsi.",
+      "Gerakan nasional robotika untuk kedaulatan teknologi Indonesia. Daftar anggota, ikuti program unggulan, jaringan 38 provinsi.",
   },
 };
 import { ArrowRight, BookOpen, Users, Lightbulb, Award, MapIcon, Calendar, Target, Play, Film, ExternalLink, Cpu, GraduationCap, Bot, Trophy, Rocket, Store, ChevronRight } from "lucide-react";
@@ -19,12 +20,22 @@ import { AnimatedStats, AnimatedSection, AnimatedCard, AnimatedTitle } from "@/c
 import { getPublicStats, getPublicEvents, getPublicInnovations, getPublicNews, getPublicFeaturedNews } from "@/features/public/data";
 import { getActiveGalleryItems } from "@/features/public/gallery-data";
 import { HeroGallery } from "@/components/features/home/hero-gallery";
-import { RobotVideoGrid } from "@/components/features/video/video-grid";
-
-// ISR — revalidate homepage every 60 seconds
+import { RobotVideoGrid } from "@/components/features/video/video-grid";  // ISR — revalidate homepage every 60 seconds
 export const revalidate = 60;
 
-
+// Helper to get page content from system_settings
+async function getPageContent() {
+  try {
+    const supabase = await createClient();
+    const { data } = await (supabase as any)
+      .from("system_settings")
+      .select("value")
+      .eq("key", "page_content")
+      .single();
+    if (data) return data.value as Record<string, string>;
+  } catch {}
+  return null;
+}
 
 const categoryLabel: Record<string, string> = {
   webinar: "Webinar", workshop: "Workshop", competition: "Kompetisi", exhibition: "Pameran",
@@ -41,15 +52,29 @@ const programs = [
   { title: "Robotika untuk UMKM", desc: "Penerapan robotika dan otomatisasi untuk produktivitas UMKM", icon: Store, target: "Pelaku UMKM" },
 ];
 
+const DEFAULT_CONTENT = {
+  hero_title_line1: "Gerakan Robotika untuk",
+  hero_title_highlight: "Kedaulatan Teknologi",
+  hero_title_line2: "Indonesia",
+  hero_description: "PRO RI — Pusat Robotika Rakyat Indonesia — hadir untuk membangun generasi muda yang unggul dalam penguasaan robotika dan kecerdasan buatan, demi mewujudkan Indonesia Emas 2045.",
+  about_title: "Sekilas PRO RI",
+  about_description: "PRO RI (Pusat Robotika Rakyat Indonesia) adalah organisasi di bawah naungan PRI yang bergerak di bidang pengembangan sumber daya manusia Indonesia dalam bidang robotika, kecerdasan buatan, dan teknologi tepat guna. Didirikan pada 6 Juni 2026, PRO RI berkomitmen untuk mempercepat penguasaan teknologi dari tingkat akar rumput hingga nasional.",
+  cta_title: "Indonesia Emas 2045 Dimulai dari Sekarang",
+  cta_description: "Jadilah bagian dari gerakan robotika nasional. Bersama PRO RI, kita wujudkan kedaulatan teknologi Indonesia.",
+};
+
 export default async function HomePage() {
-  const [stats, events, innovations, newsItems, galleryItems, featuredNews] = await Promise.all([
+  const [stats, events, innovations, newsItems, galleryItems, featuredNews, pageContent] = await Promise.all([
     getPublicStats(),
     getPublicEvents(4),
     getPublicInnovations(3),
     getPublicNews(3),
     getActiveGalleryItems(),
     getPublicFeaturedNews(5),
+    getPageContent(),
   ]);
+
+  const content = { ...DEFAULT_CONTENT, ...pageContent };
 
   const statItems = [
     { label: "Anggota", value: stats.totalMembers, icon: "Users" as const },
@@ -117,14 +142,14 @@ export default async function HomePage() {
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-4 md:mb-6 max-w-5xl mx-auto">
-              Gerakan Robotika untuk{" "}
-              <span className="text-gradient">Kedaulatan Teknologi</span>
+              {content.hero_title_line1}{" "}
+              <span className="text-gradient">{content.hero_title_highlight}</span>
               <br />
-              Indonesia
+              {content.hero_title_line2}
             </h1>
 
             <p className="text-base sm:text-lg md:text-xl text-pri-silver max-w-3xl mx-auto mb-8 md:mb-10 leading-relaxed">
-              PRO RI — Pusat Robotika Rakyat Indonesia — hadir untuk membangun generasi muda yang unggul dalam penguasaan robotika dan kecerdasan buatan, demi mewujudkan Indonesia Emas 2045.
+              {content.hero_description}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -202,7 +227,7 @@ export default async function HomePage() {
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-white font-mono mb-1">6</div>
-              <div className="text-sm text-pri-silver">Program Unggulan</div>
+              <div className="text-sm text-pri-silver">Program Strategis</div>
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-white font-mono mb-1">2026</div>
@@ -241,10 +266,10 @@ export default async function HomePage() {
                 <span className="text-xs text-pri-silver tracking-wider uppercase font-mono">Tentang PRO RI</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                Sekilas <span className="text-gradient">PRO RI</span>
+                {content.about_title} <span className="text-gradient">PRO RI</span>
               </h2>
               <p className="text-base md:text-lg text-pri-silver leading-relaxed mb-6">
-                PRO RI (Pusat Robotika Rakyat Indonesia) adalah organisasi di bawah naungan PRI yang bergerak di bidang pengembangan sumber daya manusia Indonesia dalam bidang robotika, kecerdasan buatan, dan teknologi tepat guna. Didirikan pada 6 Juni 2026, PRO RI berkomitmen untuk mempercepat penguasaan teknologi dari tingkat akar rumput hingga nasional, melalui enam program strategis yang menjangkau seluruh lapisan masyarakat.
+                {content.about_description}
               </p>
               <Link href="/about">
                 <Button variant="outline" className="border-white/10 text-pri-silver hover:text-white">
@@ -294,7 +319,7 @@ export default async function HomePage() {
       {/* Glow divider */}
       <div className="glow-divider" />
 
-      {/* Program Unggulan — 6 cards */}
+      {/* Program Unggulan */}
       <section className="section-padding bg-pri-dark/50 relative overflow-hidden">
         <div className="absolute inset-0 circuit-pattern opacity-10" />
         <div className="orbit-ring" style={{ top: '-30px', right: '-30px', width: '200px', height: '200px', opacity: 0.08 }} />
@@ -306,7 +331,7 @@ export default async function HomePage() {
               <span className="text-xs text-pri-silver tracking-wider uppercase font-mono">Program Unggulan</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              6 Program Unggulan <span className="text-gradient">PRO RI</span>
+              Program Unggulan <span className="text-gradient">PRO RI</span>
             </h2>
             <p className="text-pri-silver max-w-xl mx-auto">
               Program strategis membangun SDM Indonesia unggul di bidang robotika dan AI
@@ -573,10 +598,10 @@ export default async function HomePage() {
         <div className="container-wide relative z-10 text-center px-4">
           <Target className="h-12 w-12 text-pri-red mx-auto mb-6" />
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Indonesia Emas 2045 <span className="text-gradient">Dimulai dari Sekarang</span>
+            {content.cta_title}
           </h2>
           <p className="text-pri-silver max-w-lg mx-auto mb-8">
-            Jadilah bagian dari gerakan robotika nasional. Bersama PRO RI, kita wujudkan kedaulatan teknologi Indonesia.
+            {content.cta_description}
           </p>
           <Link href="/register">
             <Button size="lg" className="bg-pri-red hover:bg-red-700 text-white px-8 text-base glow-red">

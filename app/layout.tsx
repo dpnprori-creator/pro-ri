@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     default: "Pusat Robotika Rakyat Indonesia — PRO RI",
   },
   description:
-    "Pusat Robotika Rakyat Indonesia (PRO RI) — gerakan nasional robotika untuk kedaulatan teknologi Indonesia. Daftar anggota, 6 program unggulan, jaringan 38 provinsi.",
+    "Pusat Robotika Rakyat Indonesia (PRO RI) — gerakan nasional robotika untuk kedaulatan teknologi Indonesia. Daftar anggota, ikuti program unggulan, jaringan 38 provinsi.",
   keywords: [
     "robotika",
     "AI",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     siteName: "Pusat Robotika Rakyat Indonesia",
     title: "Pusat Robotika Rakyat Indonesia — PRO RI",
     description:
-      "Gerakan nasional robotika untuk kedaulatan teknologi Indonesia. Daftar anggota, 6 program unggulan, jaringan 38 provinsi.",
+      "Gerakan nasional robotika untuk kedaulatan teknologi Indonesia. Daftar anggota, ikuti program unggulan, jaringan 38 provinsi.",
   },
 };
 

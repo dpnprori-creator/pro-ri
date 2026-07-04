@@ -118,7 +118,7 @@ export function PublicProgramsClient({
           <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 mb-6">
             <Globe className="h-4 w-4 text-pri-red" />
             <span className="text-xs text-pri-silver tracking-wider uppercase font-mono">
-              {programs.length} Program Unggulan
+              Program Unggulan PRO RI
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
