@@ -135,7 +135,7 @@ export default function RegisterPage() {
       if (result.error) {
         toast.error(String(result.error));
       } else {
-        toast.success("Pendaftaran berhasil! Silakan cek email untuk verifikasi.");
+        toast.success("Pendaftaran berhasil! Selamat bergabung dengan PRO RI.");
         router.push("/login");
       }
     } catch (err) {

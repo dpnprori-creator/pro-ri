@@ -102,13 +102,33 @@ export default async function DashboardPage() {
               DASHBOARD
             </span>
           </div>
+          <div className="flex items-center gap-3 mb-1">
+            {data.member.role_name === "super_admin" ? (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                SUPER ADMIN
+              </span>
+            ) : data.member.role_name === "admin" ? (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                ADMIN
+              </span>
+            ) : (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                MEMBER
+              </span>
+            )}
+          </div>
           <h1 className="text-2xl font-bold text-white">
-            Selamat datang, <span className="text-gradient">{data.member.full_name}</span>
+            {data.member.role_name === "super_admin" ? "Dashboard Super Admin" :
+             data.member.role_name === "admin" ? "Dashboard Admin" :
+             "Dashboard Member"}
           </h1>
           <p className="text-pri-silver text-sm mt-1">
+            Selamat datang, <span className="text-gradient">{data.member.full_name}</span>
+            <span className="mx-2 opacity-30">|</span>
             {data.member.member_id}
-            {data.member.province_name && ` • ${data.member.province_name}`}
-            {data.member.occupation && ` • ${data.member.occupation}`}
+            {data.member.province_name && (
+              <><span className="mx-2 opacity-30">|</span>{data.member.province_name}</>
+            )}
           </p>
         </div>
       </div>

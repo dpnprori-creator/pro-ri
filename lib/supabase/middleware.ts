@@ -77,8 +77,8 @@ export async function updateSession(request: NextRequest) {
       .eq("auth_id", user.id)
       .single();
 
-    const roleData = member?.role_id as { name: string }[] | undefined;
-    const roleName = roleData?.[0]?.name;
+    const roleData = member?.role_id as { name: string } | undefined;
+    const roleName = roleData?.name;
 
     if (isSuperAdmin && roleName !== "super_admin") {
       const url = request.nextUrl.clone();

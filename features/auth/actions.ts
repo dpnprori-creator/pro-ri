@@ -25,8 +25,22 @@ export async function login(formData: FormData) {
     return { error: error.message };
   }
 
+  // Fetch user role for role-based redirect
+  const { data: { user } } = await supabase.auth.getUser();
+  let role: string | null = null;
+  if (user) {
+    const { data: member } = await supabase
+      .from("members")
+      .select("role_id(name)")
+      .eq("auth_id", user.id)
+      .single();
+
+    const roleObj = member?.role_id as { name: string } | null;
+    role = roleObj?.name ?? null;
+  }
+
   revalidatePath("/", "layout");
-  return { success: true };
+  return { success: true, role };
 }
 
 export async function register(formData: FormData) {
