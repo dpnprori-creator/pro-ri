@@ -316,6 +316,8 @@ export async function createHeroGalleryItem(formData: FormData) {
     }
   }
 
+  if (!imageUrl) return { error: "Gambar hero wajib diisi. Upload gambar atau masukkan URL gambar." };
+
   const { error } = await supabase.from("hero_gallery").insert({
     title: formData.get("title") as string,
     description: formData.get("description") as string || null,
@@ -347,6 +349,7 @@ export async function updateHeroGalleryItem(id: string, formData: FormData) {
     }
   }
   
+  // For update, imageUrl boleh tetap pakai URL lama dari DB (via formData)
   const { error } = await supabase.from("hero_gallery").update({
     title: formData.get("title") as string,
     description: formData.get("description") as string || null,
@@ -361,22 +364,31 @@ export async function updateHeroGalleryItem(id: string, formData: FormData) {
   return { success: true };
 }
 
-export async function deleteHeroGalleryItem(id: string) {
-  const supabase = await createServerClient();
-  const { error } = await supabase.from("hero_gallery").delete().eq("id", id);
-  if (error) return { error: error.message };
-  revalidatePath("/admin/gallery");
-  return { success: true };
-}
-
 export async function createActivityGalleryItem(formData: FormData) {
   const supabase = await createServerClient();
+  
+  // Handle image upload
+  let imageUrl = formData.get("image_url") as string || formData.get("imageUrl") as string;
+  const imageFile = formData.get("image") as File | null;
+  
+  if (!imageUrl && imageFile && imageFile.size > 0 && imageFile.name) {
+    try {
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `activity/${Date.now()}.${ext}`;
+      imageUrl = await uploadToSupabaseStorage("activity-gallery", path, imageFile);
+    } catch (err) {
+      console.error("Image upload error:", err);
+    }
+  }
+
   const { error } = await supabase.from("activity_gallery").insert({
     title: formData.get("title") as string,
     description: formData.get("description") as string || null,
-    image_url: formData.get("image_url") as string,
+    image_url: imageUrl,
     category: formData.get("category") as string || "general",
-    is_active: formData.get("is_active") === "true",
+    sort_order: parseInt(formData.get("sort_order") as string || formData.get("sortOrder") as string) || 0,
+    date_taken: formData.get("date_taken") as string || formData.get("dateTaken") as string || null,
+    is_active: formData.get("is_active") === "true" || formData.get("isActive") === "true",
   });
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery-kegiatan");
@@ -385,12 +397,29 @@ export async function createActivityGalleryItem(formData: FormData) {
 
 export async function updateActivityGalleryItem(id: string, formData: FormData) {
   const supabase = await createServerClient();
+  
+  // Handle image upload
+  let imageUrl = formData.get("image_url") as string || formData.get("imageUrl") as string;
+  const imageFile = formData.get("image") as File | null;
+  
+  if (!imageUrl && imageFile && imageFile.size > 0 && imageFile.name) {
+    try {
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `activity/${Date.now()}.${ext}`;
+      imageUrl = await uploadToSupabaseStorage("activity-gallery", path, imageFile);
+    } catch (err) {
+      console.error("Image upload error:", err);
+    }
+  }
+
   const { error } = await supabase.from("activity_gallery").update({
     title: formData.get("title") as string,
     description: formData.get("description") as string || null,
-    image_url: formData.get("image_url") as string,
+    image_url: imageUrl,
     category: formData.get("category") as string,
-    is_active: formData.get("is_active") === "true",
+    sort_order: parseInt(formData.get("sort_order") as string || formData.get("sortOrder") as string) || 0,
+    date_taken: formData.get("date_taken") as string || formData.get("dateTaken") as string || null,
+    is_active: formData.get("is_active") === "true" || formData.get("isActive") === "true",
   }).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery-kegiatan");
@@ -402,6 +431,14 @@ export async function deleteActivityGalleryItem(id: string) {
   const { error } = await supabase.from("activity_gallery").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery-kegiatan");
+  return { success: true };
+}
+
+export async function deleteHeroGalleryItem(id: string) {
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("hero_gallery").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/gallery");
   return { success: true };
 }
 
@@ -484,7 +521,7 @@ export async function getActivityLogs() {
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("activity_logs")
-    .select("*, member_id!inner(full_name)")
+    .select("*, member_id(full_name)")
     .order("created_at", { ascending: false })
     .limit(100);
 

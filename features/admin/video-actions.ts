@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { uploadToSupabaseStorage } from "./storage";
 
 export async function getAdminVideos() {
   const supabase = await createServerClient();
@@ -16,12 +17,43 @@ export async function getAdminVideos() {
 export async function createVideo(formData: FormData) {
   const supabase = await createServerClient();
 
+  // Handle file upload untuk video
+  let videoUrl = formData.get("video_url") as string || formData.get("videoUrl") as string;
+  const videoFile = formData.get("video") as File | null;
+
+  if (!videoUrl && videoFile && videoFile.size > 0 && videoFile.name) {
+    try {
+      const ext = videoFile.name.split(".").pop() || "mp4";
+      const path = `videos/${Date.now()}.${ext}`;
+      videoUrl = await uploadToSupabaseStorage("videos", path, videoFile);
+    } catch (err) {
+      console.error("Video upload error:", err);
+    }
+  }
+
+  // Handle poster image upload
+  let posterUrl = formData.get("poster_url") as string || formData.get("posterUrl") as string;
+  const posterFile = formData.get("poster") as File | null;
+
+  if (!posterUrl && posterFile && posterFile.size > 0 && posterFile.name) {
+    try {
+      const ext = posterFile.name.split(".").pop() || "jpg";
+      const path = `posters/${Date.now()}.${ext}`;
+      posterUrl = await uploadToSupabaseStorage("videos", path, posterFile);
+    } catch (err) {
+      console.error("Poster upload error:", err);
+    }
+  }
+
+  if (!videoUrl) return { error: "URL video atau file video wajib diisi" };
+
   const { error } = await supabase.from("videos").insert({
     title: formData.get("title") as string,
     description: formData.get("description") as string || null,
-    video_url: formData.get("video_url") as string,
-    poster_url: formData.get("poster_url") as string || null,
-    is_active: formData.get("is_active") === "true",
+    video_url: videoUrl,
+    poster_url: posterUrl || null,
+    sort_order: parseInt(formData.get("sort_order") as string || formData.get("sortOrder") as string) || 0,
+    is_active: formData.get("is_active") === "true" || formData.get("isActive") === "true",
   });
 
   if (error) return { error: error.message };
@@ -32,14 +64,43 @@ export async function createVideo(formData: FormData) {
 export async function updateVideo(id: string, formData: FormData) {
   const supabase = await createServerClient();
 
+  // Handle file upload untuk video
+  let videoUrl = formData.get("video_url") as string || formData.get("videoUrl") as string;
+  const videoFile = formData.get("video") as File | null;
+
+  if (!videoUrl && videoFile && videoFile.size > 0 && videoFile.name) {
+    try {
+      const ext = videoFile.name.split(".").pop() || "mp4";
+      const path = `videos/${Date.now()}.${ext}`;
+      videoUrl = await uploadToSupabaseStorage("videos", path, videoFile);
+    } catch (err) {
+      console.error("Video upload error:", err);
+    }
+  }
+
+  // Handle poster image upload
+  let posterUrl = formData.get("poster_url") as string || formData.get("posterUrl") as string;
+  const posterFile = formData.get("poster") as File | null;
+
+  if (!posterUrl && posterFile && posterFile.size > 0 && posterFile.name) {
+    try {
+      const ext = posterFile.name.split(".").pop() || "jpg";
+      const path = `posters/${Date.now()}.${ext}`;
+      posterUrl = await uploadToSupabaseStorage("videos", path, posterFile);
+    } catch (err) {
+      console.error("Poster upload error:", err);
+    }
+  }
+
   const { error } = await supabase
     .from("videos")
     .update({
       title: formData.get("title") as string,
       description: formData.get("description") as string || null,
-      video_url: formData.get("video_url") as string,
-      poster_url: formData.get("poster_url") as string || null,
-      is_active: formData.get("is_active") === "true",
+      video_url: videoUrl,
+      poster_url: posterUrl || null,
+      sort_order: parseInt(formData.get("sort_order") as string || formData.get("sortOrder") as string) || 0,
+      is_active: formData.get("is_active") === "true" || formData.get("isActive") === "true",
     })
     .eq("id", id);
 

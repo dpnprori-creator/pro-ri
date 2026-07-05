@@ -5,7 +5,7 @@ async function getActivityLogs() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("activity_logs")
-    .select("*, member_id!inner(full_name)")
+    .select("*, member_id(full_name)")
     .order("created_at", { ascending: false })
     .limit(100);
 

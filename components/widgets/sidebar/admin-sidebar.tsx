@@ -47,6 +47,8 @@ const adminNavItems = [
 
 const superAdminNavItems = [
   { label: "Super Admin", href: "/admin/super-admin", icon: Shield },
+  { label: "Manage Admins", href: "/admin/admins", icon: Shield },
+  { label: "Activity Logs", href: "/admin/activity", icon: Activity },
   { label: "Role Mgmt", href: "/admin/roles", icon: UserCheck },
   { label: "Pengaturan", href: "/admin/settings", icon: Settings },
 ];
