@@ -71,12 +71,21 @@ export function MemberRegistrationForm({ existingCard, userEmail }: MemberRegist
   const [photoPreview, setPhotoPreview] = useState<string | null>(
     existingCard?.photo_url || null
   );
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [signatureData, setSignatureData] = useState<string | null>(null);
   const [signatureEmpty, setSignatureEmpty] = useState(true);
+
+  // Camera states
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const cameraCanvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const signaturePadRef = useRef<SignaturePad | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraFileInputRef = useRef<HTMLInputElement>(null);
 
   // Init signature pad
   useEffect(() => {
@@ -101,6 +110,11 @@ export function MemberRegistrationForm({ existingCard, userEmail }: MemberRegist
       if (signaturePadRef.current) {
         signaturePadRef.current.off();
         signaturePadRef.current = null;
+      }
+      // Cleanup camera stream on unmount
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
       }
     };
   }, []);
@@ -133,9 +147,94 @@ export function MemberRegistrationForm({ existingCard, userEmail }: MemberRegist
       return;
     }
 
+    setPhotoFile(file);
     const reader = new FileReader();
     reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
     reader.readAsDataURL(file);
+  };
+
+  // Camera functions
+  const startCamera = async () => {
+    setCameraError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } },
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setCameraActive(true);
+    } catch (err: any) {
+      console.error("Camera error:", err);
+      if (err.name === "NotAllowedError") {
+        setCameraError("Izin kamera ditolak. Silakan izinkan akses kamera di pengaturan browser.");
+      } else if (err.name === "NotFoundError") {
+        setCameraError("Kamera tidak ditemukan di perangkat ini.");
+      } else {
+        setCameraError("Gagal mengakses kamera: " + (err.message || "Unknown error"));
+      }
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+    setCameraError(null);
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !cameraCanvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = cameraCanvasRef.current;
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Flip horizontally for mirror effect (front camera)
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Convert canvas to blob
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          toast.error("Gagal mengambil foto");
+          return;
+        }
+        const file = new File([blob], `camera_${Date.now()}.jpg`, { type: "image/jpeg" });
+        setPhotoFile(file);
+
+        // Create preview URL
+        const reader = new FileReader();
+        reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
+        reader.readAsDataURL(file);
+
+        // Stop camera after successful capture
+        stopCamera();
+        toast.success("Foto berhasil diambil!");
+      },
+      "image/jpeg",
+      0.85
+    );
+  };
+
+  const retakePhoto = () => {
+    setPhotoPreview(existingCard?.photo_url || null);
+    setPhotoFile(null);
+    startCamera();
   };
 
   const toggleInterest = (item: string) => {
@@ -168,6 +267,11 @@ export function MemberRegistrationForm({ existingCard, userEmail }: MemberRegist
     const result = await submitMemberCard(form);
 
     setSaving(false);
+
+    // Ensure photo file is in form data
+    if (photoFile) {
+      form.set("photo", photoFile, photoFile.name);
+    }
 
     if (result.error) {
       toast.error(result.error);
@@ -546,16 +650,125 @@ export function MemberRegistrationForm({ existingCard, userEmail }: MemberRegist
                 Foto Profil
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {/* Camera Modal */}
+              {cameraActive && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+                  <div className="relative max-w-lg w-full bg-[#0f1117] rounded-2xl border border-white/10 overflow-hidden">
+                    {/* Camera header */}
+                    <div className="flex items-center justify-between p-4 border-b border-white/10">
+                      <div className="flex items-center gap-2">
+                        <Camera className="h-4 w-4 text-pri-red" />
+                        <span className="text-sm font-medium text-white">Ambil Foto</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={stopCamera}
+                        className="text-pri-silver hover:text-white"
+                      >
+                        ✕
+                      </Button>
+                    </div>
+
+                    {/* Camera viewfinder */}
+                    <div className="relative aspect-[4/3] bg-black overflow-hidden">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+                      />
+                      {/* Corner brackets */}
+                      <div className="absolute inset-4 pointer-events-none">
+                        <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-green-400/60 rounded-tl" />
+                        <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-green-400/60 rounded-tr" />
+                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-green-400/60 rounded-bl" />
+                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-green-400/60 rounded-br" />
+                      </div>
+                      {/* Scanline overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-green-400/5 to-transparent animate-scanline pointer-events-none" />
+                      {/* Hidden canvas for capture */}
+                      <canvas ref={cameraCanvasRef} className="hidden" />
+                    </div>
+
+                    {/* Camera controls */}
+                    <div className="flex items-center justify-center gap-6 p-4">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => cameraFileInputRef.current?.click()}
+                        className="border-white/20 text-pri-silver"
+                      >
+                        <Upload className="h-3.5 w-3.5 mr-1.5" />
+                        Pilih dari File
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={capturePhoto}
+                        className="h-14 w-14 rounded-full bg-white border-4 border-green-400/60 flex items-center justify-center hover:scale-105 transition-transform active:scale-95"
+                      >
+                        <div className="h-10 w-10 rounded-full border-2 border-gray-800" />
+                      </button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={stopCamera}
+                        className="border-red-500/30 text-red-400"
+                      >
+                        Batal
+                      </Button>
+                    </div>
+
+                    {/* Hidden file input inside camera (for switching from camera to file) */}
+                    <input
+                      ref={cameraFileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 5 * 1024 * 1024) {
+                            toast.error("Foto maksimal 5MB");
+                            return;
+                          }
+                          setPhotoFile(file);
+                          const reader = new FileReader();
+                          reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
+                          reader.readAsDataURL(file);
+                          stopCamera();
+                          toast.success("Foto berhasil dipilih!");
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-start gap-6">
                 <div className="flex-shrink-0">
                   {photoPreview ? (
-                    <div className="relative h-32 w-32 rounded-xl overflow-hidden border-2 border-white/20">
+                    <div className="relative h-32 w-32 rounded-xl overflow-hidden border-2 border-white/20 group">
                       <img
                         src={photoPreview}
                         alt="Preview"
                         className="h-full w-full object-cover"
                       />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPhotoPreview(null);
+                          setPhotoFile(null);
+                        }}
+                        className="absolute top-1 right-1 h-5 w-5 rounded-full bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
+                      >
+                        ✕
+                      </button>
                     </div>
                   ) : (
                     <div className="h-32 w-32 rounded-xl border-2 border-dashed border-white/20 flex items-center justify-center bg-white/5">
@@ -563,30 +776,64 @@ export function MemberRegistrationForm({ existingCard, userEmail }: MemberRegist
                     </div>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="photo">Upload Foto <span className="text-pri-red">*</span></Label>
-                  <div>
+
+                <div className="flex-1 space-y-2">
+                  <Label>Upload Foto <span className="text-pri-red">*</span></Label>
+                  <div className="flex flex-wrap items-center gap-2">
                     <input
                       ref={fileInputRef}
                       id="photo"
                       name="photo"
                       type="file"
-                      accept="image/jpeg,image/png,image/webp"
+                      accept="image/jpeg,image/png,image.webp"
                       onChange={handlePhotoChange}
                       className="hidden"
                     />
                     <Button
                       type="button"
                       variant="outline"
+                      size="sm"
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-pri-silver"
+                      className="text-pri-silver border-white/10 hover:border-pri-red/30"
                     >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Pilih Foto
+                      <Upload className="h-3.5 w-3.5 mr-1.5" />
+                      Pilih dari File
                     </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={startCamera}
+                      disabled={cameraActive}
+                      className="text-green-400 border-green-500/30 hover:border-green-500/60 hover:text-green-300"
+                    >
+                      <Camera className="h-3.5 w-3.5 mr-1.5" />
+                      Ambil Foto
+                    </Button>
+                    {photoPreview && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setPhotoPreview(existingCard?.photo_url || null);
+                          setPhotoFile(null);
+                        }}
+                        className="text-red-400 hover:text-red-300"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                        Hapus
+                      </Button>
+                    )}
                   </div>
+                  {cameraError && (
+                    <p className="text-[10px] text-red-400 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {cameraError}
+                    </p>
+                  )}
                   <p className="text-[10px] text-pri-silver">
-                    Format: JPG, PNG. Maks 5 MB
+                    Format: JPG, PNG. Maks 5 MB. Bisa pilih dari file atau ambil foto langsung.
                   </p>
                 </div>
               </div>
