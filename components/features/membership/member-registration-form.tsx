@@ -264,14 +264,15 @@ export function MemberRegistrationForm({ existingCard, userEmail }: MemberRegist
       form.set("signature", signatureData);
     }
 
-    const result = await submitMemberCard(form);
-
-    setSaving(false);
-
-    // Ensure photo file is in form data
+    // ENSURE photo file is in form data BEFORE calling server action
+    // (file input doesn't always populate form data if user used camera capture)
     if (photoFile) {
       form.set("photo", photoFile, photoFile.name);
     }
+
+    const result = await submitMemberCard(form);
+
+    setSaving(false);
 
     if (result.error) {
       toast.error(result.error);

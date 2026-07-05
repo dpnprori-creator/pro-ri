@@ -35,67 +35,152 @@ export function MemberCardView({ card }: { card: MemberCardViewData }) {
   const verifyUrl = `${originUrl || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/verify/${card.member_number}`;
 
   // ============================================
-  // Helper: render card to canvas using html2canvas
+  // Helper: fetch an external image and convert to data URL
+  // (uses fetch + blob so CORS is handled by the browser)
   // ============================================
-  const renderToCanvas = useCallback(async () => {
-    if (!cardRef.current) return null;
-    const html2canvasMod = await import("html2canvas");
-    const html2canvas = html2canvasMod.default || html2canvasMod;
-    return html2canvas(cardRef.current, {
-      backgroundColor: "#ffffff",
-      scale: 2.5,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-    });
+  const imageToDataURL = useCallback(async (url: string): Promise<string | null> => {
+    try {
+      const response = await fetch(url, { mode: "cors" });
+      if (!response.ok) return null;
+      const blob = await response.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
   }, []);
 
   // ============================================
-  // DOWNLOAD PNG — render card to canvas → PNG blob
+  // Helper: trigger download from canvas via toBlob + createObjectURL
+  // (lebih reliable daripada toDataURL untuk gambar besar)
+  // ============================================
+  const downloadCanvasAsBlob = useCallback(
+    (canvas: HTMLCanvasElement, filename: string, type: string, quality?: number) => {
+      return new Promise<void>((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Canvas toBlob returned null"));
+              return;
+            }
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            resolve();
+          },
+          type,
+          quality
+        );
+      });
+    },
+    []
+  );
+
+  // ============================================
+  // Helper: render card to canvas using html2canvas
+  // (pre-loads external images to avoid CORS taint)
+  // ============================================
+  const renderToCanvas = useCallback(async () => {
+    if (!cardRef.current) return null;
+
+    // Pre-load external images to avoid tainted canvas
+    const cardEl = cardRef.current;
+    const allImages = cardEl.querySelectorAll<HTMLImageElement>("img");
+    const replacements: { img: HTMLImageElement; originalSrc: string }[] = [];
+
+    for (const img of allImages) {
+      const originalSrc = img.src;
+      if (!originalSrc || originalSrc.startsWith("data:") || originalSrc.startsWith("blob:")) continue;
+      // Try to fetch as data URL; if it fails, keep the original
+      const dataUrl = await imageToDataURL(originalSrc);
+      if (dataUrl) {
+        replacements.push({ img, originalSrc });
+        img.src = dataUrl;
+      }
+    }
+
+    try {
+      const html2canvasMod = await import("html2canvas");
+      const html2canvas = html2canvasMod.default || html2canvasMod;
+      const canvas = await html2canvas(cardEl, {
+        backgroundColor: "#ffffff",
+        scale: 2.5,
+        useCORS: false,
+        allowTaint: false,
+        logging: false,
+      });
+      return canvas;
+    } finally {
+      // Restore original image sources
+      for (const { img, originalSrc } of replacements) {
+        img.src = originalSrc;
+      }
+    }
+  }, [imageToDataURL]);
+
+  // ============================================
+  // DOWNLOAD PNG — toBlob + createObjectURL
   // ============================================
   const handleDownloadPNG = useCallback(async () => {
     const canvas = await renderToCanvas();
-    if (!canvas) return;
+    if (!canvas) {
+      toast.error("Gagal merender kartu. Silakan coba lagi.");
+      return;
+    }
     try {
-      const link = document.createElement("a");
-      link.download = `member-card-${card.member_number || "unknown"}.png`;
-      link.href = canvas.toDataURL("image/png");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      await downloadCanvasAsBlob(
+        canvas,
+        `member-card-${card.member_number || "unknown"}.png`,
+        "image/png"
+      );
       toast.success("Kartu anggota berhasil diunduh (PNG)!");
     } catch (err) {
       console.error("PNG download error:", err);
-      toast.error("Gagal mengunduh PNG. Silakan coba screenshot manual.");
+      toast.error("Gagal mengunduh PNG. Coba gunakan Cetak atau screenshot manual.");
     }
-  }, [renderToCanvas, card.member_number]);
+  }, [renderToCanvas, downloadCanvasAsBlob, card.member_number]);
 
   // ============================================
-  // DOWNLOAD JPG — render card to canvas → JPG blob
+  // DOWNLOAD JPG — toBlob + createObjectURL
   // ============================================
   const handleDownloadJPG = useCallback(async () => {
     const canvas = await renderToCanvas();
-    if (!canvas) return;
+    if (!canvas) {
+      toast.error("Gagal merender kartu. Silakan coba lagi.");
+      return;
+    }
     try {
-      const link = document.createElement("a");
-      link.download = `member-card-${card.member_number || "unknown"}.jpg`;
-      link.href = canvas.toDataURL("image/jpeg", 0.95);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      await downloadCanvasAsBlob(
+        canvas,
+        `member-card-${card.member_number || "unknown"}.jpg`,
+        "image/jpeg",
+        0.92
+      );
       toast.success("Kartu anggota berhasil diunduh (JPG)!");
     } catch (err) {
       console.error("JPG download error:", err);
-      toast.error("Gagal mengunduh JPG. Silakan coba screenshot manual.");
+      toast.error("Gagal mengunduh JPG. Coba gunakan Cetak atau screenshot manual.");
     }
-  }, [renderToCanvas, card.member_number]);
+  }, [renderToCanvas, downloadCanvasAsBlob, card.member_number]);
 
   // ============================================
-  // DOWNLOAD PDF - jspdf render
+  // DOWNLOAD PDF - jspdf render (uses same canvas)
   // ============================================
   const handleDownloadPDF = useCallback(async () => {
     const canvas = await renderToCanvas();
-    if (!canvas) return;
+    if (!canvas) {
+      toast.error("Gagal merender kartu. Silakan coba lagi.");
+      return;
+    }
 
     try {
       const jsPDFMod = await import("jspdf");
@@ -116,7 +201,7 @@ export function MemberCardView({ card }: { card: MemberCardViewData }) {
       toast.success("Kartu anggota berhasil diunduh (PDF)!");
     } catch (err) {
       console.error("PDF download error:", err);
-      toast.error("Gagal mengunduh PDF. Silakan coba screenshot manual.");
+      toast.error("Gagal mengunduh PDF. Coba gunakan Cetak atau screenshot manual.");
     }
   }, [renderToCanvas, card.member_number]);
 
@@ -518,8 +603,8 @@ export function MemberCardView({ card }: { card: MemberCardViewData }) {
 
           {/* ===== BOTTOM FOOTER ===== */}
           <div className="border-t border-gray-100 px-5 py-2 flex items-center justify-between bg-gray-50/50">
-            <p className="text-[7px] text-gray-400 font-mono tracking-wider truncate max-w-[60%]">
-              {verifyUrl}
+            <p className="text-[8px] text-gray-400 font-mono tracking-wider">
+              pro-ri.online
             </p>
             <p className="text-[7px] text-gray-400 font-mono tracking-wider flex-shrink-0">
               PRO-RI * Pusat Robotika Rakyat Indonesia
