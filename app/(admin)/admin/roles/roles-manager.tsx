@@ -1,3 +1,2 @@
-import { RoleManager } from "./role-manager";
-export { RoleManager as RolesManager };
-export { RoleManager };
+import { RolesManager } from "./role-manager";
+export { RolesManager };
