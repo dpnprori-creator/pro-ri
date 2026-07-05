@@ -23,6 +23,17 @@ import {
   BookOpen,
   Trophy,
   Award,
+  GraduationCap,
+  Store,
+  Bot,
+  Star,
+  Clock,
+  Activity,
+  BarChart3,
+  Monitor,
+  Layers,
+  CheckCircle,
+  Hexagon,
 } from "lucide-react";
 import { OfficeLocation } from "./office-location";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,38 +62,83 @@ const milestones = [
   { date: "2028 (Target)", event: "Kompetisi Robotika Nasional perdana", icon: Trophy },
 ];
 
-const values = [
-  {
-    icon: Target,
-    title: "Misi",
-    description: "Menyelenggarakan pendidikan robotika merata, mendorong integrasi kurikulum robotika nasional, mengembangkan inovasi teknologi tepat guna, membangun ekosistem robotika nasional, dan menjembatani kolaborasi pemerintah-industri-akademisi-komunitas.",
-    gradient: "from-pri-red to-red-400",
-  },
-  {
-    icon: Eye,
-    title: "Visi",
-    description: "Terwujudnya kedaulatan teknologi Indonesia melalui pengembangan sumber daya manusia yang unggul dalam bidang robotika dan kecerdasan buatan, guna mempercepat tercapainya Indonesia Emas 2045.",
-    gradient: "from-blue-500 to-cyan-400",
-  },
-  {
-    icon: Shield,
-    title: "Komitmen",
-    description: "Menyediakan akses pendidikan, pelatihan, dan pengembangan teknologi berkualitas untuk seluruh rakyat Indonesia, dari Sabang sampai Merauke.",
-    gradient: "from-green-500 to-emerald-400",
-  },
-  {
-    icon: Globe,
-    title: "Jangkauan",
-    description: "Hadir di 38 provinsi Indonesia dengan struktur organisasi berjenjang: DPN (Pusat), DPD (Provinsi), dan DPC (Kabupaten/Kota).",
-    gradient: "from-purple-500 to-pink-400",
-  },
+const visi = {
+  icon: Eye,
+  title: "Visi",
+  description: "Menjadi pusat pengembangan robotika rakyat terbesar di Indonesia yang melahirkan generasi inovatif, mandiri, berdaya saing global, serta mampu mendorong kemandirian teknologi nasional menuju Indonesia Emas 2045.",
+  gradient: "from-blue-500 to-cyan-400",
+};
+
+const misiPoints = [
+  "Meningkatkan literasi robotika, Artificial Intelligence, coding, dan teknologi digital di seluruh Indonesia.",
+  "Menyelenggarakan pendidikan, pelatihan, sertifikasi, dan pembinaan teknologi yang mudah diakses masyarakat.",
+  "Mencetak talenta muda unggul di bidang robotika dan inovasi teknologi.",
+  "Mendorong lahirnya startup dan wirausaha berbasis teknologi.",
+  "Menghubungkan dunia pendidikan, industri, pemerintah, komunitas, dan dunia usaha dalam satu ekosistem kolaboratif.",
+  "Mengembangkan teknologi yang memberikan manfaat nyata bagi masyarakat Indonesia.",
+];
+
+const nilaiNilai = [
+  { icon: Shield, title: "Integritas", desc: "Menjunjung tinggi kejujuran, profesionalisme, tanggung jawab, dan etika dalam setiap tindakan.", gradient: "from-pri-red to-red-400" },
+  { icon: Lightbulb, title: "Inovasi", desc: "Terus menciptakan solusi baru yang mampu menjawab tantangan zaman melalui riset dan pengembangan teknologi.", gradient: "from-blue-500 to-cyan-400" },
+  { icon: Heart, title: "Kolaborasi", desc: "Membangun budaya gotong royong melalui sinergi lintas sektor demi kemajuan bersama.", gradient: "from-green-500 to-emerald-400" },
+  { icon: Rocket, title: "Kemandirian", desc: "Mendorong lahirnya teknologi nasional yang mampu mengurangi ketergantungan terhadap teknologi asing.", gradient: "from-purple-500 to-pink-400" },
+  { icon: Award, title: "Kebermanfaatan", desc: "Setiap inovasi yang dikembangkan harus memberikan manfaat nyata bagi masyarakat Indonesia.", gradient: "from-amber-500 to-orange-400" },
+];
+
+const tujuanProRI = [
+  { num: "01", icon: BookOpen, title: "Mencerdaskan Rakyat", desc: "Menyediakan pendidikan robotika, AI, coding, dan teknologi digital yang dapat diakses oleh seluruh lapisan masyarakat." },
+  { num: "02", icon: Users, title: "Memberdayakan Rakyat", desc: "Mengembangkan pelatihan, inovasi, dan pemanfaatan teknologi untuk meningkatkan produktivitas ekonomi masyarakat." },
+  { num: "03", icon: Star, title: "Memajukan Rakyat", desc: "Melahirkan generasi unggul yang memiliki kemampuan teknologi, karakter kepemimpinan, dan daya saing global." },
+  { num: "04", icon: Globe, title: "Memperkuat Kolaborasi Nasional", desc: "Membangun sinergi antara pemerintah, dunia pendidikan, industri, komunitas, dan masyarakat dalam mengembangkan teknologi nasional." },
+  { num: "05", icon: Heart, title: "Memberikan Dampak Nyata", desc: "Menciptakan solusi teknologi yang mampu meningkatkan kesejahteraan masyarakat serta mendukung pembangunan Indonesia." },
+];
+
+const programStrategis = [
+  { icon: GraduationCap, title: "Sekolah Robotika Rakyat", desc: "Program pelatihan robotika, AI, coding, dan teknologi digital bagi siswa, mahasiswa, guru, tenaga pendidik, serta masyarakat umum." },
+  { icon: BookOpen, title: "Robotika Masuk Sekolah", desc: "Program implementasi pembelajaran robotika dan coding di sekolah formal maupun pendidikan nonformal." },
+  { icon: Bot, title: "Akademi AI & Digital Skill", desc: "Pelatihan Artificial Intelligence, Data Science, Cyber Security, Internet of Things, Cloud Computing, serta berbagai kompetensi digital masa depan." },
+  { icon: Trophy, title: "Kompetisi Robotika Nasional", desc: "Ajang pembinaan, kompetisi, dan pengembangan talenta muda di bidang robotika dan inovasi teknologi." },
+  { icon: Rocket, title: "Inkubator Inovasi Teknologi", desc: "Pendampingan riset, inovasi, startup teknologi, hingga hilirisasi produk agar mampu menjadi solusi nyata bagi masyarakat." },
+  { icon: Store, title: "Robotika untuk UMKM", desc: "Pemanfaatan otomasi dan teknologi untuk meningkatkan efisiensi, produktivitas, serta daya saing usaha mikro, kecil, dan menengah." },
+];
+
+const sasaranManfaat = [
+  "Pelajar SD, SMP, SMA, dan SMK",
+  "Mahasiswa",
+  "Guru dan Tenaga Pendidik",
+  "Lembaga Pendidikan Formal dan Nonformal",
+  "Komunitas Teknologi",
+  "Organisasi Kepemudaan",
+  "UMKM",
+  "Industri",
+  "Pemerintah Daerah",
+  "Masyarakat Umum",
+];
+
+const pilarTeknologi = [
+  { icon: Cpu, title: "Hardware & Mekatronika Nasional" },
+  { icon: Zap, title: "Embedded System & Mikrokontroler Nusantara" },
+  { icon: Globe, title: "Robot Operating System Indonesia (ROS-ID)" },
+  { icon: Bot, title: "Artificial Intelligence & Computer Vision Nasional" },
+  { icon: Monitor, title: "Cloud Robotics & Edge Computing" },
+  { icon: Heart, title: "Human Robot Interaction (HRI) Nusantara" },
+];
+
+const pilarUtama = [
+  { icon: BookOpen, title: "Pendidikan", desc: "Membangun fondasi pengetahuan dan keterampilan teknologi sejak dini." },
+  { icon: Lightbulb, title: "Inovasi", desc: "Mendorong lahirnya solusi-solusi baru yang relevan dengan kebutuhan bangsa." },
+  { icon: Heart, title: "Kolaborasi", desc: "Membangun sinergi lintas sektor untuk memperkuat ekosistem teknologi nasional." },
+  { icon: Award, title: "Kompetensi", desc: "Meningkatkan standar kemampuan SDM Indonesia di bidang robotika dan AI." },
+  { icon: Rocket, title: "Daya Saing", desc: "Mempersiapkan talenta Indonesia agar mampu bersaing di pasar global." },
+  { icon: Shield, title: "Keberlanjutan", desc: "Memastikan setiap program memberikan dampak jangka panjang bagi bangsa." },
 ];
 
 const roadmap = [
-  { year: "2026", phase: "Pendirian & Konsolidasi", items: ["Peluncuran PRO RI", "Pembentukan DPN, DPD, DPC", "Perumusan program kerja"], status: "completed" },
-  { year: "2027–2028", phase: "Ekspansi Nasional", items: ["Sekolah Robotika Rakyat di 38 provinsi", "Robotika Masuk Sekolah di 500+ sekolah", "Kompetisi Robotika Nasional perdana"], status: "active" },
-  { year: "2029–2030", phase: "Penguatan & Dampak", items: ["Akademi AI berjalan penuh", "100+ startup melalui Inkubator Inovasi", "Robotika untuk UMKM di 10.000+ UMKM"], status: "upcoming" },
-  { year: "2031–2045", phase: "Menuju Indonesia Emas", items: ["Ekosistem robotika nasional mandiri", "Indonesia sebagai kekuatan teknologi Asia"], status: "upcoming" },
+  { year: "2025–2030", phase: "Fondasi & Talenta", items: ["Penyusunan regulasi & infrastruktur dasar", "Pengembangan talenta robotika nasional", "Pembentukan ekosistem robotika nasional"], status: "active" },
+  { year: "2030–2035", phase: "Transformasi Sektor", items: ["Robotika di sektor pendidikan & industri", "Implementasi di pertanian, kesehatan, pertahanan", "Transformasi pelayanan publik"], status: "upcoming" },
+  { year: "2035–2040", phase: "Integrasi Nasional", items: ["Robotika di seluruh sektor strategis", "Produktivitas nasional berbasis teknologi", "Penguatan rantai pasok teknologi lokal"], status: "upcoming" },
+  { year: "2040–2045", phase: "Kepemimpinan Global", items: ["Indonesia mandiri & berdaulat di bidang teknologi", "Kepemimpinan global di bidang robotika", "Indonesia Emas 2045 tercapai"], status: "upcoming" },
 ];
 
 const sisterOrgs = ["MURI", "PERI", "LBH RI", "AMRI", "PATRIOT RI", "PERISAI RI Kristiani"];
@@ -170,8 +226,7 @@ export default function AboutPage() {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="text-lg md:text-xl text-pri-silver leading-relaxed max-w-2xl mx-auto mb-8"
             >
-              Pelajari sejarah, visi, misi, tujuan, dan peta jalan Pusat Robotika Rakyat Indonesia (PRO RI) — 
-              gerakan robotika nasional untuk kedaulatan teknologi Indonesia.
+              PRO RI (Pusat Robotika Rakyat Indonesia) — organisasi nasional yang berfokus pada pengembangan robotika, kecerdasan buatan (AI), coding, Internet of Things (IoT), otomasi, serta transformasi teknologi sebagai fondasi pembangunan SDM Indonesia menuju Indonesia Emas 2045.
             </motion.p>
 
             <motion.div
@@ -249,11 +304,14 @@ export default function AboutPage() {
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
               Sejarah Berdirinya{" "}
               <span className="text-gradient">PRO RI</span>
-            </h2>
+            </h2>              <p className="text-base md:text-lg text-pri-silver leading-relaxed mb-6">
+              Indonesia memasuki era transformasi digital yang menuntut kesiapan sumber daya manusia dalam menghadapi perkembangan teknologi yang sangat cepat. Robotika, <em>Artificial Intelligence</em> (AI), <em>Internet of Things</em> (IoT), <em>Big Data</em>, <em>Cloud Computing</em>, dan teknologi otomasi bukan lagi sekadar tren, melainkan menjadi fondasi utama pembangunan bangsa.
+            </p>
+            <p className="text-base md:text-lg text-pri-silver leading-relaxed mb-6">
+              PRO RI lahir sebagai gerakan nasional yang bertujuan membangun ekosistem robotika rakyat melalui pendidikan, pelatihan, penelitian, inovasi, kolaborasi, dan pemberdayaan masyarakat.
+            </p>
             <p className="text-base md:text-lg text-pri-silver leading-relaxed mb-8">
-              Pada tanggal <strong className="text-white">6 Juni 2026</strong>, PRI (Perkumpulan Robotika Indonesia) 
-              secara resmi meluncurkan <strong className="text-white">Pusat Robotika Rakyat Indonesia (PRO RI)</strong> 
-              sebagai gerakan nasional untuk mempercepat penguasaan teknologi robotika dan kecerdasan buatan di Indonesia.
+              Kami percaya bahwa kemajuan teknologi harus memberikan manfaat nyata bagi kehidupan masyarakat, meningkatkan produktivitas, membuka lapangan kerja baru, memperkuat industri nasional, serta mempercepat terwujudnya Indonesia sebagai negara berdaulat di bidang teknologi.
             </p>
 
             {/* Quotes Grid */}
@@ -363,50 +421,109 @@ export default function AboutPage() {
               <span className="text-xs text-pri-silver tracking-wider uppercase font-mono">Visi, Misi & Komitmen</span>
             </div>
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-              Visi, Misi &{" "}
-              <span className="text-gradient">Komitmen</span>
+              Visi &{" "}
+              <span className="text-gradient">Misi</span>
             </h2>
             <p className="text-pri-silver max-w-xl mx-auto">
               Landasan organisasi PRO RI dalam mewujudkan kedaulatan teknologi Indonesia
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-16">
-            {values.map((v, i) => (
-              <motion.div
-                key={v.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-              >
-                <Card className="glass-card-hover p-6 h-full group relative overflow-hidden">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${v.gradient} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500`} />
-                  <CardContent className="p-0 relative z-10">
-                    <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${v.gradient} bg-opacity-20 flex items-center justify-center mb-4`}>
-                      <v.icon className="h-6 w-6 text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-white mb-3">{v.title}</h3>
-                    <p className="text-sm text-pri-silver leading-relaxed">{v.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+          {/* Visi */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <motion.div {...fadeInUp}>
+              <Card className="glass-card-hover p-8 text-center group relative overflow-hidden border-pri-red/10">
+                <div className={`absolute inset-0 bg-gradient-to-br ${visi.gradient} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500`} />
+                <CardContent className="p-0 relative z-10">
+                  <div className={`h-16 w-16 rounded-xl bg-gradient-to-br ${visi.gradient} bg-opacity-20 flex items-center justify-center mx-auto mb-4`}>
+                    <visi.icon className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4">{visi.title}</h3>
+                  <p className="text-base text-pri-silver leading-relaxed max-w-2xl mx-auto italic">
+                    &ldquo;{visi.description}&rdquo;
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
-          {/* Tujuan Organisasi */}
+          {/* Misi */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <motion.div {...fadeInUp} className="text-center mb-8">
+              <h3 className="text-2xl font-bold text-white mb-2">
+                <span className="text-gradient">Misi</span> PRO RI
+              </h3>
+              <p className="text-pri-silver">Enam misi strategis dalam membangun ekosistem teknologi nasional</p>
+            </motion.div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {misiPoints.map((misi, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                  className="glass rounded-xl p-5 flex items-start gap-4 border border-white/5 hover:border-pri-red/20 transition-all duration-300 group"
+                >
+                  <div className="h-9 w-9 rounded-lg bg-pri-red/10 flex items-center justify-center shrink-0 group-hover:bg-pri-red/20 transition-colors">
+                    <span className="text-sm font-bold text-pri-red font-mono">{i + 1}</span>
+                  </div>
+                  <p className="text-sm text-pri-silver group-hover:text-white transition-colors">{misi}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Nilai-Nilai PRO RI */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <motion.div {...fadeInUp} className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 mb-4">
+                <Award className="h-4 w-4 text-pri-red" />
+                <span className="text-xs text-pri-silver tracking-wider uppercase font-mono">Nilai-Nilai</span>
+              </div>
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                Nilai-Nilai <span className="text-gradient">PRO RI</span>
+              </h3>
+              <p className="text-pri-silver">Seluruh aktivitas organisasi dibangun di atas lima nilai utama</p>
+            </motion.div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {nilaiNilai.map((n, i) => (
+                <motion.div
+                  key={n.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                >
+                  <Card className="glass-card-hover p-6 h-full group relative overflow-hidden">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${n.gradient} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500`} />
+                    <CardContent className="p-0 relative z-10">
+                      <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${n.gradient} bg-opacity-20 flex items-center justify-center mb-4`}>
+                        <n.icon className="h-6 w-6 text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white mb-3">{n.title}</h3>
+                      <p className="text-sm text-pri-silver leading-relaxed">{n.desc}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tujuan PRO RI */}
           <motion.div {...fadeInUp} className="max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-8 text-center">
-              Tujuan <span className="text-gradient">Organisasi</span>
+            <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 mb-4 mx-auto w-fit">
+              <Target className="h-4 w-4 text-pri-red" />
+              <span className="text-xs text-pri-silver tracking-wider uppercase font-mono">Lima Pilar Utama</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 text-center">
+              Tujuan <span className="text-gradient">PRO RI</span>
             </h2>
+            <p className="text-pri-silver text-center max-w-xl mx-auto mb-8">
+              PRO RI hadir sebagai gerakan nasional yang memiliki tujuan besar dalam membangun masa depan Indonesia melalui lima pilar utama
+            </p>
             <div className="space-y-4">
-              {[
-                { num: "01", icon: Rocket, title: "Akselerasi Penguasaan Teknologi", desc: "Mempercepat penguasaan teknologi robotika dan AI di kalangan generasi muda Indonesia" },
-                { num: "02", icon: Globe, title: "Pemerataan Akses", desc: "Memastikan akses pendidikan robotika merata hingga ke daerah terpencil" },
-                { num: "03", icon: Lightbulb, title: "Inovasi Tepat Guna", desc: "Mengembangkan solusi robotika yang aplikatif untuk pertanian, UMKM, dan layanan publik" },
-                { num: "04", icon: Award, title: "Pengembangan Talenta", desc: "Mencetak talenta robotika nasional yang siap bersaing di tingkat global" },
-                { num: "05", icon: Heart, title: "Kolaborasi Nasional", desc: "Menjadi katalisator kolaborasi antara pemerintah, industri, akademisi, dan komunitas robotika" },
-              ].map((item, i) => (
+              {tujuanProRI.map((item, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -20 }}
@@ -429,6 +546,83 @@ export default function AboutPage() {
               ))}
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* ===== PROGRAM STRATEGIS ===== */}
+      <section className="section-padding bg-pri-carbon relative overflow-hidden">
+        <div className="absolute inset-0 circuit-pattern opacity-[0.05]" />
+        <div className="container-wide px-4 relative z-10">
+          <motion.div {...fadeInUp} className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 mb-4">
+              <Rocket className="h-4 w-4 text-pri-red" />
+              <span className="text-xs text-pri-silver tracking-wider uppercase font-mono">Program</span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+              Program <span className="text-gradient">Strategis</span>
+            </h2>
+            <p className="text-pri-silver max-w-xl mx-auto">
+              PRO RI menjalankan program strategis untuk memperluas literasi teknologi dan membangun ekosistem robotika Indonesia
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {programStrategis.map((prog, i) => {
+              const ProgIcon = prog.icon;
+              return (
+                <motion.div
+                  key={prog.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                >
+                  <Card className="glass-tech p-6 h-full">
+                    <div className="corner-bracket corner-bracket-tl" />
+                    <div className="corner-bracket corner-bracket-tr" />
+                    <div className="corner-bracket corner-bracket-bl" />
+                    <div className="corner-bracket corner-bracket-br" />
+                    <CardContent className="p-0">
+                      <div className="h-12 w-12 rounded-xl bg-pri-red/15 flex items-center justify-center mb-4">
+                        <ProgIcon className="h-6 w-6 text-pri-red" />
+                      </div>
+                      <h3 className="text-base font-semibold text-white mb-2">{prog.title}</h3>
+                      <p className="text-sm text-pri-silver leading-relaxed">{prog.desc}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Sasaran Penerima Manfaat */}
+          <motion.div {...fadeInUp} className="text-center mt-16 mb-8">
+            <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 mb-4">
+              <Users className="h-4 w-4 text-pri-red" />
+              <span className="text-xs text-pri-silver tracking-wider uppercase font-mono">Sasaran</span>
+            </div>
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
+              Sasaran <span className="text-gradient">Penerima Manfaat</span>
+            </h3>
+            <p className="text-pri-silver max-w-xl mx-auto">
+              Program PRO RI ditujukan untuk seluruh lapisan masyarakat
+            </p>
+          </motion.div>
+
+          <div className="flex flex-wrap justify-center gap-3 max-w-3xl mx-auto">
+            {sasaranManfaat.map((s, i) => (
+              <motion.span
+                key={s}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05 }}
+                className="glass rounded-full px-5 py-2.5 text-sm text-white font-mono border border-white/5 hover:border-pri-red/30 hover:bg-pri-red/5 transition-all duration-300"
+              >
+                {s}
+              </motion.span>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -544,10 +738,108 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* ===== ENAM PILAR TEKNOLOGI ===== */}
+      <section className="section-padding bg-pri-dark/50 relative overflow-hidden">
+        <div className="absolute inset-0 circuit-pattern opacity-[0.03]" />
+        <div className="container-wide px-4 relative z-10">
+          <motion.div {...fadeInUp} className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 mb-4">
+              <Layers className="h-4 w-4 text-pri-red" />
+              <span className="text-xs text-pri-silver tracking-wider uppercase font-mono">Teknologi</span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+              Enam Pilar <span className="text-gradient">Teknologi Nasional</span>
+            </h2>
+            <p className="text-pri-silver max-w-xl mx-auto">
+              Untuk mewujudkan kedaulatan teknologi, PRO RI mendorong pengembangan enam lapisan teknologi nasional
+            </p>
+          </motion.div>
+
+          <div className="max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {pilarTeknologi.map((pilar, i) => {
+                const PilarIcon = pilar.icon;
+                return (
+                  <motion.div
+                    key={pilar.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.08 }}
+                    className="glass rounded-xl p-5 flex items-center gap-4 border border-white/5 hover:border-pri-red/20 transition-all duration-300 group"
+                  >
+                    <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-pri-red/20 to-transparent flex items-center justify-center shrink-0">
+                      <PilarIcon className="h-5 w-5 text-pri-red" />
+                    </div>
+                    <p className="text-sm text-white font-medium">{pilar.title}</p>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Road connector */}
+          <div className="flex items-center justify-center gap-2 mt-8 max-w-md mx-auto">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-pri-red/50 to-transparent" />
+            <span className="text-xs text-pri-silver font-mono">Enam Lapisan Teknologi Nasional</span>
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-pri-red/50 to-transparent" />
+          </div>
+        </div>
+      </section>
+
+      {/* ===== DAMPAK ===== */}
+      <section className="section-padding bg-pri-carbon relative overflow-hidden">
+        <div className="absolute inset-0 circuit-pattern opacity-[0.05]" />
+        <div className="orbit-ring" style={{ top: "10%", right: "5%", width: "100px", height: "100px", opacity: 0.04 }} />
+        <div className="container-wide px-4 relative z-10">
+          <motion.div {...fadeInUp} className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 mb-4">
+              <BarChart3 className="h-4 w-4 text-pri-red" />
+              <span className="text-xs text-pri-silver tracking-wider uppercase font-mono">Dampak</span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+              Dampak yang Ingin <span className="text-gradient">Dicapai</span>
+            </h2>
+            <p className="text-pri-silver max-w-xl mx-auto mb-10">
+              PRO RI berkomitmen memberikan kontribusi nyata terhadap pembangunan Indonesia
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+              {[
+                { icon: BarChart3, text: "Peningkatan produktivitas ekonomi" },
+                { icon: Users, text: "Penciptaan jutaan talenta digital" },
+                { icon: Cpu, text: "Penguatan industri robotika nasional" },
+                { icon: Shield, text: "Peningkatan ketahanan pangan dan energi" },
+                { icon: Target, text: "Penguatan sistem pertahanan berbasis teknologi" },
+                { icon: Globe, text: "Transformasi layanan publik" },
+                { icon: Award, text: "Lahirnya inovasi yang mampu bersaing di tingkat internasional" },
+              ].map((item, i) => {
+                const DampakIcon = item.icon;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.08 }}
+                    className="glass rounded-xl p-4 flex items-center gap-3 border border-white/5 hover:border-pri-red/20 transition-all duration-300 group"
+                  >
+                    <div className="h-10 w-10 rounded-lg bg-pri-red/10 flex items-center justify-center shrink-0">
+                      <DampakIcon className="h-5 w-5 text-pri-red" />
+                    </div>
+                    <p className="text-sm text-pri-silver group-hover:text-white transition-colors duration-300">{item.text}</p>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ===== FILOSOFI LOGO SECTION ===== */}
       <section className="section-padding bg-pri-dark/50 relative overflow-hidden">
         <div className="container-wide px-4 relative z-10">
-          <motion.div {...fadeInUp} className="max-w-3xl mx-auto">
+          <motion.div {...fadeInUp} className="max-w-4xl mx-auto">
             <div className="text-center mb-10">
               <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 mb-4">
                 <Zap className="h-4 w-4 text-pri-red" />
@@ -556,13 +848,12 @@ export default function AboutPage() {
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
                 Filosofi <span className="text-gradient">Logo</span>
               </h2>
-              <p className="text-pri-silver">
-                Logo PRO RI dirancang dengan filosofi yang merepresentasikan semangat gerakan robotika rakyat
+              <p className="text-pri-silver max-w-lg mx-auto">
+                Logo PRO RI merupakan representasi dari semangat perjuangan, inovasi, dan kemandirian teknologi Indonesia
               </p>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-6 mb-6">
-              {/* Logo Display */}
+            <div className="flex flex-wrap justify-center gap-6 mb-8">
               <div className="h-48 w-48 rounded-2xl glass flex items-center justify-center border border-white/10 p-4">
                 <div className="relative h-32 w-32 rounded-xl overflow-hidden ring-2 ring-pri-red/20">
                   <Image
@@ -575,12 +866,25 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Filosofi description */}
+            <motion.div {...fadeInUp} className="text-center max-w-2xl mx-auto mb-10">
+              <p className="text-sm text-pri-silver leading-relaxed">
+                Kepala harimau robotik melambangkan keberanian, kekuatan, ketangguhan, serta kemampuan bangsa Indonesia dalam menguasai teknologi masa depan. Elemen mekanikal pada kepala harimau menggambarkan presisi, rekayasa teknologi, dan inovasi berkelanjutan.
+              </p>
+              <p className="text-sm text-pri-silver leading-relaxed mt-4">
+                Lingkaran yang mengelilingi logo melambangkan persatuan dan kolaborasi seluruh elemen bangsa, sedangkan ornamen heksagonal merepresentasikan jaringan teknologi, konektivitas, dan ekosistem digital yang saling terintegrasi.
+              </p>
+              <p className="text-sm text-pri-silver leading-relaxed mt-4">
+                Dominasi warna merah dan putih mencerminkan semangat nasionalisme, keberanian, integritas, serta komitmen untuk membangun Indonesia yang maju melalui penguasaan teknologi. Tipografi PRO RI yang tegas dan futuristik menggambarkan organisasi yang modern, progresif, dan siap menghadapi tantangan revolusi industri masa depan.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
               {[
-                { icon: Cpu, label: "Bentuk Geometris", desc: "Melambangkan presisi, teknologi, dan kecerdasan buatan", gradient: "from-pri-red/10 to-transparent" },
-                { icon: Globe, label: "Warna Merah", desc: "Semangat nasionalisme dan keberanian", gradient: "from-red-500/10 to-transparent" },
-                { icon: Target, label: "Elemen Roda Gigi", desc: "Perputaran inovasi dan industri", gradient: "from-blue-500/10 to-transparent" },
-                { icon: Users, label: "Siluet Manusia", desc: "Berpusat pada pengembangan SDM", gradient: "from-green-500/10 to-transparent" },
+                { icon: Cpu, label: "Kepala Harimau Robotik", desc: "Keberanian dan kekuatan bangsa dalam menguasai teknologi masa depan", gradient: "from-pri-red/10 to-transparent" },
+                { icon: Globe, label: "Lingkaran & Heksagonal", desc: "Persatuan, kolaborasi, dan jaringan teknologi yang terintegrasi", gradient: "from-red-500/10 to-transparent" },
+                { icon: Target, label: "Warna Merah & Putih", desc: "Semangat nasionalisme, keberanian, dan komitmen membangun Indonesia", gradient: "from-blue-500/10 to-transparent" },
+                { icon: Zap, label: "Tipografi Futuristik", desc: "Organisasi modern, progresif, siap menghadapi tantangan masa depan", gradient: "from-green-500/10 to-transparent" },
               ].map((item, i) => (
                 <motion.div
                   key={i}
@@ -599,6 +903,68 @@ export default function AboutPage() {
                   </div>
                 </motion.div>
               ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ===== PILAR UTAMA ===== */}
+      <section className="section-padding bg-pri-carbon relative overflow-hidden">
+        <div className="absolute inset-0 circuit-pattern opacity-[0.05]" />
+        <div className="container-wide px-4 relative z-10">
+          <motion.div {...fadeInUp} className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 mb-4">
+              <Hexagon className="h-4 w-4 text-pri-red" />
+              <span className="text-xs text-pri-silver tracking-wider uppercase font-mono">Pilar</span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+              Pilar Utama <span className="text-gradient">PRO RI</span>
+            </h2>
+            <p className="text-pri-silver max-w-xl mx-auto">
+              Seluruh gerakan PRO RI dibangun di atas enam pilar utama
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {pilarUtama.map((pilar, i) => {
+              const PilarIcon = pilar.icon;
+              return (
+                <motion.div
+                  key={pilar.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                >
+                  <Card className="glass-tech p-6 h-full text-center">
+                    <div className="corner-bracket corner-bracket-tl" />
+                    <div className="corner-bracket corner-bracket-tr" />
+                    <div className="corner-bracket corner-bracket-bl" />
+                    <div className="corner-bracket corner-bracket-br" />
+                    <CardContent className="p-0">
+                      <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-pri-red/20 to-pri-red/5 flex items-center justify-center mx-auto mb-4 ring-2 ring-pri-red/10">
+                        <PilarIcon className="h-7 w-7 text-pri-red" />
+                      </div>
+                      <h3 className="text-base font-semibold text-white mb-2">{pilar.title}</h3>
+                      <p className="text-sm text-pri-silver">{pilar.desc}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Penutup */}
+          <motion.div {...fadeInUp} className="text-center max-w-3xl mx-auto mt-16">
+            <div className="glass rounded-xl p-8 border border-white/5">
+              <Quote className="h-8 w-8 text-pri-red mx-auto mb-4 opacity-50" />
+              <p className="text-base text-pri-silver leading-relaxed italic">
+                PRO RI percaya bahwa masa depan Indonesia tidak hanya ditentukan oleh kekayaan sumber daya alam, tetapi juga oleh kualitas sumber daya manusia yang mampu menciptakan, mengembangkan, dan menguasai teknologi.
+              </p>
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <p className="text-lg font-bold text-white">Bersatu. Berkarya. Berdampak.</p>
+                <p className="text-sm text-pri-red font-mono mt-1">Robotika Milik Rakyat, Teknologi untuk Indonesia.</p>
+              </div>
             </div>
           </motion.div>
         </div>

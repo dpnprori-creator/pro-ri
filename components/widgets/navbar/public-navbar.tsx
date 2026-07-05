@@ -7,7 +7,6 @@ import { Menu, X } from "lucide-react";
 import { NAV_PUBLIC, APP_NAME_SHORT } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export function PublicNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -53,7 +52,6 @@ export function PublicNavbar() {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-2">
-            <ThemeToggle />
             <Link href="/login">
               <Button variant="ghost" size="sm" className="text-pri-silver hover:text-white">
                 Masuk

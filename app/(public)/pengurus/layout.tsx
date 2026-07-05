@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Susunan Pengurus PRO RI",
   description:
-    "Struktur kepemimpinan Pusat Robotika Rakyat Indonesia (PRO RI): Dewan Pimpinan Nasional, Dewan Pimpinan Daerah, Dewan Pimpinan Cabang.",
+    "Susunan Pengurus Dewan Pimpinan Nasional Pusat Robotika Rakyat Indonesia Masa Bakti 2026–2030: Dewan Pembina, Dewan Pakar, Ketua & Wakil Ketua, Sekretariat, Bendahara, dan 9 Departemen Strategis.",
   openGraph: {
-    title: "Susunan Pengurus PRO RI — Dewan Pimpinan Nasional",
+    title: "Susunan Pengurus PRO RI — Dewan Pimpinan Nasional Masa Bakti 2026–2030",
     description:
-      "Struktur kepemimpinan PRO RI — DPN, DPD, DPC. Ketua: Adityo Handoko, Sekretaris: Muhamad Ied.",
+      "Struktur kepemimpinan DPN PRO RI: Dewan Pembina (Ir. H. Muhammad Arfan), Dewan Pakar (Dr. H. Hery Erdi Andrat), Ketua (H. Adityo Handoko), Sekretaris (Dr. (H.C.) H. Muhamad Ied), Bendahara (Helmi Wahyulianto), dan 9 departemen strategis.",
   },
 };
 

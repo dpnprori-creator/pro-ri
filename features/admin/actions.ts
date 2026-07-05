@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { uploadToSupabaseStorage } from "./storage";
 
 // ============================================
 // MEMBERS
@@ -10,9 +11,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function getMembers() {
   const supabase = await createServerClient();
+  // Pakai regular join (tanpa !inner) agar member tanpa role_id/province_id tetap muncul
   const { data } = await supabase
     .from("members")
-    .select("*, role_id!inner(name), province_id!inner(name)")
+    .select("*, role_id(name), province_id(name)")
     .order("created_at", { ascending: false });
 
   return data ?? [];
@@ -20,9 +22,10 @@ export async function getMembers() {
 
 export async function getMemberById(id: string) {
   const supabase = await createServerClient();
+  // Regular join agar member tanpa regency_id/province_id tetap muncul
   const { data } = await supabase
     .from("members")
-    .select("*, role_id!inner(name), province_id!inner(name), regency_id!inner(name)")
+    .select("*, role_id(name), province_id(name), regency_id(name)")
     .eq("id", id)
     .single();
 
@@ -107,9 +110,10 @@ export async function deleteMember(id: string) {
 
 export async function getAdminEvents() {
   const supabase = await createServerClient();
+  // Regular join agar event tanpa province_id tetap muncul
   const { data } = await supabase
     .from("events")
-    .select("*, province_id!inner(name)")
+    .select("*, province_id(name)")
     .order("start_date", { ascending: false });
 
   return data ?? [];
@@ -185,9 +189,10 @@ export async function deleteEvent(id: string) {
 
 export async function getAdminInnovations() {
   const supabase = await createServerClient();
+  // Regular join agar inovasi tanpa creator_id/province_id tetap muncul
   const { data } = await supabase
     .from("innovations")
-    .select("*, province_id!inner(name), creator_id!inner(full_name)")
+    .select("*, province_id(name), creator_id(full_name)")
     .order("created_at", { ascending: false });
 
   return data ?? [];
@@ -255,9 +260,10 @@ export async function deleteInnovation(id: string) {
 
 export async function getCertificates() {
   const supabase = await createServerClient();
+  // Regular join agar certificate tanpa event_id tetap muncul
   const { data } = await supabase
     .from("certificates")
-    .select("*, member_id!inner(full_name, member_id), event_id!inner(title)")
+    .select("*, member_id!inner(full_name, member_id), event_id(title)")
     .order("created_at", { ascending: false });
 
   return data ?? [];
@@ -295,13 +301,29 @@ export async function deleteCertificate(id: string) {
 
 export async function createHeroGalleryItem(formData: FormData) {
   const supabase = await createServerClient();
+  
+  // Handle image upload or URL
+  let imageUrl = formData.get("image_url") as string || formData.get("imageUrl") as string;
+  const imageFile = formData.get("image") as File | null;
+  
+  if (!imageUrl && imageFile && imageFile.size > 0 && imageFile.name) {
+    try {
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `hero/${Date.now()}.${ext}`;
+      imageUrl = await uploadToSupabaseStorage("hero-gallery", path, imageFile);
+    } catch (err) {
+      console.error("Image upload error:", err);
+    }
+  }
+
   const { error } = await supabase.from("hero_gallery").insert({
     title: formData.get("title") as string,
     description: formData.get("description") as string || null,
-    image_url: formData.get("image_url") as string,
-    link_url: formData.get("link_url") as string || null,
-    link_label: formData.get("link_label") as string || "Selengkapnya",
-    is_active: formData.get("is_active") === "true",
+    image_url: imageUrl,
+    link_url: formData.get("link_url") as string || formData.get("linkUrl") as string || null,
+    link_label: formData.get("link_label") as string || formData.get("linkLabel") as string || "Selengkapnya",
+    sort_order: parseInt(formData.get("sort_order") as string || formData.get("sortOrder") as string) || 0,
+    is_active: formData.get("is_active") === "true" || formData.get("isActive") === "true",
   });
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery");
@@ -310,12 +332,29 @@ export async function createHeroGalleryItem(formData: FormData) {
 
 export async function updateHeroGalleryItem(id: string, formData: FormData) {
   const supabase = await createServerClient();
+  
+  // Handle image upload or URL
+  let imageUrl = formData.get("image_url") as string || formData.get("imageUrl") as string;
+  const imageFile = formData.get("image") as File | null;
+  
+  if (!imageUrl && imageFile && imageFile.size > 0 && imageFile.name) {
+    try {
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `hero/${Date.now()}.${ext}`;
+      imageUrl = await uploadToSupabaseStorage("hero-gallery", path, imageFile);
+    } catch (err) {
+      console.error("Image upload error:", err);
+    }
+  }
+  
   const { error } = await supabase.from("hero_gallery").update({
     title: formData.get("title") as string,
     description: formData.get("description") as string || null,
-    image_url: formData.get("image_url") as string,
-    link_url: formData.get("link_url") as string || null,
-    is_active: formData.get("is_active") === "true",
+    image_url: imageUrl,
+    link_url: formData.get("link_url") as string || formData.get("linkUrl") as string || null,
+    link_label: formData.get("link_label") as string || formData.get("linkLabel") as string || undefined,
+    sort_order: parseInt(formData.get("sort_order") as string || formData.get("sortOrder") as string) || 0,
+    is_active: formData.get("is_active") === "true" || formData.get("isActive") === "true",
   }).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery");

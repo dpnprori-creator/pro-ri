@@ -65,14 +65,29 @@ export async function submitMemberCard(formData: FormData) {
     }
   }
 
-  // Handle signature (data URL → blob → upload)
+  // Handle signature (data URL → buffer → upload langsung via admin client)
   const signatureDataUrl = formData.get("signature") as string;
   if (signatureDataUrl && signatureDataUrl.startsWith("data:image")) {
     try {
-      const blob = Buffer.from(signatureDataUrl.split(",")[1], "base64");
-      const file = new File([blob], "signature.png", { type: "image/png" });
+      const base64Data = signatureDataUrl.split(",")[1];
+      const buffer = Buffer.from(base64Data, "base64");
       const sigPath = `${user.id}/signature_${Date.now()}.png`;
-      cardData.signature_url = await uploadToSupabaseStorage("member-cards", sigPath, file);
+      // Upload langsung pakai Buffer (tanpa new File) — kompatibel semua Node.js
+      const { createAdminClient } = await import("@/lib/supabase/admin");
+      const adminSupabase = createAdminClient();
+      const { data: uploadData, error: uploadError } = await adminSupabase.storage
+        .from("member-cards")
+        .upload(sigPath, buffer, {
+          contentType: "image/png",
+          cacheControl: "3600",
+          upsert: true,
+        });
+      if (!uploadError && uploadData) {
+        const { data: urlData } = adminSupabase.storage
+          .from("member-cards")
+          .getPublicUrl(uploadData.path);
+        cardData.signature_url = urlData.publicUrl;
+      }
     } catch (err) {
       console.error("Signature upload error:", err);
     }
@@ -116,9 +131,10 @@ export async function submitMemberCard(formData: FormData) {
 
 export async function getMemberCards() {
   const supabase = await createServerClient();
+  // Data full_name, email dll sudah ada di tabel member_cards, tidak perlu join
   const { data } = await supabase
     .from("member_cards")
-    .select("*, user_id!inner(full_name, email, member_id)")
+    .select("*")
     .order("created_at", { ascending: false });
 
   return data ?? [];
@@ -170,18 +186,11 @@ export async function checkMemberCardStatus() {
 
   if (!user) return null;
 
-  const { data: member } = await supabase
-    .from("members")
-    .select("id")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!member) return null;
-
+  // user_id di member_cards REFERENCES auth.users(id), bukan members(id)
   const { data } = await supabase
     .from("member_cards")
     .select("*")
-    .eq("user_id", member.id)
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

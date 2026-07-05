@@ -3,10 +3,11 @@ import { MemberVerificationManager } from "./member-verification-manager";
 
 async function getPendingCards() {
   const supabase = await createClient();
+  // user_id di member_cards REFERENCES auth.users(id) — data full_name, email, dll
+  // sudah ada langsung di tabel member_cards, jadi tidak perlu join
   const { data } = await supabase
     .from("member_cards")
-    .select("*, user_id!inner(full_name, email, member_id)")
-    .eq("status", "pending")
+    .select("*")
     .order("created_at", { ascending: false });
 
   return data ?? [];

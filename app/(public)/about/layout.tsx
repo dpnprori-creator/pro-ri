@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Tentang PRO RI",
+  title: "Tentang PRO RI — Pusat Robotika Rakyat Indonesia",
   description:
-    "Pelajari sejarah, visi, misi, tujuan, dan peta jalan Pusat Robotika Rakyat Indonesia (PRO RI) — gerakan robotika nasional untuk kedaulatan teknologi Indonesia.",
+    "PRO RI (Pusat Robotika Rakyat Indonesia) — organisasi nasional pengembangan robotika, AI, coding, IoT, dan otomasi. Visi, misi, program strategis, peta jalan menuju Indonesia Emas 2045.",
   openGraph: {
-    title: "Tentang PRO RI — Pusat Robotika Rakyat Indonesia",
+    title: "Tentang PRO RI — Pusat Robotika Rakyat Indonesia | Robotika Milik Rakyat",
     description:
-      "Sejarah, visi, misi, tujuan, dan peta jalan PRO RI — gerakan robotika nasional untuk kedaulatan teknologi Indonesia.",
+      "PRO RI: organisasi nasional robotika rakyat. Visi, Misi, 6 Program Strategis, 5 Nilai Utama, Roadmap 2045, Enam Pilar Teknologi Nasional. Bersatu. Berkarya. Berdampak.",
   },
 };
 

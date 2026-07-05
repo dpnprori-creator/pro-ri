@@ -75,52 +75,6 @@
   --hero-overlay-2: rgba(15, 17, 23, 0.8);
 }
 
-/* ===== LIGHT MODE ===== */
-.light {
-  /* Background: pure white utama */
-  --color-pri-carbon: #FFFFFF;
-  /* Card/section: slight gray agar terbedakan dari background putih */
-  --color-pri-dark: #F9FAFB;
-  /* Muted text: dark enough for good contrast on putih & light gray */
-  --color-pri-silver: #4B5563;
-  /* Light accent */
-  --color-pri-light: #F3F4F6;
-  /* Body text: near-black — kontras tinggi di putih */
-  --color-pri-white: #111827;
-
-  /* Glass utilities — subtle dark overlay on white */
-  /* Glass utilities — subtle dark overlay on white */
-  --glass-bg: rgba(0, 0, 0, 0.04);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-hover-bg: rgba(0, 0, 0, 0.06);
-  --glass-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --glass-hover-shadow: 0 4px 12px rgba(227, 30, 36, 0.12);
-
-  --scrollbar-track: #F3F4F6;
-  --scrollbar-thumb: #D1D5DB;
-
-  --grid-line: rgba(0, 0, 0, 0.04);
-
-  --leaflet-bg: #F9FAFB;
-  --leaflet-popup-bg: #FFFFFF;
-  --leaflet-popup-color: #111827;
-  --leaflet-popup-border: rgba(0, 0, 0, 0.1);
-
-  --color-border-base: rgba(0, 0, 0, 0.08);
-  --color-input-base: rgba(0, 0, 0, 0.06);
-
-  --hero-overlay: rgba(255, 255, 255, 0.92);
-  --hero-overlay-2: rgba(255, 255, 255, 0.85);
-}
-
-/* Light mode: red buttons must keep white text for readability */
-.light .bg-pri-red,
-.light .bg-destructive,
-.light button.bg-pri-red,
-.light [class*="bg-pri-red"] {
-  --color-white: #FFFFFF;
-}
-
 /* Base styles */
 * {
   border-color: var(--color-border);

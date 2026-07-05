@@ -139,7 +139,8 @@ export function PublicProgramsClient({
             {programs.map((program, i) => {
               const Icon = iconMap[program.icon] || GraduationCap;
               const isRegistered = registrations[program.id] === "registered" || registrations[program.id] === "approved";
-              const isOpen = program.label === "dibuka" || program.label === "akan datang" || !program.label;
+              const isOpen = program.label === "dibuka" || !program.label;
+              const isUpcoming = program.label === "akan datang";
 
               return (
                 <Card key={program.id} className="glass-tech overflow-hidden group">
@@ -186,19 +187,41 @@ export function PublicProgramsClient({
                       </p>
                     )}
                     {program.features && program.features.length > 0 && (
-                      <ul className="space-y-1.5 mb-6">
-                        {program.features.slice(0, 4).map((f: string, idx: number) => (
-                          <li key={idx} className="text-sm text-pri-silver flex items-center gap-2">
-                            <span className="h-1.5 w-1.5 rounded-full bg-pri-red shrink-0" />
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="space-y-2 mb-6">
+                        <p className="text-xs font-mono text-pri-silver/40 uppercase tracking-wider">
+                          Benefit Program
+                        </p>
+                        <div className="grid grid-cols-1 gap-1.5">
+                          {program.features.slice(0, 4).map((f: string, idx: number) => (
+                            <div
+                              key={idx}
+                              className="flex items-start gap-2.5 text-sm text-pri-silver group/benefit"
+                            >
+                              <div className="flex-shrink-0 mt-0.5 h-5 w-5 rounded-full bg-gradient-to-br from-pri-red/20 to-transparent flex items-center justify-center">
+                                <CheckCircle className="h-3 w-3 text-pri-red" />
+                              </div>
+                              <span className="group-hover/benefit:text-white transition-colors">
+                                {f}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        {program.features.length > 4 && (
+                          <p className="text-xs text-pri-silver/50 mt-1">
+                            +{program.features.length - 4} benefit lainnya
+                          </p>
+                        )}
+                      </div>
                     )}
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2">
-                      {isOpen && (
+                      {isUpcoming ? (
+                        <div className="flex-1 glass rounded-lg py-2.5 px-3 text-center border border-yellow-500/20">
+                          <p className="text-xs text-yellow-400 font-medium">Segera Dibuka</p>
+                          <p className="text-[10px] text-pri-silver/60 mt-0.5">Pendaftaran belum tersedia</p>
+                        </div>
+                      ) : isOpen ? (
                         <Button
                           onClick={() => openModal(program)}
                           size="sm"
@@ -220,7 +243,7 @@ export function PublicProgramsClient({
                             </>
                           )}
                         </Button>
-                      )}
+                      ) : null}
                       <Button
                         variant="outline"
                         size="sm"

@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { APP_NAME_SHORT } from "@/lib/constants";
 import { logout, getCurrentUserRole } from "@/features/auth/actions";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -123,7 +122,6 @@ export function DashboardSidebar({ onClose }: DashboardSidebarProps) {
 
       {/* Theme Toggle & Logout */}
       <div className="p-4 border-t border-white/10 space-y-2">
-        <ThemeToggle variant="full" className="w-full justify-start" />
         <form action={logout}>
           <Button
             type="submit"

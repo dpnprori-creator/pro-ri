@@ -406,20 +406,20 @@ export function EventsManager({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Tanggal Mulai</Label>
+                <Label htmlFor="start_date">Tanggal Mulai</Label>
                 <Input
-                  id="startDate"
-                  name="startDate"
+                  id="start_date"
+                  name="start_date"
                   type="datetime-local"
                   defaultValue={editingEvent?.start_date ? editingEvent.start_date.slice(0, 16) : ""}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">Tanggal Selesai</Label>
+                <Label htmlFor="end_date">Tanggal Selesai</Label>
                 <Input
-                  id="endDate"
-                  name="endDate"
+                  id="end_date"
+                  name="end_date"
                   type="datetime-local"
                   defaultValue={editingEvent?.end_date ? editingEvent.end_date.slice(0, 16) : ""}
                   required
@@ -439,10 +439,10 @@ export function EventsManager({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="provinceId">Provinsi</Label>
+                <Label htmlFor="province_id">Provinsi</Label>
                 <select
-                  id="provinceId"
-                  name="provinceId"
+                  id="province_id"
+                  name="province_id"
                   className="flex h-10 w-full rounded-md border border-white/20 bg-pri-dark px-3 py-2 text-sm text-white"
                 >
                   <option value="">Pilih provinsi</option>
@@ -454,10 +454,10 @@ export function EventsManager({
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="maxParticipants">Max Peserta</Label>
+                <Label htmlFor="max_participants">Max Peserta</Label>
                 <Input
-                  id="maxParticipants"
-                  name="maxParticipants"
+                  id="max_participants"
+                  name="max_participants"
                   type="number"
                   placeholder="100"
                 />

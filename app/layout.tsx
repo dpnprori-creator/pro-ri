@@ -34,6 +34,14 @@ export const metadata: Metadata = {
     "robotika indonesia",
     "indonesia emas 2045",
   ],
+  icons: {
+    icon: [
+      { url: "/images/logo-persegi.jpeg", type: "image/jpeg" },
+    ],
+    apple: [
+      { url: "/images/logo-persegi.jpeg" },
+    ],
+  },
   openGraph: {
     type: "website",
     locale: "id_ID",
@@ -50,7 +58,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" suppressHydrationWarning>
+    <html lang="id">
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >

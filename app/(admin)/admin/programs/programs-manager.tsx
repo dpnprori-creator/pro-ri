@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Eye, UserCheck, ExternalLink, Download } from "lucide-react";
+import { Plus, Eye, UserCheck, ExternalLink, Download, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,14 +103,30 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
   const [selectedProgram, setSelectedProgram] = useState<ProgramRow | null>(null);
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [benefits, setBenefits] = useState<string[]>([]);
+
+  // Fetch full program data when editing
+  const [editProgramData, setEditProgramData] = useState<any>(null);
 
   const openCreate = () => {
     setSelectedProgram(null);
+    setEditProgramData(null);
+    setBenefits([]);
     setDialogOpen(true);
   };
 
-  const openEdit = (program: ProgramRow) => {
+  const openEdit = async (program: ProgramRow) => {
     setSelectedProgram(program);
+    // Fetch full data for the program
+    try {
+      const { getProgramBySlug } = await import("@/features/admin/programs-actions");
+      const fullData = await getProgramBySlug(program.slug);
+      setEditProgramData(fullData);
+      setBenefits(fullData?.features || []);
+    } catch {
+      setEditProgramData(null);
+      setBenefits([]);
+    }
     setDialogOpen(true);
   };
 
@@ -266,21 +282,22 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="shortDescription">Deskripsi Singkat</Label>
+              <Label htmlFor="short_description">Deskripsi Singkat</Label>
               <Input
-                id="shortDescription"
-                name="shortDescription"
+                id="short_description"
+                name="short_description"
+                defaultValue={editProgramData?.short_description || ""}
                 placeholder="Deskripsi singkat untuk card"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Deskripsi Lengkap</Label>
-              <textarea
+              <Label htmlFor="description">Deskripsi Lengkap</Label>                <textarea
                 id="description"
                 name="description"
                 rows={4}
-                placeholder="Deskripsi lengkap program..."
+                defaultValue={editProgramData?.description || ""}
+                placeholder="Deskripsi lengkap program. Ceritakan tentang program ini secara detail..."
                 className="flex w-full rounded-md border border-white/20 bg-pri-dark px-3 py-2 text-sm text-white placeholder:text-pri-silver"
               />
             </div>
@@ -291,7 +308,7 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
                 <select
                   id="icon"
                   name="icon"
-                  defaultValue="GraduationCap"
+                  defaultValue={editProgramData?.icon || "GraduationCap"}
                   className="flex h-10 w-full rounded-md border border-white/20 bg-pri-dark px-3 py-2 text-sm text-white"
                 >
                   {iconOptions.map((opt) => (
@@ -309,22 +326,61 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="features">Fitur (1 per baris)</Label>
-              <textarea
-                id="features"
-                name="features"
-                rows={4}
-                placeholder="Modul belajar terstruktur&#10;Perangkat praktik disediakan&#10;Pendampingan instruktur"
-                className="flex w-full rounded-md border border-white/20 bg-pri-dark px-3 py-2 text-sm text-white placeholder:text-pri-silver"
-              />
+            {/* Benefits / Features — Dynamic Add/Remove dengan React State */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Benefit / Fitur Program</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBenefits([...benefits, ""])}
+                  className="border-green-500/30 text-green-400 hover:text-green-300 text-xs h-8"
+                >
+                  + Tambah Benefit
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {benefits.map((b, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-pri-red shrink-0 w-6">{i + 1}</span>
+                    <input
+                      value={b}
+                      onChange={(e) => {
+                        const newBenefits = [...benefits];
+                        newBenefits[i] = e.target.value;
+                        setBenefits(newBenefits);
+                      }}
+                      className="flex h-9 w-full rounded-md border border-white/20 bg-pri-dark px-3 py-2 text-sm text-white placeholder:text-pri-silver"
+                      placeholder="Cth: Modul belajar terstruktur, perangkat praktik disediakan..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBenefits(benefits.filter((_, idx) => idx !== i))}
+                      className="text-red-400 hover:text-red-300 shrink-0 px-1"
+                      title="Hapus"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                {benefits.length === 0 && (
+                  <p className="text-xs text-pri-silver/50 italic">
+                    Belum ada benefit. Klik "Tambah Benefit" untuk menambahkan.
+                  </p>
+                )}
+              </div>
+              <input type="hidden" name="features" value={JSON.stringify(benefits)} />
+              <p className="text-[10px] text-pri-silver/60">
+                Tambahkan benefit/fitur program. Setiap baris akan ditampilkan sebagai poin benefit di halaman publik.
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="targetAudience">Target Peserta</Label>
+              <Label htmlFor="target_audience">Target Peserta</Label>
               <Input
-                id="targetAudience"
-                name="targetAudience"
+                id="target_audience"
+                name="target_audience"
                 placeholder="Mahasiswa, fresh graduate, profesional"
               />
             </div>
@@ -361,19 +417,19 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="maxParticipants">Max Peserta</Label>
+                <Label htmlFor="max_participants">Max Peserta</Label>
                 <Input
-                  id="maxParticipants"
-                  name="maxParticipants"
+                  id="max_participants"
+                  name="max_participants"
                   type="number"
                   placeholder="100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sortOrder">Urutan</Label>
+                <Label htmlFor="sort_order">Urutan</Label>
                 <Input
-                  id="sortOrder"
-                  name="sortOrder"
+                  id="sort_order"
+                  name="sort_order"
                   type="number"
                   placeholder="0"
                 />
@@ -390,18 +446,18 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Tanggal Mulai</Label>
+                <Label htmlFor="start_date">Tanggal Mulai</Label>
                 <Input
-                  id="startDate"
-                  name="startDate"
+                  id="start_date"
+                  name="start_date"
                   type="datetime-local"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">Tanggal Selesai</Label>
+                <Label htmlFor="end_date">Tanggal Selesai</Label>
                 <Input
-                  id="endDate"
-                  name="endDate"
+                  id="end_date"
+                  name="end_date"
                   type="datetime-local"
                 />
               </div>

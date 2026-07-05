@@ -36,14 +36,27 @@ export async function createProgram(formData: FormData) {
     .eq("auth_id", user.id)
     .single();
 
+  let featuresArr: string[] = [];
+  try {
+    const featuresRaw = formData.get("features");
+    if (featuresRaw) featuresArr = JSON.parse(featuresRaw as string);
+  } catch {}
+
   const { error } = await supabase.from("programs").insert({
     title: formData.get("title") as string,
     slug: (formData.get("title") as string).toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
     description: formData.get("description") as string || null,
     short_description: formData.get("short_description") as string || null,
     icon: formData.get("icon") as string || "BookOpen",
+    image_url: formData.get("image_url") as string || null,
+    features: featuresArr,
+    target_audience: formData.get("target_audience") as string || null,
     status: formData.get("status") as string || "active",
-    label: formData.get("label") as string || "Program",
+    label: formData.get("label") as string || "dibuka",
+    max_participants: parseInt(formData.get("max_participants") as string) || null,
+    sort_order: parseInt(formData.get("sort_order") as string) || 0,
+    start_date: formData.get("start_date") as string || null,
+    end_date: formData.get("end_date") as string || null,
     created_by: member?.id,
   });
 
@@ -55,14 +68,28 @@ export async function createProgram(formData: FormData) {
 export async function updateProgram(id: string, formData: FormData) {
   const supabase = await createServerClient();
 
+  let featuresArr: string[] = [];
+  try {
+    const featuresRaw = formData.get("features");
+    if (featuresRaw) featuresArr = JSON.parse(featuresRaw as string);
+  } catch {}
+
   const { error } = await supabase
     .from("programs")
     .update({
       title: formData.get("title") as string,
       description: formData.get("description") as string || null,
       short_description: formData.get("short_description") as string || null,
+      icon: formData.get("icon") as string || "BookOpen",
+      image_url: formData.get("image_url") as string || null,
+      features: featuresArr,
+      target_audience: formData.get("target_audience") as string || null,
       status: formData.get("status") as string,
       label: formData.get("label") as string,
+      max_participants: parseInt(formData.get("max_participants") as string) || null,
+      sort_order: parseInt(formData.get("sort_order") as string) || 0,
+      start_date: formData.get("start_date") as string || null,
+      end_date: formData.get("end_date") as string || null,
     })
     .eq("id", id);
 

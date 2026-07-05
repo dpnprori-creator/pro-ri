@@ -18,6 +18,7 @@ import {
   Target,
   Sparkles,
   Clock,
+  XCircle,
   ChevronRight,
   Zap,
   Activity,
@@ -463,12 +464,30 @@ export default async function ProgramDetailPage(props: { params: Promise<{ slug:
                     )}
                   </div>
 
-                  <ProgramRegistration
-                    programId={program.id}
-                    registered={isRegistered}
-                    registrationStatus={isRegistered ? "registered" : null}
-                    isLoggedIn={!!userId}
-                  />
+                  {program.label === "akan datang" ? (
+                    <div className="glass rounded-xl p-5 text-center border border-yellow-500/20">
+                      <Clock className="h-8 w-8 text-yellow-400 mx-auto mb-3" />
+                      <h4 className="text-white font-semibold mb-1 text-sm">Segera Dibuka</h4>
+                      <p className="text-xs text-pri-silver">
+                        Pendaftaran untuk program ini akan dibuka setelah program resmi diluncurkan.
+                      </p>
+                    </div>
+                  ) : program.label === "ditutup" || program.label === "selesai" ? (
+                    <div className="glass rounded-xl p-5 text-center border border-red-500/20">
+                      <XCircle className="h-8 w-8 text-red-400 mx-auto mb-3" />
+                      <h4 className="text-white font-semibold mb-1 text-sm">Pendaftaran Ditutup</h4>
+                      <p className="text-xs text-pri-silver">
+                        Program ini sudah tidak menerima pendaftaran baru.
+                      </p>
+                    </div>
+                  ) : (
+                    <ProgramRegistration
+                      programId={program.id}
+                      registered={isRegistered}
+                      registrationStatus={isRegistered ? "registered" : null}
+                      isLoggedIn={!!userId}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </div>

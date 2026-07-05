@@ -26,7 +26,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { APP_NAME_SHORT } from "@/lib/constants";
 import { logout, getCurrentUserRole } from "@/features/auth/actions";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const adminNavItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -153,7 +152,6 @@ export function AdminSidebar() {
       </nav>
 
       <div className="p-4 border-t border-white/10 space-y-2">
-        <ThemeToggle variant="full" className="w-full justify-start" />
         <Link href="/dashboard">
           <Button variant="ghost" className="w-full justify-start text-pri-silver hover:text-white">
             <LayoutDashboard className="h-4 w-4 mr-2" />
