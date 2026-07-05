@@ -568,6 +568,16 @@ body {
   100% { transform: translateX(100%); }
 }
 
+/* Scanning line animation — for loading/pending state */
+@keyframes scanline {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-scanline {
+  animation: scanline 2s ease-in-out infinite;
+}
+
 /* Corner bracket decorations */
 .corner-bracket {
   position: absolute;

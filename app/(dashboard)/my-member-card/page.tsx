@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { MemberCardView } from "@/components/features/membership/member-card-view";
 import { MemberRegistrationForm } from "@/components/features/membership/member-registration-form";
+import { MemberCardPending } from "@/components/features/membership/member-card-pending";
 import {
   CreditCard,
   CheckCircle2,
@@ -65,7 +66,6 @@ export default async function MyMemberCardPage() {
     );
   }
 
-  // Determine card status
   const cardExists = !!card;
   const cardStatus = card?.status as string | undefined;
   const statusInfo = cardStatus ? statusConfig[cardStatus] : null;
@@ -88,77 +88,72 @@ export default async function MyMemberCardPage() {
           <p className="text-pri-silver text-sm mt-1">
             {cardStatus === "approved"
               ? "Kartu identitas resmi anggota Pusat Robotika Rakyat Indonesia"
-              : "Lengkapi data diri untuk mendapatkan kartu anggota resmi"}
+              : cardStatus === "pending"
+                ? "Data kamu sedang diverifikasi oleh tim admin PRO RI"
+                : "Lengkapi data diri untuk mendapatkan kartu anggota resmi"}
           </p>
         </div>
       </div>
 
-      {/* Status Banner (if card exists) */}
-      {cardExists && statusInfo && (
-        <div
-          className={`p-4 rounded-lg flex items-center gap-3 ${statusInfo.color}`}
-        >
-          {statusInfo.icon}
-          <div className="flex-1">
-            <p className="text-sm font-medium">{statusInfo.label}</p>
-            {cardStatus === "rejected" && card?.rejection_reason && (
-              <p className="text-xs mt-0.5 opacity-80">
-                Alasan: {card.rejection_reason}
+      {/* Content — berdasarkan status kartu */}
+      {!cardExists ? (
+        /* Belum punya kartu → tampilkan form pendaftaran */
+        <MemberRegistrationForm userEmail={userEmail} />
+      ) : cardStatus === "pending" ? (
+        /* Pending → tampilkan waiting screen (FORM TIDAK DITAMPILKAN) */
+        <MemberCardPending
+          fullName={card?.full_name || member.full_name}
+          submittedAt={card?.created_at}
+        />
+      ) : cardStatus === "approved" ? (
+        /* Approved → tampilkan kartu */
+        <>
+          <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-green-300">Kartu Anggota Aktif</p>
+              <p className="text-xs text-pri-silver mt-0.5">
+                Kartu anggota kamu sudah terverifikasi dan aktif. Unduh atau cetak kartu di bawah.
               </p>
-            )}
+            </div>
+            <Badge variant="success" className="text-[10px]">Aktif</Badge>
           </div>
-          <Badge
-            variant={
-              cardStatus === "approved"
-                ? "success"
-                : cardStatus === "pending"
-                  ? "warning"
-                  : "danger"
-            }
-            className="text-[10px]"
-          >
-            {statusInfo.label}
-          </Badge>
-        </div>
-      )}
-
-      {/* Content — Card View or Registration Form */}
-      {cardStatus === "approved" && card ? (
-        <MemberCardView card={card as any} />
-      ) : (
+          <MemberCardView card={card as any} />
+        </>
+      ) : cardStatus === "rejected" ? (
+        /* Rejected → tampilkan form dengan data lama + alasan penolakan */
         <MemberRegistrationForm
-          existingCard={
-            card
-              ? ({
-                  id: card.id,
-                  status: card.status,
-                  rejection_reason: card.rejection_reason,
-                  full_name: card.full_name || member.full_name,
-                  nickname: card.nickname,
-                  family_count: card.family_count,
-                  gender: card.gender,
-                  birth_place: card.birth_place,
-                  birth_date: card.birth_date,
-                  religion: card.religion,
-                  nik: card.nik,
-                  npwp: card.npwp,
-                  email: card.email || userEmail,
-                  phone: card.phone || member.phone || "",
-                  address: card.address,
-                  postal_code: card.postal_code,
-                  education: card.education,
-                  occupation: card.occupation || member.occupation,
-                  interests: card.interests,
-                  skills: card.skills,
-                  experience: card.experience,
-                  motivation: card.motivation,
-                  photo_url: card.photo_url,
-                  signature_url: card.signature_url,
-                } as any)
-              : null
-          }
+          existingCard={{
+            id: card.id,
+            status: card.status,
+            rejection_reason: card.rejection_reason,
+            full_name: card.full_name || member.full_name,
+            nickname: card.nickname,
+            family_count: card.family_count,
+            gender: card.gender,
+            birth_place: card.birth_place,
+            birth_date: card.birth_date,
+            religion: card.religion,
+            nik: card.nik,
+            npwp: card.npwp,
+            email: card.email || userEmail,
+            phone: card.phone || member.phone || "",
+            address: card.address,
+            postal_code: card.postal_code,
+            education: card.education,
+            occupation: card.occupation || member.occupation,
+            interests: card.interests,
+            skills: card.skills,
+            experience: card.experience,
+            motivation: card.motivation,
+            photo_url: card.photo_url,
+            signature_url: card.signature_url,
+          } as any}
           userEmail={userEmail}
         />
+      ) : (
+        /* Fallback: no card status — show form */
+        <MemberRegistrationForm userEmail={userEmail} />
       )}
     </div>
   );

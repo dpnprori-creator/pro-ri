@@ -158,6 +158,21 @@ export async function verifyMemberCard(id: string, status: "approved" | "rejecte
     verified_at: new Date().toISOString(),
   };
 
+  // Generate member number when approving
+  let memberNumber: string | null = null;
+  if (status === "approved") {
+    const year = new Date().getFullYear();
+    // Count existing approved cards to generate sequential number
+    const { count } = await supabase
+      .from("member_cards")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "approved");
+
+    const seq = (count ?? 0) + 1;
+    memberNumber = `PRO-RI-${year}-${String(seq).padStart(5, "0")}`;
+    updates.member_number = memberNumber;
+  }
+
   if (rejectionReason) {
     updates.rejection_reason = rejectionReason;
   }
@@ -168,8 +183,13 @@ export async function verifyMemberCard(id: string, status: "approved" | "rejecte
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  // Revalidate BOTH admin and user paths
   revalidatePath("/admin/member-verification");
-  return { success: true };
+  revalidatePath("/my-member-card");
+  revalidatePath("/membership");
+
+  return { success: true, memberNumber };
 }
 
 export async function approveMemberCard(id: string) {

@@ -35,25 +35,71 @@ export function MemberCardView({ card }: { card: MemberCardViewData }) {
   const verifyUrl = `${originUrl || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/verify/${card.member_number}`;
 
   // ============================================
+  // Helper: render card to canvas using html2canvas
+  // ============================================
+  const renderToCanvas = useCallback(async () => {
+    if (!cardRef.current) return null;
+    const html2canvasMod = await import("html2canvas");
+    const html2canvas = html2canvasMod.default || html2canvasMod;
+    return html2canvas(cardRef.current, {
+      backgroundColor: "#ffffff",
+      scale: 2.5,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+    });
+  }, []);
+
+  // ============================================
+  // DOWNLOAD PNG — render card to canvas → PNG blob
+  // ============================================
+  const handleDownloadPNG = useCallback(async () => {
+    const canvas = await renderToCanvas();
+    if (!canvas) return;
+    try {
+      const link = document.createElement("a");
+      link.download = `member-card-${card.member_number || "unknown"}.png`;
+      link.href = canvas.toDataURL("image/png");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Kartu anggota berhasil diunduh (PNG)!");
+    } catch (err) {
+      console.error("PNG download error:", err);
+      toast.error("Gagal mengunduh PNG. Silakan coba screenshot manual.");
+    }
+  }, [renderToCanvas, card.member_number]);
+
+  // ============================================
+  // DOWNLOAD JPG — render card to canvas → JPG blob
+  // ============================================
+  const handleDownloadJPG = useCallback(async () => {
+    const canvas = await renderToCanvas();
+    if (!canvas) return;
+    try {
+      const link = document.createElement("a");
+      link.download = `member-card-${card.member_number || "unknown"}.jpg`;
+      link.href = canvas.toDataURL("image/jpeg", 0.95);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Kartu anggota berhasil diunduh (JPG)!");
+    } catch (err) {
+      console.error("JPG download error:", err);
+      toast.error("Gagal mengunduh JPG. Silakan coba screenshot manual.");
+    }
+  }, [renderToCanvas, card.member_number]);
+
+  // ============================================
   // DOWNLOAD PDF - jspdf render
   // ============================================
   const handleDownloadPDF = useCallback(async () => {
-    if (!cardRef.current) return;
+    const canvas = await renderToCanvas();
+    if (!canvas) return;
 
     try {
-      const html2canvasMod = await import("html2canvas");
-      const html2canvas = html2canvasMod.default || html2canvasMod;
-
       const jsPDFMod = await import("jspdf");
       const { default: jsPDF } = jsPDFMod;
-
-      const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: "#ffffff",
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-      });
 
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
@@ -69,10 +115,10 @@ export function MemberCardView({ card }: { card: MemberCardViewData }) {
       pdf.save(`member-card-${card.member_number}.pdf`);
       toast.success("Kartu anggota berhasil diunduh (PDF)!");
     } catch (err) {
-      console.error("Download error:", err);
-      toast.error("Gagal mengunduh kartu. Silakan coba screenshot manual.");
+      console.error("PDF download error:", err);
+      toast.error("Gagal mengunduh PDF. Silakan coba screenshot manual.");
     }
-  }, [card.member_number]);
+  }, [renderToCanvas, card.member_number]);
 
   // ============================================
   // CETAK / PRINT — clone DOM + inject styles
@@ -490,8 +536,26 @@ export function MemberCardView({ card }: { card: MemberCardViewData }) {
         <Button
           variant="outline"
           size="sm"
+          onClick={handleDownloadPNG}
+          className="border-emerald-500/30 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/60 transition-all"
+        >
+          <Download className="h-3.5 w-3.5 mr-1.5" />
+          Download PNG
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDownloadJPG}
+          className="border-sky-500/30 text-sky-400 hover:text-sky-300 hover:border-sky-500/60 transition-all"
+        >
+          <Download className="h-3.5 w-3.5 mr-1.5" />
+          Download JPG
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={handleDownloadPDF}
-          className="border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 transition-all"
+          className="border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 transition-all dark:border-gray-600 dark:text-gray-300 dark:hover:text-white"
         >
           <Download className="h-3.5 w-3.5 mr-1.5" />
           Download PDF
@@ -500,7 +564,7 @@ export function MemberCardView({ card }: { card: MemberCardViewData }) {
           variant="outline"
           size="sm"
           onClick={handlePrint}
-          className="border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 transition-all"
+          className="border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 transition-all dark:border-gray-600 dark:text-gray-300 dark:hover:text-white"
         >
           <Printer className="h-3.5 w-3.5 mr-1.5" />
           Cetak
@@ -512,7 +576,7 @@ export function MemberCardView({ card }: { card: MemberCardViewData }) {
             navigator.clipboard.writeText(verifyUrl);
             toast.success("Link verifikasi disalin");
           }}
-          className="border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 transition-all"
+          className="border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 transition-all dark:border-gray-600 dark:text-gray-300 dark:hover:text-white"
         >
           <Share2 className="h-3.5 w-3.5 mr-1.5" />
           Salin Link
