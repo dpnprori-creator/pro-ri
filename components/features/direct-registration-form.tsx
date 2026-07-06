@@ -257,7 +257,7 @@ export function DirectRegistrationForm({
               id="reg-member-id"
               value={memberId}
               onChange={(e) => setMemberId(e.target.value)}
-              placeholder="PRI-2026-XXXXX"
+              placeholder="PRORI-2026-XXXXX"
               required
               className="h-9 text-sm font-mono"
             />

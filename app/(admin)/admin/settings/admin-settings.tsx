@@ -100,7 +100,7 @@ export function AdminSettings({ user, settings }: AdminSettingsProps) {
     e.preventDefault();
     setSavingKey("maintenance");
     const form = new FormData(e.currentTarget);
-    const value = {
+    const value: Record<string, unknown> = {
       enabled: maintenanceValue.enabled,
       message: form.get("maintenance_message") as string,
       allowed_roles: ["super_admin", "admin"],

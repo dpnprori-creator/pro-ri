@@ -169,7 +169,7 @@ export async function verifyMemberCard(id: string, status: "approved" | "rejecte
       .eq("status", "approved");
 
     const seq = (count ?? 0) + 1;
-    memberNumber = `PRO-RI-${year}-${String(seq).padStart(5, "0")}`;
+    memberNumber = `PRORI-${year}-${String(seq).padStart(5, "0")}`;
     updates.member_number = memberNumber;
   }
 

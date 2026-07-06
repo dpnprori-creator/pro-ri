@@ -173,7 +173,7 @@ export default async function VerifyMemberPage(props: { params: Promise<{ member
                     ) : (
                       <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-green-500/10 to-gray-900">
                         <span className="text-2xl font-bold text-green-400 font-mono">
-                          {card.full_name.charAt(0)}
+                          {card.full_name?.charAt(0) || "?"}
                         </span>
                       </div>
                     )}

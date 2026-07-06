@@ -54,6 +54,21 @@ export async function lookupMemberByMemberId(memberId: string) {
 export async function registerProgramByMemberId(programId: string, memberId: string, fullName: string) {
   const supabase = await createServerClient();
 
+  // Check program is open for registration
+  const { data: program } = await supabase
+    .from("programs")
+    .select("label, status")
+    .eq("id", programId)
+    .single();
+
+  if (!program) return { error: "Program tidak ditemukan" };
+  if (program.label !== "dibuka") {
+    return { error: "Program ini belum dibuka untuk pendaftaran" };
+  }
+  if (program.status !== "published") {
+    return { error: "Program ini belum tersedia" };
+  }
+
   const { data: member } = await supabase
     .from("members")
     .select("id")
@@ -81,6 +96,21 @@ export async function registerProgramByMemberId(programId: string, memberId: str
 
 export async function registerEventByMemberId(eventId: string, memberId: string, fullName: string) {
   const supabase = await createServerClient();
+
+  // Check event is open for registration (status must be 'published' and end_date not passed)
+  const { data: event } = await supabase
+    .from("events")
+    .select("status, start_date, end_date")
+    .eq("id", eventId)
+    .single();
+
+  if (!event) return { error: "Event tidak ditemukan" };
+  if (event.status !== "published") {
+    return { error: "Event ini belum dibuka untuk pendaftaran" };
+  }
+  if (new Date(event.end_date) < new Date()) {
+    return { error: "Event ini sudah selesai" };
+  }
 
   const { data: member } = await supabase
     .from("members")
@@ -112,6 +142,21 @@ export async function registerProgram(programId: string) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return { error: "Silakan login terlebih dahulu" };
+
+  // Check program is open for registration
+  const { data: program } = await supabase
+    .from("programs")
+    .select("label, status")
+    .eq("id", programId)
+    .single();
+
+  if (!program) return { error: "Program tidak ditemukan" };
+  if (program.label !== "dibuka") {
+    return { error: "Program ini belum dibuka untuk pendaftaran" };
+  }
+  if (program.status !== "published") {
+    return { error: "Program ini belum tersedia" };
+  }
 
   const { data: member } = await supabase
     .from("members")

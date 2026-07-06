@@ -171,11 +171,36 @@ export async function getStats() {
     supabase.from("member_designations").select("*", { count: "exact", head: true }).eq("designation", "mentor"),
   ]);
 
-  const { data: provinces } = await supabase
-    .from("provinces")
-    .select("name, total_members, total_events, total_innovations")
-    .order("total_members", { ascending: false })
-    .limit(5);
+  // Query actual member counts by province directly from members table
+  // (more accurate than relying on provinces.total_members which needs recalculation)
+  const { data: membersByProvince } = await supabase
+    .from("members")
+    .select("province_id, province_id!inner(name)")
+    .eq("status", "active")
+    .not("province_id", "is", null);
+
+  // Count members per province in JavaScript for reliable aggregation
+  const provinceCounts: Record<string, { name: string; count: number }> = {};
+  for (const row of membersByProvince ?? []) {
+    const provData = row.province_id as unknown as { name: string };
+    const provName = provData?.name || "Unknown";
+    const key = provName;
+    if (!provinceCounts[key]) {
+      provinceCounts[key] = { name: provName, count: 0 };
+    }
+    provinceCounts[key].count++;
+  }
+
+  // Sort by count descending and take top 5
+  const provinces = Object.values(provinceCounts)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+    .map((p) => ({
+      name: p.name,
+      total_members: p.count,
+      total_events: 0,
+      total_innovations: 0,
+    }));
 
   const { data: growth } = await supabase
     .from("members")

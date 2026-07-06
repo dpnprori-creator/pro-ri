@@ -168,7 +168,7 @@ export function RegistrationModal({
     }
   };
 
-  const isOpen = label === "dibuka" || label === "akan datang" || !label;
+  const isOpen = label === "dibuka" || !label;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
@@ -251,7 +251,7 @@ export function RegistrationModal({
                     id="modal-member-id"
                     value={memberId}
                     onChange={(e) => setMemberId(e.target.value)}
-                    placeholder="PRI-2026-XXXXX"
+                    placeholder="PRORI-2026-XXXXX"
                     required
                     className="h-9 text-sm font-mono"
                   />

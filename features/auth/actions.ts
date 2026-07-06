@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -129,7 +130,7 @@ export async function register(formData: FormData) {
       // 3b. Trigger didn't create the member — insert directly
       const insertFields: MemberInsert = {
         auth_id: authData.user.id,
-        member_id: `PRI-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, "0")}`,
+        member_id: `PRORI-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, "0")}`,
         full_name: fullName,
         email,
         phone,
@@ -185,6 +186,7 @@ export async function logout() {
   }
 
   revalidatePath("/", "layout");
+  redirect("/");
 }
 
 export async function getCurrentUserRole(): Promise<{ role: string | null }> {

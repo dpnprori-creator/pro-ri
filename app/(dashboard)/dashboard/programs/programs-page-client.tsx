@@ -239,7 +239,7 @@ export function ProgramsPageClient({
               const Icon = iconMap[program.icon] || GraduationCap;
               const existingReg = registrations[program.id];
               const isRegistered = !!existingReg;
-              const isOpen = program.label === "dibuka" || program.label === "akan datang" || !program.label;
+              const isOpen = program.label === "dibuka" || !program.label;
 
               return (
                 <Card key={program.id} className="glass-tech overflow-hidden group">

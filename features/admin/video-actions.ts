@@ -4,6 +4,33 @@ import { revalidatePath } from "next/cache";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { uploadToSupabaseStorage } from "./storage";
 
+/**
+ * Extract YouTube video ID from various YouTube URL formats
+ */
+function extractYouTubeId(url: string): string | null {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/, // bare video ID
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+/**
+ * Auto-generate poster/thumbnail URL from video URL
+ */
+function autoGeneratePosterUrl(videoUrl: string): string | null {
+  const ytId = extractYouTubeId(videoUrl);
+  if (ytId) {
+    return `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`;
+  }
+  return null;
+}
+
 export async function getAdminVideos() {
   const supabase = await createServerClient();
   const { data } = await supabase
@@ -32,7 +59,7 @@ export async function createVideo(formData: FormData) {
   }
 
   // Handle poster image upload
-  let posterUrl = formData.get("poster_url") as string || formData.get("posterUrl") as string;
+  let posterUrl: string | null = formData.get("poster_url") as string || formData.get("posterUrl") as string;
   const posterFile = formData.get("poster") as File | null;
 
   if (!posterUrl && posterFile && posterFile.size > 0 && posterFile.name) {
@@ -45,13 +72,18 @@ export async function createVideo(formData: FormData) {
     }
   }
 
+  // Auto-generate poster from YouTube URL if no poster provided
+  if (!posterUrl && videoUrl) {
+    posterUrl = autoGeneratePosterUrl(videoUrl);
+  }
+
   if (!videoUrl) return { error: "URL video atau file video wajib diisi" };
 
   const { error } = await supabase.from("videos").insert({
     title: formData.get("title") as string,
     description: formData.get("description") as string || null,
     video_url: videoUrl,
-    poster_url: posterUrl || null,
+    poster_url: posterUrl,
     sort_order: parseInt(formData.get("sort_order") as string || formData.get("sortOrder") as string) || 0,
     is_active: formData.get("is_active") === "true" || formData.get("isActive") === "true",
   });
@@ -79,7 +111,7 @@ export async function updateVideo(id: string, formData: FormData) {
   }
 
   // Handle poster image upload
-  let posterUrl = formData.get("poster_url") as string || formData.get("posterUrl") as string;
+  let posterUrl: string | null = formData.get("poster_url") as string || formData.get("posterUrl") as string;
   const posterFile = formData.get("poster") as File | null;
 
   if (!posterUrl && posterFile && posterFile.size > 0 && posterFile.name) {
@@ -92,13 +124,18 @@ export async function updateVideo(id: string, formData: FormData) {
     }
   }
 
+  // Auto-generate poster from YouTube URL if no poster provided
+  if (!posterUrl && videoUrl) {
+    posterUrl = autoGeneratePosterUrl(videoUrl);
+  }
+
   const { error } = await supabase
     .from("videos")
     .update({
       title: formData.get("title") as string,
       description: formData.get("description") as string || null,
       video_url: videoUrl,
-      poster_url: posterUrl || null,
+      poster_url: posterUrl,
       sort_order: parseInt(formData.get("sort_order") as string || formData.get("sortOrder") as string) || 0,
       is_active: formData.get("is_active") === "true" || formData.get("isActive") === "true",
     })

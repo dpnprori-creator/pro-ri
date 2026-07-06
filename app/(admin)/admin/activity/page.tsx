@@ -1,16 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { getActivityLogs } from "@/features/admin/actions";
 import { ActivityLogs } from "./activity-logs";
-
-async function getActivityLogs() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("activity_logs")
-    .select("*, member_id(full_name)")
-    .order("created_at", { ascending: false })
-    .limit(100);
-
-  return data ?? [];
-}
 
 export default async function AdminActivityPage() {
   const logs = await getActivityLogs();
@@ -22,7 +11,7 @@ export default async function AdminActivityPage() {
         <p className="text-pri-silver mt-1">Aktivitas terkini</p>
       </div>
 
-      <ActivityLogs logs={logs} />
+      <ActivityLogs logs={logs as any} />
     </div>
   );
 }

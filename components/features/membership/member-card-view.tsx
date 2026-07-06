@@ -475,7 +475,7 @@ export function MemberCardView({ card }: { card: MemberCardViewData }) {
                 ) : (
                   <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-[#E31E24]/5 to-gray-100">
                     <span className="text-3xl font-bold text-[#E31E24] font-mono">
-                      {card.full_name.charAt(0)}
+                      {card.full_name?.charAt(0) || "?"}
                     </span>
                   </div>
                 )}
@@ -591,7 +591,7 @@ export function MemberCardView({ card }: { card: MemberCardViewData }) {
               <div className="pt-1">
                 <div className="flex items-center gap-2 text-[7px] text-gray-300 font-mono tracking-wider">
                   <Cpu className="h-2.5 w-2.5" />
-                  <span>ID: {card.member_number.slice(-6)}</span>
+                  <span>ID: {(card.member_number || "N/A").slice(-6)}</span>
                   <span className="text-gray-200">|</span>
                   <span>v2.0</span>
                   <span className="text-gray-200">|</span>

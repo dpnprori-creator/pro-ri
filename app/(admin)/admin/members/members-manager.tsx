@@ -2,13 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, UserX, Download } from "lucide-react";
+import { Eye, UserX, Download, User, Mail, Fingerprint, MapPin, BadgeCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { deleteMember, updateMemberStatus } from "@/features/admin/actions";
 import { downloadCSV, formatMembersCSV } from "@/lib/export-utils";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface MemberItem {
   id: string;
@@ -75,6 +81,13 @@ const columns: Column<MemberItem>[] = [
 
 export function MembersManager({ members }: { members: MemberItem[] }) {
   const router = useRouter();
+  const [detailMember, setDetailMember] = useState<MemberItem | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const handleViewDetail = (item: MemberItem) => {
+    setDetailMember(item);
+    setDetailOpen(true);
+  };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Yakin ingin menghapus member ini?")) return;
@@ -94,6 +107,9 @@ export function MembersManager({ members }: { members: MemberItem[] }) {
       toast.error(result.error);
     } else {
       toast.success(`Status member diubah ke ${newStatus}`);
+      if (detailMember?.id === id) {
+        setDetailMember((prev) => prev ? { ...prev, status: newStatus } : null);
+      }
       router.refresh();
     }
   };
@@ -129,7 +145,7 @@ export function MembersManager({ members }: { members: MemberItem[] }) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push(`/admin/members/${item.id}`)}
+              onClick={() => handleViewDetail(item)}
             >
               <Eye className="h-3.5 w-3.5 mr-1" />
               Detail
@@ -151,8 +167,98 @@ export function MembersManager({ members }: { members: MemberItem[] }) {
               Hapus
             </Button>
           </div>
-        )}
+        )        }
       />
+
+
+      {/* Member Detail Dialog */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <User className="h-5 w-5 text-pri-red" />
+              Detail Member
+            </DialogTitle>
+          </DialogHeader>
+          {detailMember && (
+            <div className="space-y-6">
+              {/* Avatar & Name */}
+              <div className="flex flex-col items-center text-center">
+                <div className="h-20 w-20 rounded-full bg-pri-red/10 flex items-center justify-center mb-3">
+                  <span className="text-2xl font-bold text-pri-red">
+                    {detailMember.full_name?.charAt(0) || "?"}
+                  </span>
+                </div>
+                <h2 className="text-lg font-semibold text-white">{detailMember.full_name}</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant={detailMember.status === "active" ? "success" : "secondary"}>
+                    {detailMember.status === "active" ? "Aktif" : detailMember.status}
+                  </Badge>
+                  {detailMember.role_id && (
+                    <Badge variant={detailMember.role_id.name === "super_admin" ? "danger" : "warning"}>
+                      {detailMember.role_id.name}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="space-y-3 text-sm bg-white/[0.03] rounded-lg p-4 border border-white/5">
+                <div className="flex items-center gap-3 text-pri-silver">
+                  <Mail className="h-4 w-4 text-pri-red shrink-0" />
+                  <span>{detailMember.email}</span>
+                </div>
+                <div className="flex items-center gap-3 text-pri-silver">
+                  <Fingerprint className="h-4 w-4 text-pri-red shrink-0" />
+                  <span className="font-mono">{detailMember.member_id}</span>
+                </div>
+                {detailMember.phone && (
+                  <div className="flex items-center gap-3 text-pri-silver">
+                    <BadgeCheck className="h-4 w-4 text-pri-red shrink-0" />
+                    <span>{detailMember.phone}</span>
+                  </div>
+                )}
+                {detailMember.province_id && (
+                  <div className="flex items-center gap-3 text-pri-silver">
+                    <MapPin className="h-4 w-4 text-pri-red shrink-0" />
+                    <span>{detailMember.province_id.name}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-3 text-pri-silver">
+                  <BadgeCheck className="h-4 w-4 text-pri-red shrink-0" />
+                  <span>Bergabung {new Date(detailMember.created_at).toLocaleDateString("id-ID")}</span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 border-white/10 text-pri-silver hover:text-white"
+                  onClick={() => {
+                    handleToggleStatus(detailMember.id, detailMember.status);
+                  }}
+                >
+                  <UserX className="h-3.5 w-3.5 mr-1" />
+                  {detailMember.status === "active" ? "Nonaktifkan" : "Aktifkan"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 border-red-500/20 text-red-400 hover:bg-red-500/10"
+                  onClick={() => {
+                    handleDelete(detailMember.id);
+                    setDetailOpen(false);
+                  }}
+                >
+                  Hapus
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

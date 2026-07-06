@@ -12,6 +12,21 @@ export async function registerForEvent(eventId: string) {
 
   if (!user) return { error: "Silakan login terlebih dahulu" };
 
+  // Check event is open for registration
+  const { data: event } = await supabase
+    .from("events")
+    .select("status, start_date, end_date")
+    .eq("id", eventId)
+    .single();
+
+  if (!event) return { error: "Event tidak ditemukan" };
+  if (event.status !== "published") {
+    return { error: "Event ini belum dibuka untuk pendaftaran" };
+  }
+  if (new Date(event.end_date) < new Date()) {
+    return { error: "Event ini sudah selesai" };
+  }
+
   const { data: member } = await supabase
     .from("members")
     .select("id")

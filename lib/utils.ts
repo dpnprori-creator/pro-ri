@@ -23,7 +23,7 @@ export function formatDateTime(date: string | Date): string {
 }
 
 export function generateMemberId(year: number, sequence: number): string {
-  return `PRI-${year}-${String(sequence).padStart(5, "0")}`;
+  return `PRORI-${year}-${String(sequence).padStart(5, "0")}`;
 }
 
 export function slugify(text: string): string {

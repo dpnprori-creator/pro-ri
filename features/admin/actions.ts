@@ -54,7 +54,7 @@ export async function createMember(formData: FormData) {
     auth_id: authData.user.id,
     email,
     full_name: fullName,
-    member_id: `PRI-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, "0")}`,
+    member_id: `PRORI-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, "0")}`,
     phone: formData.get("phone") as string || null,
     province_id: formData.get("province_id") as string || null,
     regency_id: formData.get("regency_id") as string || null,
@@ -349,16 +349,22 @@ export async function updateHeroGalleryItem(id: string, formData: FormData) {
     }
   }
   
-  // For update, imageUrl boleh tetap pakai URL lama dari DB (via formData)
-  const { error } = await supabase.from("hero_gallery").update({
+  // Build update payload — ONLY include image_url if a new image was provided!
+  const updates: Record<string, string | number | boolean | null | undefined> = {
     title: formData.get("title") as string,
     description: formData.get("description") as string || null,
-    image_url: imageUrl,
     link_url: formData.get("link_url") as string || formData.get("linkUrl") as string || null,
     link_label: formData.get("link_label") as string || formData.get("linkLabel") as string || undefined,
     sort_order: parseInt(formData.get("sort_order") as string || formData.get("sortOrder") as string) || 0,
     is_active: formData.get("is_active") === "true" || formData.get("isActive") === "true",
-  }).eq("id", id);
+  };
+  
+  // Only set image_url if a new image file or URL was provided
+  if (imageUrl) {
+    updates.image_url = imageUrl;
+  }
+  
+  const { error } = await (supabase as any).from("hero_gallery").update(updates).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery");
   return { success: true };
@@ -412,15 +418,22 @@ export async function updateActivityGalleryItem(id: string, formData: FormData) 
     }
   }
 
-  const { error } = await supabase.from("activity_gallery").update({
+  // Build update payload — ONLY include image_url if a new image was provided!
+  const updates: Record<string, string | number | boolean | null | undefined> = {
     title: formData.get("title") as string,
     description: formData.get("description") as string || null,
-    image_url: imageUrl,
     category: formData.get("category") as string,
     sort_order: parseInt(formData.get("sort_order") as string || formData.get("sortOrder") as string) || 0,
     date_taken: formData.get("date_taken") as string || formData.get("dateTaken") as string || null,
     is_active: formData.get("is_active") === "true" || formData.get("isActive") === "true",
-  }).eq("id", id);
+  };
+  
+  // Only set image_url if a new image file or URL was provided
+  if (imageUrl) {
+    updates.image_url = imageUrl;
+  }
+
+  const { error } = await (supabase as any).from("activity_gallery").update(updates).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery-kegiatan");
   return { success: true };
