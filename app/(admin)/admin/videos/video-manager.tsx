@@ -268,6 +268,7 @@ export function VideoManager({ videos }: { videos: VideoRow[] }) {
                 <input
                   ref={videoInputRef}
                   type="file"
+                  name="video"
                   accept="video/mp4,video/webm,video/quicktime"
                   onChange={handleVideoFileChange}
                   className="hidden"
@@ -332,6 +333,7 @@ export function VideoManager({ videos }: { videos: VideoRow[] }) {
                 <input
                   ref={posterInputRef}
                   type="file"
+                  name="poster"
                   accept="image/jpeg,image/png,image/webp"
                   onChange={handlePosterFileChange}
                   className="hidden"

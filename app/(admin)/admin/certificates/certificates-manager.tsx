@@ -133,10 +133,6 @@ export function CertificatesManager({ certificates }: { certificates: Certificat
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="certificateNumber">Nomor Sertifikat</Label>
-              <Input id="certificateNumber" name="certificateNumber" defaultValue={editing?.certificate_number} required placeholder="PRO-2026-XXXX" />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="memberId">Member ID</Label>
               <Input id="memberId" name="memberId" defaultValue={editing?.member_id} required placeholder="PRORI-2026-XXXXX" />
             </div>

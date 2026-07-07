@@ -278,9 +278,20 @@ export async function getCertificates() {
 export async function createCertificate(formData: FormData) {
   const adminSupabase = createAdminClient();
 
+  // Auto-generate certificate number if not provided
+  let certNumber = formData.get("certificate_number") as string;
+  if (!certNumber) {
+    const year = new Date().getFullYear();
+    const { count } = await adminSupabase
+      .from("certificates")
+      .select("*", { count: "exact", head: true });
+    const seq = (count ?? 0) + 1;
+    certNumber = `CERT-${year}-${String(seq).padStart(5, "0")}`;
+  }
+
   const { error } = await adminSupabase.from("certificates").insert({
-    certificate_number: formData.get("certificate_number") as string,
-    member_id: formData.get("member_id") as string,
+    certificate_number: certNumber,
+    member_id: formData.get("member_id") as string || formData.get("memberId") as string,
     event_id: formData.get("event_id") as string || null,
     type: formData.get("type") as string,
     title: formData.get("title") as string,
@@ -319,10 +330,13 @@ export async function createHeroGalleryItem(formData: FormData) {
       imageUrl = await uploadToSupabaseStorage("hero-gallery", path, imageFile);
     } catch (err) {
       console.error("Image upload error:", err);
+      return { error: "Gagal mengupload gambar: " + (err instanceof Error ? err.message : "Unknown error") };
     }
   }
 
-  if (!imageUrl) return { error: "Gambar hero wajib diisi. Upload gambar atau masukkan URL gambar." };
+  if (!imageUrl) {
+    return { error: "Gambar hero wajib diisi. Upload gambar atau masukkan URL gambar." };
+  }
 
   const { error } = await supabase.from("hero_gallery").insert({
     title: formData.get("title") as string,
@@ -353,6 +367,7 @@ export async function updateHeroGalleryItem(id: string, formData: FormData) {
       imageUrl = await uploadToSupabaseStorage("hero-gallery", path, imageFile);
     } catch (err) {
       console.error("Image upload error:", err);
+      return { error: "Gagal mengupload gambar: " + (err instanceof Error ? err.message : "Unknown error") };
     }
   }
   

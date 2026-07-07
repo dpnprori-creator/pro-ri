@@ -250,6 +250,7 @@ export function GalleryManager({ items }: { items: GalleryItem[] }) {
                 <input
                   ref={fileInputRef}
                   type="file"
+                  name="image"
                   accept="image/jpeg,image/png,image/webp"
                   onChange={handleImageChange}
                   className="hidden"
@@ -264,6 +265,7 @@ export function GalleryManager({ items }: { items: GalleryItem[] }) {
                 </div>
               </div>
               <Input
+                name="imageUrl"
                 value={imageUrlInput}
                 onChange={(e) => {
                   setImageUrlInput(e.target.value);

@@ -55,7 +55,7 @@ export async function submitComment(formData: FormData) {
     name,
     email: email || null,
     content,
-    is_approved: false,
+    is_approved: true,
   });
 
   if (error) return { error: "Gagal menambahkan komentar" };

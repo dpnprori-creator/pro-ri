@@ -42,16 +42,31 @@ export async function createProgram(formData: FormData) {
     if (featuresRaw) featuresArr = JSON.parse(featuresRaw as string);
   } catch {}
 
+  // Handle image upload
+  let imageUrl = formData.get("image_url") as string || formData.get("imageUrl") as string;
+  const imageFile = formData.get("image") as File | null;
+
+  if (!imageUrl && imageFile && imageFile.size > 0 && imageFile.name) {
+    try {
+      const { uploadToSupabaseStorage } = await import("@/features/admin/storage");
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `programs/${Date.now()}.${ext}`;
+      imageUrl = await uploadToSupabaseStorage("news", path, imageFile);
+    } catch (err) {
+      console.error("Image upload error:", err);
+    }
+  }
+
   const { error } = await supabase.from("programs").insert({
     title: formData.get("title") as string,
     slug: (formData.get("title") as string).toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
     description: formData.get("description") as string || null,
     short_description: formData.get("short_description") as string || null,
     icon: formData.get("icon") as string || "BookOpen",
-    image_url: formData.get("image_url") as string || null,
+    image_url: imageUrl || null,
     features: featuresArr,
     target_audience: formData.get("target_audience") as string || null,
-    status: formData.get("status") as string || "active",
+    status: formData.get("status") as string || "draft",
     label: formData.get("label") as string || "dibuka",
     max_participants: parseInt(formData.get("max_participants") as string) || null,
     sort_order: parseInt(formData.get("sort_order") as string) || 0,
@@ -74,24 +89,41 @@ export async function updateProgram(id: string, formData: FormData) {
     if (featuresRaw) featuresArr = JSON.parse(featuresRaw as string);
   } catch {}
 
-  const { error } = await supabase
-    .from("programs")
-    .update({
-      title: formData.get("title") as string,
-      description: formData.get("description") as string || null,
-      short_description: formData.get("short_description") as string || null,
-      icon: formData.get("icon") as string || "BookOpen",
-      image_url: formData.get("image_url") as string || null,
-      features: featuresArr,
-      target_audience: formData.get("target_audience") as string || null,
-      status: formData.get("status") as string,
-      label: formData.get("label") as string,
-      max_participants: parseInt(formData.get("max_participants") as string) || null,
-      sort_order: parseInt(formData.get("sort_order") as string) || 0,
-      start_date: formData.get("start_date") as string || null,
-      end_date: formData.get("end_date") as string || null,
-    })
-    .eq("id", id);
+  // Handle image upload
+  let imageUrl = formData.get("image_url") as string || formData.get("imageUrl") as string;
+  const imageFile = formData.get("image") as File | null;
+
+  if (!imageUrl && imageFile && imageFile.size > 0 && imageFile.name) {
+    try {
+      const { uploadToSupabaseStorage } = await import("@/features/admin/storage");
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `programs/${Date.now()}.${ext}`;
+      imageUrl = await uploadToSupabaseStorage("news", path, imageFile);
+    } catch (err) {
+      console.error("Image upload error:", err);
+    }
+  }
+
+  const updates: Record<string, string | number | boolean | string[] | null | undefined> = {
+    title: formData.get("title") as string,
+    description: formData.get("description") as string || null,
+    short_description: formData.get("short_description") as string || null,
+    icon: formData.get("icon") as string || "BookOpen",
+    features: featuresArr,
+    target_audience: formData.get("target_audience") as string || null,
+    status: formData.get("status") as string,
+    label: formData.get("label") as string,
+    max_participants: parseInt(formData.get("max_participants") as string) || null,
+    sort_order: parseInt(formData.get("sort_order") as string) || 0,
+    start_date: formData.get("start_date") as string || null,
+    end_date: formData.get("end_date") as string || null,
+  };
+
+  if (imageUrl) {
+    updates.image_url = imageUrl;
+  }
+
+  const { error } = await (supabase as any).from("programs").update(updates).eq("id", id);
 
   if (error) return { error: error.message };
   revalidatePath("/admin/programs");

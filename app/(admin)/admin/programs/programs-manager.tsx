@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Eye, UserCheck, ExternalLink, Download, X } from "lucide-react";
+import Image from "next/image";
+import { Plus, Eye, UserCheck, ExternalLink, Download, Upload, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,6 +105,9 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [benefits, setBenefits] = useState<string[]>([]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch full program data when editing
   const [editProgramData, setEditProgramData] = useState<any>(null);
@@ -112,6 +116,8 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
     setSelectedProgram(null);
     setEditProgramData(null);
     setBenefits([]);
+    setImageFile(null);
+    setImagePreview(null);
     setDialogOpen(true);
   };
 
@@ -123,10 +129,13 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
       const fullData = await getProgramBySlug(program.slug);
       setEditProgramData(fullData);
       setBenefits(fullData?.features || []);
+      setImagePreview(fullData?.image_url || null);
     } catch {
       setEditProgramData(null);
       setBenefits([]);
+      setImagePreview(null);
     }
+    setImageFile(null);
     setDialogOpen(true);
   };
 
@@ -144,11 +153,30 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Gambar maksimal 5MB");
+      return;
+    }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
 
     const form = new FormData(e.currentTarget);
+    if (imageFile) form.append("image", imageFile);
+
     const result = selectedProgram
       ? await updateProgram(selectedProgram.id, form)
       : await createProgram(form);
@@ -160,6 +188,8 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
     } else {
       toast.success(selectedProgram ? "Program diupdate" : "Program dibuat");
       setDialogOpen(false);
+      setImageFile(null);
+      setImagePreview(null);
       router.refresh();
     }
   };
@@ -317,13 +347,80 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="imageUrl">URL Gambar</Label>
-                <Input
-                  id="imageUrl"
-                  name="imageUrl"
-                  placeholder="https://..."
-                />
+                <Label htmlFor="status">Status</Label>
+                <select
+                  id="status"
+                  name="status"
+                  defaultValue={selectedProgram?.status || "draft"}
+                  className="flex h-10 w-full rounded-md border border-white/20 bg-pri-dark px-3 py-2 text-sm text-white"
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Terbitkan</option>
+                  <option value="archived">Arsip</option>
+                </select>
               </div>
+            </div>
+
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <Label>Gambar Program</Label>
+              {imagePreview ? (
+                <div className="relative rounded-lg overflow-hidden border border-white/10">
+                  <Image
+                    src={imagePreview}
+                    alt="Preview"
+                    width={400}
+                    height={200}
+                    className="object-cover max-h-48 w-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/60 flex items-center justify-center hover:bg-red-500 transition-colors"
+                  >
+                    <X className="h-4 w-4 text-white" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="relative border-2 border-dashed border-white/20 rounded-lg p-6 text-center cursor-pointer hover:border-pri-red/50 transition-colors group"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-pri-red/10 transition-colors">
+                      <Upload className="h-5 w-5 text-pri-silver group-hover:text-pri-red transition-colors" />
+                    </div>
+                    <p className="text-sm text-pri-silver">Klik untuk upload gambar</p>
+                    <p className="text-xs text-pri-silver/50">PNG, JPG, WebP — Maks 5MB</p>
+                  </div>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                name="image"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+              <div className="relative my-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-pri-dark px-2 text-pri-silver/50">atau masukkan URL gambar</span>
+                </div>
+              </div>
+              <Input
+                name="imageUrl"
+                placeholder="https://example.com/gambar.jpg"
+                className="bg-pri-dark/50 border-white/10 text-sm"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setImagePreview(e.target.value);
+                  }
+                }}
+              />
             </div>
 
             {/* Benefits / Features — Dynamic Add/Remove dengan React State */}
@@ -386,19 +483,6 @@ export function ProgramsManager({ programs }: { programs: ProgramRow[] }) {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  name="status"
-                  defaultValue={selectedProgram?.status || "draft"}
-                  className="flex h-10 w-full rounded-md border border-white/20 bg-pri-dark px-3 py-2 text-sm text-white"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Terbitkan</option>
-                  <option value="archived">Arsip</option>
-                </select>
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="label">Label</Label>
                 <select

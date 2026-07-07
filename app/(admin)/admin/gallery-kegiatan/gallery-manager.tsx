@@ -276,6 +276,7 @@ export function GalleryKegiatanManager({ items }: { items: GalleryItem[] }) {
                 <input
                   ref={fileInputRef}
                   type="file"
+                  name="image"
                   accept="image/jpeg,image/png,image/webp"
                   onChange={handleImageChange}
                   className="hidden"
