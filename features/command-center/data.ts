@@ -92,18 +92,64 @@ export async function getProvinceStats() {
   
   if (!provinces) return [];
   
-  // Get active member counts by province directly from members table
-  const { data: members } = await supabase
-    .from("members")
-    .select("province_id")
-    .eq("status", "active")
-    .not("province_id", "is", null);
+  // Get counts per province from all relevant tables in parallel
+  const [
+    { data: members },
+    { data: events },
+    { data: innovations },
+    { data: designations },
+  ] = await Promise.all([
+    supabase.from("members").select("province_id, role_id").eq("status", "active").not("province_id", "is", null),
+    supabase.from("events").select("province_id").not("province_id", "is", null),
+    supabase.from("innovations").select("province_id").neq("status", "archived").not("province_id", "is", null),
+    supabase.from("member_designations").select("member_id, designation"),
+  ]);
   
   // Count per province using JS
   const memberCounts: Record<string, number> = {};
+  const trainerCounts: Record<string, number> = {};
+  const mentorCounts: Record<string, number> = {};
+  const eventCounts: Record<string, number> = {};
+  const innovationCounts: Record<string, number> = {};
+  
   for (const m of members ?? []) {
     if (m.province_id) {
       memberCounts[m.province_id] = (memberCounts[m.province_id] || 0) + 1;
+    }
+  }
+  
+  for (const e of events ?? []) {
+    if (e.province_id) {
+      eventCounts[e.province_id] = (eventCounts[e.province_id] || 0) + 1;
+    }
+  }
+  
+  for (const i of innovations ?? []) {
+    if (i.province_id) {
+      innovationCounts[i.province_id] = (innovationCounts[i.province_id] || 0) + 1;
+    }
+  }
+  
+  // Map member designations (trainer/mentor) to their province via member's province_id
+  const memberProvinceMap = new Map((members ?? []).map(m => [m.province_id, true]));
+  // Re-query members with their province for designation mapping
+  const { data: membersWithRole } = await supabase
+    .from("members")
+    .select("id, province_id")
+    .eq("status", "active")
+    .not("province_id", "is", null);
+  
+  // Build member_id -> province_id mapping
+  const memberToProvince = new Map((membersWithRole ?? []).map(m => [m.id, m.province_id]));
+  
+  for (const d of designations ?? []) {
+    const provId = memberToProvince.get(d.member_id);
+    if (provId) {
+      if (d.designation === "trainer") {
+        trainerCounts[provId] = (trainerCounts[provId] || 0) + 1;
+      } else if (d.designation === "mentor") {
+        mentorCounts[provId] = (mentorCounts[provId] || 0) + 1;
+      }
     }
   }
   
@@ -111,10 +157,10 @@ export async function getProvinceStats() {
   const result = provinces.map((p) => ({
     ...p,
     total_members: memberCounts[p.id] || 0,
-    total_trainers: 0,
-    total_mentors: 0,
-    total_events: 0,
-    total_innovations: 0,
+    total_trainers: trainerCounts[p.id] || 0,
+    total_mentors: mentorCounts[p.id] || 0,
+    total_events: eventCounts[p.id] || 0,
+    total_innovations: innovationCounts[p.id] || 0,
   }));
   
   // Sort by member count descending

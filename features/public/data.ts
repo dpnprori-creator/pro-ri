@@ -198,6 +198,35 @@ export async function getPublicFeaturedNews(limit?: number) {
   return data ?? [];
 }
 
+export async function getRelatedNews(category: string, excludeId: string, limit: number = 4) {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("news")
+    .select("id, title, slug, excerpt, image_url, category, published_at")
+    .eq("status", "published")
+    .eq("category", category)
+    .neq("id", excludeId)
+    .order("published_at", { ascending: false })
+    .limit(limit);
+  return data ?? [];
+}
+
+export async function getPopularNews(limit: number = 5) {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("news")
+    .select("id, title, slug, excerpt, image_url, category, view_count, published_at")
+    .eq("status", "published")
+    .order("view_count", { ascending: false })
+    .limit(limit);
+  return data ?? [];
+}
+
+export async function incrementNewsView(slug: string) {
+  const supabase = await createServerClient();
+  await (supabase.rpc as any)("increment_news_view", { news_slug: slug });
+}
+
 export async function getPublicNewsPaginated({ page = 1, pageSize = 12, category }: { page?: number; pageSize?: number; category?: string }) {
   const supabase = await createServerClient();
 
