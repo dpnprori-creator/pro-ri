@@ -458,7 +458,13 @@ export async function createActivityGalleryItem(formData: FormData) {
       imageUrl = await uploadToSupabaseStorage("activity-gallery", path, imageFile);
     } catch (err) {
       console.error("Image upload error:", err);
+      return { error: "Gagal mengupload gambar: " + (err instanceof Error ? err.message : "Unknown error") };
     }
+  }
+
+  // image_url is NOT NULL in database — validate it exists
+  if (!imageUrl) {
+    return { error: "Gambar wajib diupload. Pilih file gambar terlebih dahulu." };
   }
 
   const { error } = await supabase.from("activity_gallery").insert({
@@ -490,6 +496,7 @@ export async function updateActivityGalleryItem(id: string, formData: FormData) 
       imageUrl = await uploadToSupabaseStorage("activity-gallery", path, imageFile);
     } catch (err) {
       console.error("Image upload error:", err);
+      return { error: "Gagal mengupload gambar: " + (err instanceof Error ? err.message : "Unknown error") };
     }
   }
 
@@ -671,6 +678,7 @@ export async function createNews(formData: FormData) {
       imageUrl = await uploadToSupabaseStorage("news", path, imageFile);
     } catch (err) {
       console.error("Image upload error:", err);
+      return { error: "Gagal mengupload gambar: " + (err instanceof Error ? err.message : "Unknown error") };
     }
   }
 
@@ -705,6 +713,7 @@ export async function updateNews(id: string, formData: FormData) {
       imageUrl = await uploadToSupabaseStorage("news", path, imageFile);
     } catch (err) {
       console.error("Image upload error:", err);
+      return { error: "Gagal mengupload gambar: " + (err instanceof Error ? err.message : "Unknown error") };
     }
   }
 

@@ -55,6 +55,7 @@ export async function createVideo(formData: FormData) {
       videoUrl = await uploadToSupabaseStorage("videos", path, videoFile);
     } catch (err) {
       console.error("Video upload error:", err);
+      return { error: "Gagal mengupload video: " + (err instanceof Error ? err.message : "Unknown error") };
     }
   }
 
@@ -69,6 +70,7 @@ export async function createVideo(formData: FormData) {
       posterUrl = await uploadToSupabaseStorage("videos", path, posterFile);
     } catch (err) {
       console.error("Poster upload error:", err);
+      // Poster is optional, just log the error
     }
   }
 
@@ -107,6 +109,7 @@ export async function updateVideo(id: string, formData: FormData) {
       videoUrl = await uploadToSupabaseStorage("videos", path, videoFile);
     } catch (err) {
       console.error("Video upload error:", err);
+      return { error: "Gagal mengupload video: " + (err instanceof Error ? err.message : "Unknown error") };
     }
   }
 
@@ -121,6 +124,7 @@ export async function updateVideo(id: string, formData: FormData) {
       posterUrl = await uploadToSupabaseStorage("videos", path, posterFile);
     } catch (err) {
       console.error("Poster upload error:", err);
+      // Poster is optional, just log the error
     }
   }
 

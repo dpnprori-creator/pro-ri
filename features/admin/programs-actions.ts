@@ -54,6 +54,7 @@ export async function createProgram(formData: FormData) {
       imageUrl = await uploadToSupabaseStorage("news", path, imageFile);
     } catch (err) {
       console.error("Image upload error:", err);
+      return { error: "Gagal mengupload gambar: " + (err instanceof Error ? err.message : "Unknown error") };
     }
   }
 
@@ -101,6 +102,7 @@ export async function updateProgram(id: string, formData: FormData) {
       imageUrl = await uploadToSupabaseStorage("news", path, imageFile);
     } catch (err) {
       console.error("Image upload error:", err);
+      return { error: "Gagal mengupload gambar: " + (err instanceof Error ? err.message : "Unknown error") };
     }
   }
 
