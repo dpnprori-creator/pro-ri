@@ -61,11 +61,36 @@ export async function recalculateAllCounters() {
   const adminSupabase = createAdminClient();
 
   try {
-    // Call the database function
-    const { error } = await adminSupabase.rpc("recalculate_province_counters");
-    if (error) throw error;
+    // JS-based recalculation — update provinces table directly
+    const { data: activeMembers } = await supabase
+      .from("members")
+      .select("province_id")
+      .eq("status", "active")
+      .not("province_id", "is", null);
 
-    // Also do a manual recalculation for member counters
+    // Count members per province in JS
+    const provinceMemberCounts: Record<string, number> = {};
+    for (const m of activeMembers ?? []) {
+      if (m.province_id) {
+        provinceMemberCounts[m.province_id] = (provinceMemberCounts[m.province_id] || 0) + 1;
+      }
+    }
+
+    // Update provinces table
+    for (const [provId, count] of Object.entries(provinceMemberCounts)) {
+      await adminSupabase
+        .from("provinces")
+        .update({ total_members: count })
+        .eq("id", provId);
+    }
+
+    // Also reset provinces with no members to 0
+    await adminSupabase
+      .from("provinces")
+      .update({ total_members: 0 })
+      .not("id", "in", `(${Object.keys(provinceMemberCounts).map(id => `"${id}"`).join(",")})`);
+
+    // Get aggregate counts
     const [memberCount, trainerCount, mentorCount] = await Promise.all([
       adminSupabase.from("members").select("*", { count: "exact", head: true }).eq("status", "active"),
       adminSupabase.from("member_designations").select("*", { count: "exact", head: true }).eq("designation", "trainer"),
@@ -79,11 +104,12 @@ export async function recalculateAllCounters() {
         activeMembers: memberCount.count ?? 0,
         trainers: trainerCount.count ?? 0,
         mentors: mentorCount.count ?? 0,
+        provinceCount: Object.keys(provinceMemberCounts).length,
       },
     };
   } catch (err) {
     console.error("Recalculate error:", err);
-    return { error: "Gagal merekalkulasi data. Pastikan fungsi database tersedia." };
+    return { error: "Gagal merekalkulasi data: " + (err instanceof Error ? err.message : "Unknown error") };
   }
 }
 
@@ -162,7 +188,8 @@ export async function getSystemHealth() {
     supabase.from("events").select("*", { count: "exact", head: true }),
     supabase.from("innovations").select("*", { count: "exact", head: true }),
     supabase.from("certificates").select("*", { count: "exact", head: true }),
-    supabase.from("provinces").select("*", { count: "exact", head: true }).gt("total_members", 0),
+    // Count members with province (approximation for provinces coverage)
+    supabase.from("members").select("province_id", { count: "exact", head: true }).eq("status", "active").not("province_id", "is", null),
     supabase.from("member_cards").select("*", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("contact_messages").select("*", { count: "exact", head: true }).eq("is_read", false),
     supabase.from("activity_logs").select("*", { count: "exact", head: true }),

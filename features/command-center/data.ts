@@ -83,11 +83,42 @@ export async function getCommandCenterStats() {
 
 export async function getProvinceStats() {
   const supabase = await createServerClient();
-  const { data } = await supabase
+  
+  // Get all provinces
+  const { data: provinces } = await supabase
     .from("provinces")
-    .select("id, name, code, capital, latitude, longitude, total_members, total_trainers, total_mentors, total_events, total_innovations, created_at")
-    .order("total_members", { ascending: false });
-  return data ?? [];
+    .select("id, name, code, capital, latitude, longitude, created_at")
+    .order("name", { ascending: true });
+  
+  if (!provinces) return [];
+  
+  // Get active member counts by province directly from members table
+  const { data: members } = await supabase
+    .from("members")
+    .select("province_id")
+    .eq("status", "active")
+    .not("province_id", "is", null);
+  
+  // Count per province using JS
+  const memberCounts: Record<string, number> = {};
+  for (const m of members ?? []) {
+    if (m.province_id) {
+      memberCounts[m.province_id] = (memberCounts[m.province_id] || 0) + 1;
+    }
+  }
+  
+  // Map counts back to province objects
+  const result = provinces.map((p) => ({
+    ...p,
+    total_members: memberCounts[p.id] || 0,
+    total_trainers: 0,
+    total_mentors: 0,
+    total_events: 0,
+    total_innovations: 0,
+  }));
+  
+  // Sort by member count descending
+  return result.sort((a, b) => b.total_members - a.total_members);
 }
 
 export async function getAllRegencyStats() {

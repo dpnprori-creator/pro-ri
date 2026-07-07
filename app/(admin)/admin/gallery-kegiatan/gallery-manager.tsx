@@ -153,6 +153,7 @@ export function GalleryKegiatanManager({ items }: { items: GalleryItem[] }) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
+    const loadingToast = toast.loading(editingItem ? "Menyimpan perubahan..." : "Mengupload gambar...");
 
     const form = new FormData(e.currentTarget);
     if (imageFile) form.append("image", imageFile);
@@ -162,6 +163,7 @@ export function GalleryKegiatanManager({ items }: { items: GalleryItem[] }) {
       : await createActivityGalleryItem(form);
 
     setSaving(false);
+    toast.dismiss(loadingToast);
 
     if (result.error) {
       toast.error(result.error);

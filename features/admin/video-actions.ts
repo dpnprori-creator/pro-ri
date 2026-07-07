@@ -129,17 +129,24 @@ export async function updateVideo(id: string, formData: FormData) {
     posterUrl = autoGeneratePosterUrl(videoUrl);
   }
 
-  const { error } = await supabase
-    .from("videos")
-    .update({
-      title: formData.get("title") as string,
-      description: formData.get("description") as string || null,
-      video_url: videoUrl,
-      poster_url: posterUrl,
-      sort_order: parseInt(formData.get("sort_order") as string || formData.get("sortOrder") as string) || 0,
-      is_active: formData.get("is_active") === "true" || formData.get("isActive") === "true",
-    })
-    .eq("id", id);
+  // Build update payload — only include video_url/poster_url if provided
+  const updates: Record<string, string | number | boolean | null | undefined> = {
+    title: formData.get("title") as string,
+    description: formData.get("description") as string || null,
+    sort_order: parseInt(formData.get("sort_order") as string || formData.get("sortOrder") as string) || 0,
+    is_active: formData.get("is_active") === "true" || formData.get("isActive") === "true",
+  };
+
+  // Only set video_url if a new video was provided
+  if (videoUrl) {
+    updates.video_url = videoUrl;
+  }
+  // Only set poster_url if provided
+  if (posterUrl) {
+    updates.poster_url = posterUrl;
+  }
+
+  const { error } = await (supabase as any).from("videos").update(updates).eq("id", id);
 
   if (error) return { error: error.message };
   revalidatePath("/admin/videos");

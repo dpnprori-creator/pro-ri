@@ -123,6 +123,7 @@ export function GalleryManager({ items }: { items: GalleryItem[] }) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
+    const loadingToast = toast.loading(editingItem ? "Menyimpan perubahan..." : "Mengupload gambar...");
 
     const form = new FormData(e.currentTarget);
     if (imageFile) {
@@ -139,6 +140,7 @@ export function GalleryManager({ items }: { items: GalleryItem[] }) {
       : await createHeroGalleryItem(form);
 
     setSaving(false);
+    toast.dismiss(loadingToast);
 
     if (result.error) {
       toast.error(result.error);

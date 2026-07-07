@@ -165,6 +165,12 @@ export async function register(formData: FormData) {
       }
     }
 
+    // Log activity
+    try {
+      const { logActivity } = await import("@/features/admin/actions");
+      await logActivity("register", "member", authData.user.id, { email });
+    } catch {}
+
     revalidatePath("/", "layout");
     return { success: true };
   } catch (err) {

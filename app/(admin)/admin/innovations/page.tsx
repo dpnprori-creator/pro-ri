@@ -6,7 +6,7 @@ async function getInnovations() {
   const [innovations, provinces] = await Promise.all([
     supabase
       .from("innovations")
-      .select("id, title, slug, category, year, status, province_id!inner(name), creator_id!inner(full_name)")
+      .select("id, title, slug, category, year, status, province_id(name), creator_id(full_name)")
       .order("created_at", { ascending: false }),
     supabase.from("provinces").select("id, name").order("name"),
   ]);

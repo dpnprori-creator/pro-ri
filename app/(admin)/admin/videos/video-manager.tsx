@@ -126,6 +126,7 @@ export function VideoManager({ videos }: { videos: VideoRow[] }) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
+    const loadingToast = toast.loading(editingVideo ? "Menyimpan perubahan..." : "Mengupload video...");
 
     const form = new FormData(e.currentTarget);
 
@@ -152,6 +153,7 @@ export function VideoManager({ videos }: { videos: VideoRow[] }) {
       : await createVideo(form);
 
     setSaving(false);
+    toast.dismiss(loadingToast);
 
     if (result.error) {
       toast.error(result.error);

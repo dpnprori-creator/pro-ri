@@ -148,6 +148,7 @@ export async function createEvent(formData: FormData) {
 
   if (error) return { error: error.message };
   revalidatePath("/admin/events");
+  await logActivity("create_event", "event", undefined, { title: formData.get("title") as string });
   return { success: true };
 }
 
@@ -171,6 +172,7 @@ export async function updateEvent(id: string, formData: FormData) {
 
   if (error) return { error: error.message };
   revalidatePath("/admin/events");
+  await logActivity("update_event", "event", id);
   return { success: true };
 }
 
@@ -180,6 +182,7 @@ export async function deleteEvent(id: string) {
 
   if (error) return { error: error.message };
   revalidatePath("/admin/events");
+  await logActivity("delete_event", "event", id);
   return { success: true };
 }
 
@@ -223,6 +226,7 @@ export async function createInnovation(formData: FormData) {
 
   if (error) return { error: error.message };
   revalidatePath("/admin/innovations");
+  await logActivity("create_innovation", "innovation", undefined, { title: formData.get("title") as string });
   return { success: true };
 }
 
@@ -242,6 +246,7 @@ export async function updateInnovation(id: string, formData: FormData) {
 
   if (error) return { error: error.message };
   revalidatePath("/admin/innovations");
+  await logActivity("update_innovation", "innovation", id);
   return { success: true };
 }
 
@@ -251,6 +256,7 @@ export async function deleteInnovation(id: string) {
 
   if (error) return { error: error.message };
   revalidatePath("/admin/innovations");
+  await logActivity("delete_innovation", "innovation", id);
   return { success: true };
 }
 
@@ -270,9 +276,9 @@ export async function getCertificates() {
 }
 
 export async function createCertificate(formData: FormData) {
-  const supabase = await createServerClient();
+  const adminSupabase = createAdminClient();
 
-  const { error } = await supabase.from("certificates").insert({
+  const { error } = await adminSupabase.from("certificates").insert({
     certificate_number: formData.get("certificate_number") as string,
     member_id: formData.get("member_id") as string,
     event_id: formData.get("event_id") as string || null,
@@ -329,6 +335,7 @@ export async function createHeroGalleryItem(formData: FormData) {
   });
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery");
+  await logActivity("create_hero_gallery", "hero_gallery", undefined, { title: formData.get("title") as string });
   return { success: true };
 }
 
@@ -367,6 +374,7 @@ export async function updateHeroGalleryItem(id: string, formData: FormData) {
   const { error } = await (supabase as any).from("hero_gallery").update(updates).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery");
+  await logActivity("update_hero_gallery", "hero_gallery", id);
   return { success: true };
 }
 
@@ -398,6 +406,7 @@ export async function createActivityGalleryItem(formData: FormData) {
   });
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery-kegiatan");
+  await logActivity("create_activity_gallery", "activity_gallery", undefined, { title: formData.get("title") as string });
   return { success: true };
 }
 
@@ -436,6 +445,7 @@ export async function updateActivityGalleryItem(id: string, formData: FormData) 
   const { error } = await (supabase as any).from("activity_gallery").update(updates).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery-kegiatan");
+  await logActivity("update_activity_gallery", "activity_gallery", id);
   return { success: true };
 }
 
@@ -444,6 +454,7 @@ export async function deleteActivityGalleryItem(id: string) {
   const { error } = await supabase.from("activity_gallery").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery-kegiatan");
+  await logActivity("delete_activity_gallery", "activity_gallery", id);
   return { success: true };
 }
 
@@ -452,6 +463,7 @@ export async function deleteHeroGalleryItem(id: string) {
   const { error } = await supabase.from("hero_gallery").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/gallery");
+  await logActivity("delete_hero_gallery", "hero_gallery", id);
   return { success: true };
 }
 
@@ -582,11 +594,26 @@ export async function createNews(formData: FormData) {
     .eq("auth_id", user.id)
     .single();
 
+  // Handle image upload
+  let imageUrl = formData.get("image_url") as string || formData.get("imageUrl") as string;
+  const imageFile = formData.get("image") as File | null;
+
+  if (!imageUrl && imageFile && imageFile.size > 0 && imageFile.name) {
+    try {
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `news/${Date.now()}.${ext}`;
+      imageUrl = await uploadToSupabaseStorage("news", path, imageFile);
+    } catch (err) {
+      console.error("Image upload error:", err);
+    }
+  }
+
   const { error } = await supabase.from("news").insert({
     title: formData.get("title") as string,
     slug: (formData.get("title") as string).toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
     content: formData.get("content") as string || null,
     excerpt: formData.get("excerpt") as string || null,
+    image_url: imageUrl || null,
     category: (formData.get("category") as string) || "article",
     status: (formData.get("status") as string) || "draft",
     author_id: member?.id,
@@ -594,21 +621,44 @@ export async function createNews(formData: FormData) {
 
   if (error) return { error: error.message };
   revalidatePath("/admin/news");
+  await logActivity("create_news", "news", undefined, { title: formData.get("title") as string });
   return { success: true };
 }
 
 export async function updateNews(id: string, formData: FormData) {
   const supabase = await createServerClient();
-  const { error } = await supabase.from("news").update({
+
+  // Handle image upload
+  let imageUrl = formData.get("image_url") as string || formData.get("imageUrl") as string;
+  const imageFile = formData.get("image") as File | null;
+
+  if (!imageUrl && imageFile && imageFile.size > 0 && imageFile.name) {
+    try {
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `news/${Date.now()}.${ext}`;
+      imageUrl = await uploadToSupabaseStorage("news", path, imageFile);
+    } catch (err) {
+      console.error("Image upload error:", err);
+    }
+  }
+
+  const updates: Record<string, string | number | boolean | null | undefined> = {
     title: formData.get("title") as string,
     content: formData.get("content") as string || null,
     excerpt: formData.get("excerpt") as string || null,
     category: formData.get("category") as string,
     status: formData.get("status") as string,
-  }).eq("id", id);
+  };
+
+  if (imageUrl) {
+    updates.image_url = imageUrl;
+  }
+
+  const { error } = await (supabase as any).from("news").update(updates).eq("id", id);
 
   if (error) return { error: error.message };
   revalidatePath("/admin/news");
+  await logActivity("update_news", "news", id);
   return { success: true };
 }
 
@@ -617,6 +667,7 @@ export async function deleteNews(id: string) {
   const { error } = await supabase.from("news").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/news");
+  await logActivity("delete_news", "news", id);
   return { success: true };
 }
 
