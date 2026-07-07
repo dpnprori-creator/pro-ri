@@ -131,6 +131,20 @@ export async function createEvent(formData: FormData) {
     .eq("auth_id", user.id)
     .single();
 
+  // Handle banner image upload
+  let bannerUrl = formData.get("banner_url") as string || formData.get("bannerUrl") as string;
+  const bannerFile = formData.get("image") as File | null;
+
+  if (!bannerUrl && bannerFile && bannerFile.size > 0 && bannerFile.name) {
+    try {
+      const ext = bannerFile.name.split(".").pop() || "jpg";
+      const path = `events/${Date.now()}.${ext}`;
+      bannerUrl = await uploadToSupabaseStorage("events", path, bannerFile);
+    } catch (err) {
+      console.error("Banner upload error:", err);
+    }
+  }
+
   const { error } = await supabase.from("events").insert({
     title: formData.get("title") as string,
     slug: (formData.get("title") as string).toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
@@ -142,6 +156,7 @@ export async function createEvent(formData: FormData) {
     location: formData.get("location") as string || null,
     max_participants: parseInt(formData.get("max_participants") as string) || null,
     province_id: formData.get("province_id") as string || null,
+    banner_url: bannerUrl || null,
     status: formData.get("status") as string || "draft",
     created_by: member?.id,
   });
@@ -155,20 +170,37 @@ export async function createEvent(formData: FormData) {
 export async function updateEvent(id: string, formData: FormData) {
   const supabase = await createServerClient();
 
-  const { error } = await supabase
-    .from("events")
-    .update({
-      title: formData.get("title") as string,
-      description: formData.get("description") as string || null,
-      category: formData.get("category") as string,
-      type: formData.get("type") as string,
-      start_date: formData.get("start_date") as string,
-      end_date: formData.get("end_date") as string,
-      location: formData.get("location") as string || null,
-      max_participants: parseInt(formData.get("max_participants") as string) || null,
-      status: formData.get("status") as string,
-    })
-    .eq("id", id);
+  // Handle banner image upload
+  let bannerUrl = formData.get("banner_url") as string || formData.get("bannerUrl") as string;
+  const bannerFile = formData.get("image") as File | null;
+
+  if (!bannerUrl && bannerFile && bannerFile.size > 0 && bannerFile.name) {
+    try {
+      const ext = bannerFile.name.split(".").pop() || "jpg";
+      const path = `events/${Date.now()}.${ext}`;
+      bannerUrl = await uploadToSupabaseStorage("events", path, bannerFile);
+    } catch (err) {
+      console.error("Banner upload error:", err);
+    }
+  }
+
+  const updates: Record<string, string | number | boolean | null | undefined> = {
+    title: formData.get("title") as string,
+    description: formData.get("description") as string || null,
+    category: formData.get("category") as string,
+    type: formData.get("type") as string,
+    start_date: formData.get("start_date") as string,
+    end_date: formData.get("end_date") as string,
+    location: formData.get("location") as string || null,
+    max_participants: parseInt(formData.get("max_participants") as string) || null,
+    status: formData.get("status") as string,
+  };
+
+  if (bannerUrl) {
+    updates.banner_url = bannerUrl;
+  }
+
+  const { error } = await (supabase as any).from("events").update(updates).eq("id", id);
 
   if (error) return { error: error.message };
   revalidatePath("/admin/events");
@@ -289,9 +321,28 @@ export async function createCertificate(formData: FormData) {
     certNumber = `CERT-${year}-${String(seq).padStart(5, "0")}`;
   }
 
+  // Look up member by member_id (number) if input is not a UUID
+  let memberId = formData.get("member_id") as string || formData.get("memberId") as string;
+  if (memberId && !memberId.includes("-")) {
+    // It looks like a UUID already, use as-is
+  } else if (memberId && memberId.includes("-") && memberId.length < 36) {
+    // It's a member number like PRORI-2026-00001 — look up the UUID
+    const { data: member } = await adminSupabase
+      .from("members")
+      .select("id")
+      .eq("member_id", memberId)
+      .maybeSingle();
+    
+    if (member) {
+      memberId = member.id;
+    } else {
+      return { error: "Member dengan nomor " + memberId + " tidak ditemukan" };
+    }
+  }
+
   const { error } = await adminSupabase.from("certificates").insert({
     certificate_number: certNumber,
-    member_id: formData.get("member_id") as string || formData.get("memberId") as string,
+    member_id: memberId,
     event_id: formData.get("event_id") as string || null,
     type: formData.get("type") as string,
     title: formData.get("title") as string,

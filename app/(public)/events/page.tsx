@@ -8,7 +8,7 @@ async function getEvents() {
 
   const { data: events } = await supabase
     .from("events")
-    .select("id, title, slug, description, category, type, start_date, end_date, location, banner_url, max_participants, province_id!inner(name)")
+    .select("id, title, slug, description, category, type, start_date, end_date, location, banner_url, max_participants, province_id(name)")
     .eq("status", "published")
     .order("start_date", { ascending: false });
 

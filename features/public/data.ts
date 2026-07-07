@@ -14,7 +14,7 @@ export async function getPublishedEvents(options: QueryOptions = {}) {
 
   let query = supabase
     .from("events")
-    .select("id, title, slug, description, category, type, start_date, end_date, location, banner_url, province_id, max_participants", { count: "exact" })
+    .select("id, title, slug, description, category, type, start_date, end_date, location, banner_url, province_id(name), max_participants", { count: "exact" })
     .eq("status", "published")
     .order("start_date", { ascending: false });
 
@@ -141,7 +141,7 @@ export async function getPublicInnovations(limit?: number) {
   const supabase = await createServerClient();
   let query = supabase
     .from("innovations")
-    .select("id, title, slug, description, category, image_url, year, status, province_id!inner(name), creator_id!inner(full_name)")
+    .select("id, title, slug, description, category, image_url, year, status, province_id(name), creator_id(full_name)")
     .in("status", ["published", "featured"])
     .order("created_at", { ascending: false });
 
@@ -157,7 +157,7 @@ export async function getPublicInnovation(slug: string) {
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("innovations")
-    .select("*, province_id!inner(name), creator_id!inner(full_name)")
+    .select("*, province_id(name), creator_id(full_name)")
     .in("status", ["published", "featured"])
     .eq("slug", slug)
     .single();
