@@ -524,11 +524,11 @@ DECLARE
   year TEXT := EXTRACT(YEAR FROM NOW())::TEXT;
   next_seq INTEGER;
 BEGIN
-  SELECT COALESCE(MAX(CAST(SPLIT_PART(member_id, '-', 3) AS INTEGER)), 0) + 1
+  SELECT COALESCE(MAX(CAST(SPLIT_PART(member_id, '-', 4) AS INTEGER)), 0) + 1
   INTO next_seq
   FROM members
-  WHERE member_id LIKE 'PRI-' || year || '-%';
-  RETURN 'PRI-' || year || '-' || LPAD(next_seq::TEXT, 5, '0');
+  WHERE member_id LIKE 'PRO-RI-' || year || '-%';
+  RETURN 'PRO-RI-' || year || '-' || LPAD(next_seq::TEXT, 5, '0');
 END;
 $$;
 

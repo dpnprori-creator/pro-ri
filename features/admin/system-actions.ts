@@ -126,10 +126,34 @@ export async function toggleMaintenanceMode(enabled: boolean, message?: string) 
     allowed_roles: ["super_admin", "admin"],
   };
 
-  const { error } = await (supabase as any)
+  // Check if maintenance key exists
+  const { data: existing } = await (supabase as any)
     .from("system_settings")
-    .update({ value, updated_at: new Date().toISOString() })
-    .eq("key", "maintenance");
+    .select("id")
+    .eq("key", "maintenance")
+    .maybeSingle();
+
+  let error;
+  if (existing) {
+    // Update existing
+    const result = await (supabase as any)
+      .from("system_settings")
+      .update({ value, updated_at: new Date().toISOString() })
+      .eq("key", "maintenance");
+    error = result.error;
+  } else {
+    // Insert new
+    const result = await (supabase as any)
+      .from("system_settings")
+      .insert({
+        key: "maintenance",
+        value,
+        label: "Maintenance Mode",
+        description: "Pengaturan mode maintenance website",
+        category: "system",
+      });
+    error = result.error;
+  }
 
   if (error) return { error: error.message };
   revalidatePath("/", "layout");

@@ -7,8 +7,8 @@ interface CertificateData {
   type: string;
   issued_at: string;
   verified: boolean;
-  member_id: { full_name: string; member_id: string };
-  event_id: { title: string; start_date: string };
+  member_id: { full_name: string; member_id: string } | null;
+  event_id: { title: string; start_date: string } | null;
 }
 
 export function CertificateDetail({ certificate }: { certificate: CertificateData }) {

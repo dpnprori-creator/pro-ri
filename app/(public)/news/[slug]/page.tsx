@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MarkdownContent } from "@/components/features/news/markdown-content";
 import { NewsComments } from "@/components/features/news/news-comments";
 import { CopyLinkButton } from "@/components/features/news/copy-link-button";
+import { NewsViewTracker } from "@/components/features/news/news-view-tracker";
 import { getRelatedNews, getPopularNews } from "@/features/public/data";
 import {
   Calendar,
@@ -75,6 +76,8 @@ export default async function NewsDetailPage(props: { params: Promise<{ slug: st
     <section className="pt-28 pb-16 circuit-pattern min-h-screen">
       <div className="container-wide px-4">
         {/* Back Link */}
+        <NewsViewTracker slug={slug} />
+
         <Link
           href="/news"
           className="inline-flex items-center gap-1.5 text-sm text-pri-silver hover:text-white mb-6 transition-colors"
@@ -171,19 +174,28 @@ export default async function NewsDetailPage(props: { params: Promise<{ slug: st
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Popular News */}
+            {/* Popular News — enhanced */}
             <Card className="glass-card overflow-hidden border-white/10">
-              <div className="px-5 pt-5 pb-3">
-                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-pri-red" />
-                  Berita Terpopuler
-                </h3>
+              <div className="relative">
+                {/* Decorative gradient header */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-pri-red via-red-400 to-pri-red/50" />
+                <div className="px-5 pt-5 pb-3">
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-pri-red" />
+                    Berita Terpopuler
+                  </h3>
+                </div>
               </div>
               <CardContent className="px-5 pb-5 space-y-3">
                 {popularNews.length === 0 ? (
-                  <p className="text-xs text-pri-silver/60 py-4 text-center">
-                    Belum ada data
-                  </p>
+                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                    <div className="h-12 w-12 rounded-full bg-pri-red/10 flex items-center justify-center mb-3">
+                      <TrendingUp className="h-6 w-6 text-pri-red/30" />
+                    </div>
+                    <p className="text-xs text-pri-silver/60">
+                      Belum ada data
+                    </p>
+                  </div>
                 ) : (
                   popularNews.map((item, i) => (
                     <Link
@@ -191,25 +203,33 @@ export default async function NewsDetailPage(props: { params: Promise<{ slug: st
                       href={`/news/${item.slug}`}
                       className={`flex gap-3 group ${i < popularNews.length - 1 ? "pb-3 border-b border-white/5" : ""}`}
                     >
-                      <span className="text-lg font-bold text-pri-red/30 font-mono shrink-0 mt-0.5">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
+                      <div className="relative shrink-0">
+                        <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold font-mono ${
+                          i === 0
+                            ? "bg-pri-red/20 text-pri-red border border-pri-red/30"
+                            : i === 1
+                            ? "bg-white/10 text-pri-silver border border-white/10"
+                            : i === 2
+                            ? "bg-amber-600/10 text-amber-400 border border-amber-600/20"
+                            : "bg-white/5 text-pri-silver/50 border border-white/5"
+                        }`}>
+                          {i + 1}
+                        </span>
+                      </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm text-white line-clamp-2 group-hover:text-pri-red transition-colors leading-snug">
                           {item.title}
                         </p>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-3 mt-1.5">
                           <span className="text-[10px] text-pri-silver/50">
                             {item.published_at
-                              ? new Date(item.published_at).toLocaleDateString("id-ID")
+                              ? new Date(item.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" })
                               : ""}
                           </span>
-                          {item.view_count > 0 && (
-                            <span className="text-[10px] text-pri-silver/40 flex items-center gap-0.5">
-                              <Eye className="h-2.5 w-2.5" />
-                              {item.view_count}
-                            </span>
-                          )}
+                          <span className="text-[10px] text-pri-silver/40 flex items-center gap-0.5">
+                            <Eye className="h-2.5 w-2.5" />
+                            {item.view_count || 0}
+                          </span>
                         </div>
                       </div>
                     </Link>
@@ -218,24 +238,32 @@ export default async function NewsDetailPage(props: { params: Promise<{ slug: st
               </CardContent>
             </Card>
 
-            {/* Categories */}
+            {/* Categories — enhanced */}
             <Card className="glass-card overflow-hidden border-white/10">
-              <div className="px-5 pt-5 pb-3">
-                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <Target className="h-4 w-4 text-pri-red" />
-                  Kategori
-                </h3>
+              <div className="relative">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-pri-red via-red-400 to-pri-red/50" />
+                <div className="px-5 pt-5 pb-3">
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Target className="h-4 w-4 text-pri-red" />
+                    Kategori
+                  </h3>
+                </div>
               </div>
-              <CardContent className="px-5 pb-5 space-y-2">
-                {Object.entries(categoryLabel).map(([key, label]) => (
+              <CardContent className="px-5 pb-5 space-y-1">
+                {Object.entries(categoryLabel).map(([key, label], i) => (
                   <Link
                     key={key}
                     href={`/news?category=${key}`}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group"
+                    className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors group"
                   >
-                    <span className="text-sm text-pri-silver group-hover:text-white transition-colors">
-                      {label}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <div className={`h-2 w-2 rounded-full ${
+                        i === 0 ? "bg-pri-red" : i === 1 ? "bg-purple-400" : "bg-green-400"
+                      }`} />
+                      <span className="text-sm text-pri-silver group-hover:text-white transition-colors">
+                        {label}
+                      </span>
+                    </div>
                     <ChevronRight className="h-3.5 w-3.5 text-pri-silver/30 group-hover:text-pri-red transition-colors" />
                   </Link>
                 ))}

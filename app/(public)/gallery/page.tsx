@@ -1,26 +1,28 @@
 import { createClient } from "@/lib/supabase/server";
 import { GalleryView } from "./gallery-view";
+import { VideoGallerySection } from "@/components/features/video/video-gallery-section";
 import type { GalleryItem } from "./gallery-shared";
 
 async function getGallery() {
   const supabase = await createClient();
 
-  const [{ data: hero }, { data: activities }] = await Promise.all([
+  const [{ data: hero }, { data: activities }, { data: videos }] = await Promise.all([
     supabase.from("hero_gallery").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
     supabase.from("activity_gallery").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
+    supabase.from("videos").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
   ]);
 
   return {
     hero: hero ?? [],
     activities: activities ?? [],
+    videos: videos ?? [],
   };
 }
 
 export default async function GalleryPage() {
-  const { hero, activities } = await getGallery();
+  const { hero, activities, videos } = await getGallery();
 
   // Merge hero gallery + activity gallery into a single items array.
-  // hero_gallery tidak punya field category/date_taken, jadi di-map dulu.
   const items: GalleryItem[] = [
     ...hero.map((h) => ({
       id: h.id,
@@ -55,7 +57,18 @@ export default async function GalleryPage() {
         <p className="text-pri-silver">Dokumentasi kegiatan dan momen PRO RI</p>
       </div>
 
+      {/* Image Gallery */}
       <GalleryView items={items} />
+
+      {/* Video Gallery Section */}
+      {videos.length > 0 && (
+        <>
+          <div className="my-12">
+            <div className="h-px bg-gradient-to-r from-transparent via-pri-red/30 to-transparent" />
+          </div>
+          <VideoGallerySection videos={videos} />
+        </>
+      )}
     </div>
   );
 }

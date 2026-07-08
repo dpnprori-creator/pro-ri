@@ -9,7 +9,7 @@ async function getCertificate(id: string) {
 
   const { data } = await supabase
     .from("certificates")
-    .select("*, member_id!inner(full_name, member_id), event_id!inner(title, start_date)")
+    .select("*, member_id(full_name, member_id), event_id(title, start_date)")
     .eq("id", id)
     .single();
 

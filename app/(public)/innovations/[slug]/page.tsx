@@ -60,8 +60,19 @@ export default async function InnovationDetailPage({
           </div>
 
           <CardContent className="p-6 md:p-8">
-            {/* Innovation Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Innovation Image */}
+        {innovation.image_url && (
+          <div className="rounded-lg overflow-hidden border border-white/10 mb-8">
+            <img
+              src={innovation.image_url}
+              alt={innovation.title}
+              className="w-full h-64 md:h-80 object-cover"
+            />
+          </div>
+        )}
+
+        {/* Innovation Details */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {creator && (
                 <div className="flex items-center gap-3 text-sm">
                   <User className="h-5 w-5 text-pri-red shrink-0" />

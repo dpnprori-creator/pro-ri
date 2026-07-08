@@ -224,7 +224,7 @@ export async function getPopularNews(limit: number = 5) {
 
 export async function incrementNewsView(slug: string) {
   const supabase = await createServerClient();
-  await (supabase.rpc as any)("increment_news_view", { news_slug: slug });
+  await (supabase.rpc as any)("increment_view_count", { slug_param: slug });
 }
 
 export async function getPublicNewsPaginated({ page = 1, pageSize = 12, category }: { page?: number; pageSize?: number; category?: string }) {

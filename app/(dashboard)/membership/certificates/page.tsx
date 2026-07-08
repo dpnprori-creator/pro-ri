@@ -16,7 +16,7 @@ async function getCertificates() {
 
   const { data } = await supabase
     .from("certificates")
-    .select("*, event_id!inner(title)")
+    .select("*, event_id(title)")
     .eq("member_id", member.id)
     .order("issued_at", { ascending: false });
 

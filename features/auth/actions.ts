@@ -130,7 +130,7 @@ export async function register(formData: FormData) {
       // 3b. Trigger didn't create the member — insert directly
       const insertFields: MemberInsert = {
         auth_id: authData.user.id,
-        member_id: `PRORI-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, "0")}`,
+        member_id: `PRO-RI-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, "0")}`,
         full_name: fullName,
         email,
         phone,

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { APP_NAME, TARGET_MEMBERS, TARGET_TRAINERS, TARGET_MENTORS } from "@/lib/constants";
+import { RealtimeDashboard } from "@/components/features/command-center/realtime-dashboard";
 import { MonitoringDashboardClient } from "@/app/(admin)/admin/monitoring/monitoring-client";
 import {
   getProvinceStats,
@@ -103,6 +104,13 @@ export default async function NationalMapPage() {
               Klik provinsi untuk eksplorasi data hingga level desa/kelurahan.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* Realtime Dashboard Stats */}
+      <section className="pb-8 px-4">
+        <div className="container-wide">
+          <RealtimeDashboard />
         </div>
       </section>
 

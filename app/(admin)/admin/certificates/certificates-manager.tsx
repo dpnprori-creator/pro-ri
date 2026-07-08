@@ -134,7 +134,7 @@ export function CertificatesManager({ certificates }: { certificates: Certificat
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="memberId">Member ID</Label>
-              <Input id="memberId" name="memberId" defaultValue={editing?.member_id} required placeholder="PRORI-2026-XXXXX" />
+              <Input id="memberId" name="memberId" defaultValue={editing?.member_id} required placeholder="PRO-RI-2026-XXXXX" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="title">Judul</Label>

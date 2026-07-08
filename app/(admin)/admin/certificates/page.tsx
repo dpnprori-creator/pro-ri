@@ -5,7 +5,7 @@ async function getCertificates() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("certificates")
-    .select("id, certificate_number, title, type, issued_at, verified, member_id!inner(full_name, member_id), event_id!inner(title)")
+    .select("id, certificate_number, title, type, issued_at, verified, member_id(full_name, member_id), event_id(title)")
     .order("created_at", { ascending: false });
 
   return data ?? [];

@@ -23,7 +23,7 @@ BEGIN;
 -- 1. FIX: generate_member_id() — PRORI prefix
 -- ================================================
 -- Sebelumnya: PRI-2026-00001
--- Sesudah:    PRORI-2026-00001
+-- Sesudah:    PRO-RI-2026-00001
 
 CREATE OR REPLACE FUNCTION generate_member_id()
 RETURNS TEXT
@@ -32,11 +32,11 @@ DECLARE
   year TEXT := EXTRACT(YEAR FROM NOW())::TEXT;
   next_seq INTEGER;
 BEGIN
-  SELECT COALESCE(MAX(CAST(SPLIT_PART(member_id, '-', 3) AS INTEGER)), 0) + 1
+  SELECT COALESCE(MAX(CAST(SPLIT_PART(member_id, '-', 4) AS INTEGER)), 0) + 1
   INTO next_seq
   FROM members
-  WHERE member_id LIKE 'PRORI-' || year || '-%';
-  RETURN 'PRORI-' || year || '-' || LPAD(next_seq::TEXT, 5, '0');
+  WHERE member_id LIKE 'PRO-RI-' || year || '-%';
+  RETURN 'PRO-RI-' || year || '-' || LPAD(next_seq::TEXT, 5, '0');
 END;
 $$;
 
@@ -197,13 +197,13 @@ SET value = jsonb_set(
   '"PRORI"'::jsonb
 )
 WHERE key = 'member_card_config'
-  AND value->>'member_number_prefix' = 'PRI';
+  AND    value->>'member_number_prefix' = 'PRI';
 
 -- Jika belum ada system_settings, insert default
 INSERT INTO system_settings (key, value, label, category)
 SELECT
   'member_card_config',
-  '{"auto_member_number": true, "member_number_prefix": "PRORI", "require_approval": true}'::jsonb,
+  '{"auto_member_number": true, "member_number_prefix": "PRO-RI", "require_approval": true}'::jsonb,
   'Konfigurasi Kartu Anggota',
   'membership'
 WHERE NOT EXISTS (

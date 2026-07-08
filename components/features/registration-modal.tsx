@@ -251,7 +251,7 @@ export function RegistrationModal({
                     id="modal-member-id"
                     value={memberId}
                     onChange={(e) => setMemberId(e.target.value)}
-                    placeholder="PRORI-2026-XXXXX"
+                    placeholder="PRO-RI-2026-XXXXX"
                     required
                     className="h-9 text-sm font-mono"
                   />

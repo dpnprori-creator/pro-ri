@@ -54,7 +54,7 @@ export async function createMember(formData: FormData) {
     auth_id: authData.user.id,
     email,
     full_name: fullName,
-    member_id: `PRORI-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, "0")}`,
+    member_id: `PRO-RI-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, "0")}`,
     phone: formData.get("phone") as string || null,
     province_id: formData.get("province_id") as string || null,
     regency_id: formData.get("regency_id") as string || null,
@@ -245,11 +245,27 @@ export async function createInnovation(formData: FormData) {
     .eq("auth_id", user.id)
     .single();
 
+  // Handle image upload
+  let imageUrl = formData.get("image_url") as string;
+  const imageFile = formData.get("image") as File | null;
+
+  if (!imageUrl && imageFile && imageFile.size > 0 && imageFile.name) {
+    try {
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `innovations/${Date.now()}.${ext}`;
+      imageUrl = await uploadToSupabaseStorage("innovations", path, imageFile);
+    } catch (err) {
+      console.error("Innovation image upload error:", err);
+      return { error: "Gagal mengupload gambar: " + (err instanceof Error ? err.message : "Unknown error") };
+    }
+  }
+
   const { error } = await supabase.from("innovations").insert({
     title: formData.get("title") as string,
     slug: (formData.get("title") as string).toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
     description: formData.get("description") as string || null,
     category: formData.get("category") as string,
+    image_url: imageUrl || null,
     year: parseInt(formData.get("year") as string) || new Date().getFullYear(),
     province_id: formData.get("province_id") as string || null,
     status: formData.get("status") as string || "draft",
@@ -265,15 +281,36 @@ export async function createInnovation(formData: FormData) {
 export async function updateInnovation(id: string, formData: FormData) {
   const supabase = await createServerClient();
 
-  const { error } = await supabase
+  // Handle image upload
+  let imageUrl = formData.get("image_url") as string;
+  const imageFile = formData.get("image") as File | null;
+
+  if (!imageUrl && imageFile && imageFile.size > 0 && imageFile.name) {
+    try {
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `innovations/${Date.now()}.${ext}`;
+      imageUrl = await uploadToSupabaseStorage("innovations", path, imageFile);
+    } catch (err) {
+      console.error("Innovation image upload error:", err);
+      return { error: "Gagal mengupload gambar: " + (err instanceof Error ? err.message : "Unknown error") };
+    }
+  }
+
+  const updates: Record<string, string | number | boolean | null | undefined> = {
+    title: formData.get("title") as string,
+    description: formData.get("description") as string || null,
+    category: formData.get("category") as string,
+    year: parseInt(formData.get("year") as string) || null,
+    status: formData.get("status") as string,
+  };
+
+  if (imageUrl) {
+    updates.image_url = imageUrl;
+  }
+
+  const { error } = await (supabase as any)
     .from("innovations")
-    .update({
-      title: formData.get("title") as string,
-      description: formData.get("description") as string || null,
-      category: formData.get("category") as string,
-      year: parseInt(formData.get("year") as string) || null,
-      status: formData.get("status") as string,
-    })
+    .update(updates)
     .eq("id", id);
 
   if (error) return { error: error.message };
@@ -321,12 +358,14 @@ export async function createCertificate(formData: FormData) {
     certNumber = `CERT-${year}-${String(seq).padStart(5, "0")}`;
   }
 
-  // Look up member by member_id (number) if input is not a UUID
+  // Look up member by member_id (number) if input is a member number format
   let memberId = formData.get("member_id") as string || formData.get("memberId") as string;
-  if (memberId && !memberId.includes("-")) {
-    // It looks like a UUID already, use as-is
-  } else if (memberId && memberId.includes("-") && memberId.length < 36) {
-    // It's a member number like PRORI-2026-00001 — look up the UUID
+  
+  // UUID format: 36 chars with hyphens at positions 8, 13, 18, 23
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(memberId);
+  
+  if (memberId && !isUUID) {
+    // It's a member number like PRO-RI-2026-00001 — look up the UUID
     const { data: member } = await adminSupabase
       .from("members")
       .select("id")
