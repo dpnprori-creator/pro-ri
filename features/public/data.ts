@@ -265,6 +265,22 @@ export async function getPublicNewsCategories() {
   return categories;
 }
 
+export async function getPublicVideos(limit?: number) {
+  const supabase = await createServerClient();
+  let query = supabase
+    .from("videos")
+    .select("id, title, description, video_url, poster_url, sort_order")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  const { data } = await query;
+  return data ?? [];
+}
+
 export async function getProvinces() {
   const supabase = await createServerClient();
   const { data } = await supabase

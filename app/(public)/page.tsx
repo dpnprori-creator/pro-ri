@@ -17,10 +17,12 @@ import { ArrowRight, BookOpen, Users, Lightbulb, Award, MapIcon, Calendar, Targe
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AnimatedStats, AnimatedSection, AnimatedCard, AnimatedTitle } from "@/components/features/home/animated-stats";
-import { getPublicStats, getPublicEvents, getPublicInnovations, getPublicNews, getPublicFeaturedNews } from "@/features/public/data";
+import { getPublicStats, getPublicEvents, getPublicInnovations, getPublicNews, getPublicFeaturedNews, getPublicVideos } from "@/features/public/data";
 import { getActiveGalleryItems } from "@/features/public/gallery-data";
 import { HeroGallery } from "@/components/features/home/hero-gallery";
-import { RobotVideoGrid } from "@/components/features/video/video-grid";  // ISR — revalidate homepage every 60 seconds
+import { RobotVideoGrid } from "@/components/features/video/video-grid";
+
+// ISR — revalidate homepage every 60 seconds
 export const revalidate = 60;
 
 // Helper to get page content from system_settings
@@ -57,37 +59,37 @@ const DEFAULT_CONTENT = {
   hero_title_highlight: "Kedaulatan Teknologi",
   hero_title_line2: "Indonesia",
   hero_description: "PRO RI — Pusat Robotika Rakyat Indonesia — hadir untuk membangun generasi muda yang unggul dalam penguasaan robotika dan kecerdasan buatan, demi mewujudkan Indonesia Emas 2045.",
-  about_title: "Sekilas PRO RI",
+  about_title: "Sekilas",
   about_description: "PRO RI (Pusat Robotika Rakyat Indonesia) adalah organisasi di bawah naungan PRI yang bergerak di bidang pengembangan sumber daya manusia Indonesia dalam bidang robotika, kecerdasan buatan, dan teknologi tepat guna. Didirikan pada 6 Juni 2026, PRO RI berkomitmen untuk mempercepat penguasaan teknologi dari tingkat akar rumput hingga nasional.",
   cta_title: "Indonesia Emas 2045 Dimulai dari Sekarang",
   cta_description: "Jadilah bagian dari gerakan robotika nasional. Bersama PRO RI, kita wujudkan kedaulatan teknologi Indonesia.",
   trust_provinsi_label: "Provinsi Tersebar",
   trust_program_label: "Program Strategis",
   trust_tahun_label: "Tahun Berdiri",
-  programs_section_title: "Program Unggulan PRO RI",
+  programs_section_title: "Program Unggulan",
   programs_section_subtitle: "Program strategis membangun SDM Indonesia unggul di bidang robotika dan AI",
   programs_button_text: "Lihat Detail Program",
-  impact_section_title: "Dampak Nasional PRO RI",
+  impact_section_title: "Dampak Nasional",
   impact_section_subtitle: "Ekosistem teknologi yang tersebar di seluruh Indonesia",
   video_section_title: "Robotika & ",
   video_section_highlight: "AI",
   video_section_suffix: " dalam Aksi",
   video_section_subtitle: "Saksikan bagaimana teknologi robotika dan AI mengubah masa depan Indonesia",
   video_button_text: "Lihat Galeri Kegiatan",
-  events_section_title: "Kegiatan Terbaru",
+  events_section_title: "Kegiatan",
   events_section_subtitle: "Event dan kegiatan PRO RI terbaru",
   events_link_text: "Lihat Semua",
-  innovations_section_title: "Inovasi Terkini",
+  innovations_section_title: "Inovasi",
   innovations_section_subtitle: "Karya inovasi teknologi dari talenta Indonesia",
   innovations_link_text: "Lihat Semua",
-  news_section_title: "Informasi Terkini",
+  news_section_title: "Informasi",
   news_section_subtitle: "Berita terbaru tentang PRO RI",
   news_link_text: "Lihat Semua",
   featured_news_label: "Featured News",
 };
 
 export default async function HomePage() {
-  const [stats, events, innovations, newsItems, galleryItems, featuredNews, pageContent] = await Promise.all([
+  const [stats, events, innovations, newsItems, galleryItems, featuredNews, pageContent, videos] = await Promise.all([
     getPublicStats(),
     getPublicEvents(4),
     getPublicInnovations(3),
@@ -95,6 +97,7 @@ export default async function HomePage() {
     getActiveGalleryItems(),
     getPublicFeaturedNews(5),
     getPageContent(),
+    getPublicVideos(),
   ]);
 
   const content = { ...DEFAULT_CONTENT, ...pageContent };
@@ -359,19 +362,21 @@ export default async function HomePage() {
             <p className="text-pri-silver max-w-xl mx-auto">
               {content.programs_section_subtitle}
             </p>
-          </AnimatedSection>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          </AnimatedSection>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {programs.map((p, i) => (
               <AnimatedCard key={p.title} delay={i * 0.08}>
-                <Card className="glass-card-hover p-6 h-full">
+                <Card className="glass-tech p-6 h-full group overflow-visible">
+                  <div className="corner-bracket corner-bracket-tl" />
+                  <div className="corner-bracket corner-bracket-tr" />
+                  <div className="corner-bracket corner-bracket-bl" />
+                  <div className="corner-bracket corner-bracket-br" />
                   <CardContent className="p-0">
-                    <div className="h-12 w-12 rounded-lg bg-pri-red/10 flex items-center justify-center mb-4">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-pri-red/20 to-pri-red/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 ring-1 ring-pri-red/20">
                       <p.icon className="h-6 w-6 text-pri-red" />
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">{p.title}</h3>
+                    <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-pri-red transition-colors">{p.title}</h3>
                     <p className="text-sm text-pri-silver leading-relaxed mb-3">{p.desc}</p>
-                    <span className="text-[10px] font-mono text-pri-red uppercase tracking-wider">
+                    <span className="inline-block text-[10px] font-mono text-pri-red uppercase tracking-wider px-2 py-0.5 rounded border border-pri-red/20 bg-pri-red/5">
                       Target: {p.target}
                     </span>
                   </CardContent>
@@ -421,7 +426,7 @@ export default async function HomePage() {
             </p>
           </AnimatedSection>
 
-          <RobotVideoGrid />
+          <RobotVideoGrid videos={videos} />
 
           <AnimatedSection className="text-center mt-10">
             <Link href="/gallery">
@@ -467,23 +472,28 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {events.map((event: any, i: number) => (
                 <AnimatedCard key={event.id} delay={i * 0.08}>
                   <Link href={`/events/${event.slug}`}>
-                    <Card className="glass-card-hover p-5 h-full">
+                    <Card className="glass-tech p-5 h-full group overflow-visible">
+                      <div className="corner-bracket corner-bracket-tl" />
+                      <div className="corner-bracket corner-bracket-tr" />
+                      <div className="corner-bracket corner-bracket-bl" />
+                      <div className="corner-bracket corner-bracket-br" />
                       <CardContent className="p-0">
-                        <span className="text-[10px] font-mono text-pri-red uppercase tracking-wider">
+                        <span className="inline-block text-[10px] font-mono text-pri-red uppercase tracking-wider px-2 py-0.5 rounded border border-pri-red/20 bg-pri-red/5">
                           {categoryLabel[event.category] || event.category}
                         </span>
-                        <h3 className="text-sm font-semibold text-white mt-1 mb-3 line-clamp-2">
+                        <h3 className="text-sm font-semibold text-white mt-2 mb-3 line-clamp-2 group-hover:text-pri-red transition-colors">
                           {event.title}
                         </h3>
-                        <p className="text-xs text-pri-silver">
-                          {new Date(event.start_date).toLocaleDateString("id-ID", {
+                        <div className="flex items-center gap-1.5 text-xs text-pri-silver">
+                          <Calendar className="h-3 w-3 text-pri-red/60" />
+                          <span>{new Date(event.start_date).toLocaleDateString("id-ID", {
                             day: "numeric", month: "long", year: "numeric",
-                          })}
-                        </p>
+                          })}</span>
+                        </div>
                       </CardContent>
                     </Card>
                   </Link>
@@ -514,20 +524,27 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {innovations.map((item: any, i: number) => (
                 <AnimatedCard key={item.id} delay={i * 0.1}>
                   <Link href={`/innovations/${item.slug}`}>
-                    <Card className="glass-card-hover p-5 h-full">
+                    <Card className="glass-tech p-5 h-full group overflow-visible">
+                      <div className="corner-bracket corner-bracket-tl" />
+                      <div className="corner-bracket corner-bracket-tr" />
+                      <div className="corner-bracket corner-bracket-bl" />
+                      <div className="corner-bracket corner-bracket-br" />
                       <CardContent className="p-0">
-                        <span className="text-[10px] font-mono text-pri-red uppercase tracking-wider">
+                        <span className="inline-block text-[10px] font-mono text-pri-red uppercase tracking-wider px-2 py-0.5 rounded border border-pri-red/20 bg-pri-red/5">
                           {categoryLabel[item.category] || item.category}
                         </span>
-                        <h3 className="text-sm font-semibold text-white mt-1 mb-2 line-clamp-2">
+                        <h3 className="text-sm font-semibold text-white mt-2 mb-2 line-clamp-2 group-hover:text-pri-red transition-colors">
                           {item.title}
                         </h3>
                         {item.year && (
-                          <p className="text-xs text-pri-silver">{item.year}</p>
+                          <div className="flex items-center gap-1.5 text-xs text-pri-silver">
+                            <Lightbulb className="h-3 w-3 text-pri-red/60" />
+                            <span>{item.year}</span>
+                          </div>
                         )}
                       </CardContent>
                     </Card>
@@ -559,11 +576,15 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {newsItems.map((item: any, i: number) => (
                 <AnimatedCard key={item.id} delay={i * 0.1}>
                   <Link href={`/news/${item.slug}`}>
-                    <Card className="glass-card-hover p-0 overflow-hidden h-full group">
+                    <Card className="glass-tech p-0 overflow-hidden h-full group">
+                      <div className="corner-bracket corner-bracket-tl" />
+                      <div className="corner-bracket corner-bracket-tr" />
+                      <div className="corner-bracket corner-bracket-bl" />
+                      <div className="corner-bracket corner-bracket-br" />
                       {item.image_url ? (
                         <div className="relative h-40 overflow-hidden">
                           <Image
@@ -584,10 +605,10 @@ export default async function HomePage() {
                       )}
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-[10px] font-mono text-pri-red uppercase tracking-wider">
+                          <span className="inline-block text-[10px] font-mono text-pri-red uppercase tracking-wider px-1.5 py-0.5 rounded border border-pri-red/20 bg-pri-red/5">
                             {categoryLabel[item.category] || item.category}
                           </span>
-                          <span className="text-[10px] text-pri-silver">
+                          <span className="text-[10px] text-pri-silver/60">
                             {item.published_at
                               ? new Date(item.published_at).toLocaleDateString("id-ID")
                               : ""}
@@ -597,7 +618,7 @@ export default async function HomePage() {
                           {item.title}
                         </h3>
                         {item.excerpt && (
-                          <p className="text-xs text-pri-silver mt-1 line-clamp-2">{item.excerpt}</p>
+                          <p className="text-xs text-pri-silver/70 mt-1 line-clamp-2 leading-relaxed">{item.excerpt}</p>
                         )}
                       </CardContent>
                     </Card>

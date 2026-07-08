@@ -169,11 +169,56 @@ export async function getProvinceStats() {
 
 export async function getAllRegencyStats() {
   const supabase = await createServerClient();
-  const { data } = await supabase
+
+  // Get all regencies
+  const { data: regencies } = await supabase
     .from("regencies")
-    .select("id, name, province_id, code, latitude, longitude, total_members, total_trainers, total_events, total_innovations, created_at")
-    .order("total_members", { ascending: false });
-  return data ?? [];
+    .select("id, name, province_id, code, latitude, longitude, created_at")
+    .order("name", { ascending: true });
+
+  if (!regencies) return [];
+
+  // Compute counts per regency from members, events, innovations
+  // Note: only members table has regency_id; events & innovations use province_id
+  const [
+    { data: members },
+    { data: designations },
+  ] = await Promise.all([
+    supabase.from("members").select("regency_id, id").eq("status", "active").not("regency_id", "is", null),
+    supabase.from("member_designations").select("member_id, designation"),
+  ]);
+
+  const memberCounts: Record<string, number> = {};
+  const trainerCounts: Record<string, number> = {};
+
+  for (const m of members ?? []) {
+    if (m.regency_id) {
+      memberCounts[m.regency_id] = (memberCounts[m.regency_id] || 0) + 1;
+    }
+  }
+
+  // Map member designations to regency via member's regency_id
+  const memberIdToRegency = new Map((members ?? []).map((m: { id: string; regency_id: string | null }) => [m.id, m.regency_id]));
+  for (const d of designations ?? []) {
+    const regId = memberIdToRegency.get(d.member_id);
+    if (regId && d.designation === "trainer") {
+      trainerCounts[regId] = (trainerCounts[regId] || 0) + 1;
+    }
+  }
+
+  return regencies.map((r: any) => ({
+    id: r.id,
+    name: r.name,
+    province_id: r.province_id,
+    code: r.code,
+    latitude: r.latitude,
+    longitude: r.longitude,
+    total_members: memberCounts[r.id] || 0,
+    total_trainers: trainerCounts[r.id] || 0,
+    total_events: 0,
+    total_innovations: 0,
+    created_at: r.created_at,
+  })).sort((a, b) => b.total_members - a.total_members);
 }
 
 export async function getAllDistrictStats() {

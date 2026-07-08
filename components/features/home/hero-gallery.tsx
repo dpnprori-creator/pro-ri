@@ -163,7 +163,7 @@ export function HeroGallery({ items }: HeroGalleryProps) {
 
       {/* Dots Indicator */}
       {items.length > 1 && (
-        <div className="absolute bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
+        <div className="absolute bottom-32 sm:bottom-36 md:bottom-40 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
           {items.map((_, i) => (
             <button
               key={i}

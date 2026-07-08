@@ -49,10 +49,16 @@ export function AnimatedStats({ stats }: { stats: StatItem[] }) {
 
         return (
           <motion.div key={stat.label} variants={fadeIn}>
-            <Card className="glass-card-hover text-center p-6">
+            <Card className="glass-tech text-center p-6 group overflow-visible">
+              <div className="corner-bracket corner-bracket-tl" />
+              <div className="corner-bracket corner-bracket-tr" />
+              <div className="corner-bracket corner-bracket-bl" />
+              <div className="corner-bracket corner-bracket-br" />
               <CardContent className="p-0">
-                <Icon className="h-8 w-8 text-pri-red mx-auto mb-3" />
-                <div className="text-3xl md:text-4xl font-bold text-white font-mono mb-1">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-pri-red/20 to-pri-red/5 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300 ring-1 ring-pri-red/20">
+                  <Icon className="h-6 w-6 text-pri-red" />
+                </div>
+                <div className="text-3xl md:text-4xl font-bold text-white font-mono mb-1 group-hover:text-pri-red transition-colors">
                   {stat.value.toLocaleString()}
                 </div>
                 <div className="text-sm text-pri-silver mb-2">{stat.label}</div>
