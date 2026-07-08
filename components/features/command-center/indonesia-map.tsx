@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
-import type { ProvinceStats } from "@/features/command-center/data";
+import type { ProvinceStats, RegencyStats } from "@/features/command-center/data";
 
 // Dynamic import with no SSR for Leaflet
 const MapView = dynamic(() => import("./map-view"), {
@@ -16,16 +16,20 @@ const MapView = dynamic(() => import("./map-view"), {
 
 interface IndonesiaMapProps {
   provinces: ProvinceStats[];
+  regencies?: RegencyStats[];
   onProvinceSelect?: (province: ProvinceStats | null) => void;
+  onRegencySelect?: (regency: RegencyStats | null) => void;
   selectedProvinceId?: string | null;
 }
 
-export function IndonesiaMap({ provinces, onProvinceSelect, selectedProvinceId }: IndonesiaMapProps) {
+export function IndonesiaMap({ provinces, regencies, onProvinceSelect, onRegencySelect, selectedProvinceId }: IndonesiaMapProps) {
   return (
     <div className="rounded-xl border border-white/10 overflow-hidden glass-card">
       <MapView
         provinces={provinces}
+        regencies={regencies}
         onProvinceSelect={onProvinceSelect}
+        onRegencySelect={onRegencySelect}
         selectedProvinceId={selectedProvinceId}
       />
     </div>

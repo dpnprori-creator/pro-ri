@@ -11,7 +11,7 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import type { ProvinceStats } from "@/features/command-center/data";
+import type { ProvinceStats, RegencyStats } from "@/features/command-center/data";
 
 // Fix Leaflet icon issue in Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -24,8 +24,11 @@ L.Icon.Default.mergeOptions({
 
 interface MapViewProps {
   provinces: ProvinceStats[];
+  regencies?: RegencyStats[];
   onProvinceSelect?: (province: ProvinceStats | null) => void;
+  onRegencySelect?: (regency: RegencyStats | null) => void;
   selectedProvinceId?: string | null;
+  selectedRegencyId?: string | null;
 }
 
 // Province name mapping: GeoJSON property names → database names
@@ -101,6 +104,54 @@ function getColor(value: number, max: number): string {
   if (intensity > 0.2) return "#a0565a";
   if (intensity > 0.1) return "#7a686a";
   return "#3d3d4a";
+}
+
+// Deterministic hash from string (stable between renders)
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
+}
+
+// Generate schematic lat/lng for regencies within a province area
+// Uses deterministic positions (no Math.random) so markers don't jump on re-render
+function generateRegencyPositions(
+  regencies: RegencyStats[],
+  centerLat: number,
+  centerLng: number
+): (RegencyStats & { estLat: number; estLng: number })[] {
+  if (regencies.length === 0) return [];
+  
+  // Calculate grid dimensions
+  const cols = Math.ceil(Math.sqrt(regencies.length));
+  const rows = Math.ceil(regencies.length / cols);
+  
+  // Spread factor: ~0.5 degrees = ~55km spacing
+  const spread = Math.min(1.0, Math.max(0.3, cols * 0.15));
+  
+  return regencies.map((reg, index) => {
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+    
+    // Position in grid relative to center
+    const xOffset = (col - (cols - 1) / 2) * (spread / cols);
+    const yOffset = (row - (rows - 1) / 2) * (spread / rows);
+    
+    // Deterministic jitter based on regency ID hash (stable between renders)
+    const jitterSeed = hashString(reg.id);
+    const jitterLat = ((jitterSeed % 97) / 97 - 0.5) * 0.04;
+    const jitterLng = ((jitterSeed % 101) / 101 - 0.5) * 0.04;
+    
+    return {
+      ...reg,
+      estLat: centerLat + yOffset + jitterLat,
+      estLng: centerLng + xOffset + jitterLng,
+    };
+  });
 }
 
 // Abbreviate long province names for map labels
@@ -188,10 +239,30 @@ const GEOJSON_SOURCES = [
 const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
 const DARK_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>';
 
+// Zoom controller: flies to selected province center
+function MapZoomToProvince({ province }: { province: ProvinceStats | null }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (province?.latitude && province?.longitude) {
+      map.flyTo([province.latitude, province.longitude], province.total_members > 0 ? 8 : 7, {
+        duration: 1.2,
+      });
+    } else {
+      map.flyTo([-2.5, 118], 5, { duration: 1.2 });
+    }
+  }, [province?.id]);
+  
+  return null;
+}
+
 export default function MapView({
   provinces = [],
+  regencies = [],
   onProvinceSelect,
+  onRegencySelect,
   selectedProvinceId,
+  selectedRegencyId,
 }: MapViewProps) {
   const [geoData, setGeoData] = useState<any>(null);
   const [geoLoading, setGeoLoading] = useState(true);
@@ -328,8 +399,24 @@ export default function MapView({
     }
   }
 
+  // Selected province for zoom
+  const selectedProvince = selectedProvinceId
+    ? safeProvinces.find(p => p.id === selectedProvinceId) || null
+    : null;
+  
   // Province with lat/lng for CircleMarkers
   const hasCoords = safeProvinces.filter((p) => p.latitude && p.longitude);
+  
+  // Regency data for the selected province (with schematic positions)
+  const selectedProvinceRegencies = selectedProvince
+    ? generateRegencyPositions(
+        regencies.filter(r => r.province_id === selectedProvince.id),
+        selectedProvince.latitude || -2.5,
+        selectedProvince.longitude || 118
+      )
+    : [];
+  
+  const maxRegencyMembers = Math.max(...selectedProvinceRegencies.map(r => r.total_members), 1);
 
   return (
     <div className="relative h-[500px] w-full rounded-xl overflow-hidden">
@@ -359,11 +446,79 @@ export default function MapView({
           />
         )}
 
-        {/* CircleMarkers for each province with lat/lng — always visible */}
-        {hasCoords.map((prov) => {
+        {/* Zoom controller — fly to selected province */}
+        <MapZoomToProvince province={selectedProvince} />
+
+        {/* Regency CircleMarkers — shown when province selected */}
+        {selectedProvince && selectedProvinceRegencies.length > 0 && selectedProvinceRegencies.map((reg) => {
+          const radius = Math.max(8, (reg.total_members / maxRegencyMembers) * 25);
+          const color = getColor(reg.total_members, maxRegencyMembers);
+          const isSelected = selectedRegencyId === reg.id;
+
+          return (
+            <CircleMarker
+              key={reg.id}
+              center={[reg.estLat, reg.estLng]}
+              radius={Math.max(radius, 6)}
+              pathOptions={{
+                fillColor: color,
+                fillOpacity: isSelected ? 0.95 : 0.7,
+                weight: isSelected ? 3 : 1,
+                color: isSelected
+                  ? "#22c55e"
+                  : reg.total_members > 0
+                  ? "rgba(34,197,94,0.6)"
+                  : "rgba(255,255,255,0.15)",
+              }}
+              eventHandlers={{
+                click: () => onRegencySelect?.(reg),
+              }}
+            >
+              <Tooltip direction="top" offset={[0, -10]} className="custom-map-tooltip">
+                <div style={{ minWidth: "160px" }}>
+                  <div style={{
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    marginBottom: "4px",
+                    color: "#fff",
+                    borderBottom: "1px solid rgba(255,255,255,0.15)",
+                    paddingBottom: "4px",
+                  }}>
+                    🏛 {reg.name}
+                  </div>
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "2px 8px",
+                    fontSize: "11px",
+                  }}>
+                    <span style={{ color: "#93c5fd" }}>Anggota:</span>
+                    <span style={{ color: "#fff", fontFamily: "monospace", fontWeight: 600, textAlign: "right" }}>
+                      {reg.total_members.toLocaleString()}
+                    </span>
+                    <span style={{ color: "#fde68a" }}>Trainer:</span>
+                    <span style={{ color: "#fff", fontFamily: "monospace", textAlign: "right" }}>
+                      {reg.total_trainers}
+                    </span>
+                  </div>
+                  <div style={{
+                    marginTop: "4px",
+                    fontSize: "9px",
+                    color: "rgba(255,255,255,0.4)",
+                    textAlign: "center",
+                  }}>
+                    Klik untuk lihat kecamatan
+                  </div>
+                </div>
+              </Tooltip>
+            </CircleMarker>
+          );
+        })}
+
+        {/* Province CircleMarkers — hidden when zoomed into a province */}
+        {!selectedProvince && hasCoords.map((prov) => {
           const radius = Math.max(10, (prov.total_members / maxMembers) * 35);
           const color = getColor(prov.total_members, maxMembers);
-          const isSelected = selectedProvinceId === prov.id;
 
           return (
             <CircleMarker
@@ -372,11 +527,9 @@ export default function MapView({
               radius={Math.max(radius, 8)}
               pathOptions={{
                 fillColor: color,
-                fillOpacity: isSelected ? 0.95 : 0.75,
-                weight: isSelected ? 3 : 1.5,
-                color: isSelected
-                  ? "#E31E24"
-                  : prov.total_members > 0
+                fillOpacity: 0.75,
+                weight: 1.5,
+                color: prov.total_members > 0
                   ? "rgba(255,255,255,0.5)"
                   : "rgba(255,255,255,0.2)",
               }}
@@ -429,7 +582,7 @@ export default function MapView({
                       fontFamily: "monospace",
                       textAlign: "center",
                     }}>
-                      Klik untuk detail kab/kota
+                      Klik untuk lihat kab/kota
                     </div>
                   )}
                 </div>
@@ -438,12 +591,24 @@ export default function MapView({
           );
         })}
 
-        {/* Province name labels */}
-        <ProvinceLabels provinces={safeProvinces} provinceMap={provinceMap} />
+        {/* Province name labels — hidden when zoomed into province */}
+        {!selectedProvince && <ProvinceLabels provinces={safeProvinces} provinceMap={provinceMap} />}
       </MapContainer>
 
+      {/* Back button when in regency view */}
+      {selectedProvince && (
+        <div className="absolute top-3 right-3 z-[1000] flex items-center gap-2">
+          <button
+            onClick={() => onProvinceSelect?.(null)}
+            className="bg-black/70 backdrop-blur-md hover:bg-black/85 text-xs text-pri-silver hover:text-white px-3 py-1.5 rounded-lg border border-white/10 transition-all"
+          >
+            ← Kembali ke semua provinsi
+          </button>
+        </div>
+      )}
+
       {/* Loading indicator for GeoJSON */}
-      {geoLoading && (
+      {geoLoading && !selectedProvince && (
         <div className="absolute top-3 right-3 z-[1000] bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs text-pri-silver border border-white/10">
           Memuat batas provinsi...
         </div>
@@ -452,14 +617,16 @@ export default function MapView({
       {/* Legend — updated with actual member counts */}
       <div className="absolute bottom-3 left-3 z-[1000] bg-black/80 backdrop-blur-md rounded-lg px-3 py-2.5 border border-white/10">
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-[10px] text-pri-silver font-semibold font-mono">PETA SEBARAN</span>
+          <span className="text-[10px] text-pri-silver font-semibold font-mono">
+            {selectedProvince ? 'KABUPATEN/KOTA' : 'PETA SEBARAN'}
+          </span>
           <div className="flex items-center gap-1.5">
             {[
               { color: "#1a1a2e", label: "0" },
-              { color: "#7a686a", label: `${Math.ceil(maxMembers * 0.05)}` },
-              { color: "#a0565a", label: `${Math.ceil(maxMembers * 0.2)}` },
-              { color: "#d93036", label: `${Math.ceil(maxMembers * 0.5)}` },
-              { color: "#E31E24", label: `${maxMembers}` },
+              { color: "#7a686a", label: `${Math.ceil(selectedProvince ? maxRegencyMembers * 0.05 : maxMembers * 0.05)}` },
+              { color: "#a0565a", label: `${Math.ceil(selectedProvince ? maxRegencyMembers * 0.2 : maxMembers * 0.2)}` },
+              { color: "#d93036", label: `${Math.ceil(selectedProvince ? maxRegencyMembers * 0.5 : maxMembers * 0.5)}` },
+              { color: "#E31E24", label: `${selectedProvince ? maxRegencyMembers : maxMembers}` },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-1">
                 <div
@@ -471,16 +638,10 @@ export default function MapView({
             ))}
           </div>
           <span className="text-[9px] text-pri-silver/40 font-mono">anggota</span>
-          {!geoError && geoData && (
+          {!geoError && geoData && !selectedProvince && (
             <>
               <span className="text-pri-silver/20 mx-0.5">|</span>
               <span className="text-[8px] text-green-400/70 font-mono">Batas Provinsi</span>
-            </>
-          )}
-          {geoError && !geoLoading && (
-            <>
-              <span className="text-pri-silver/20 mx-0.5">|</span>
-              <span className="text-[8px] text-yellow-400/50 font-mono">Marker</span>
             </>
           )}
         </div>
@@ -489,17 +650,27 @@ export default function MapView({
       {/* Status info — with total member count */}
       <div className="absolute top-3 left-3 z-[1000] bg-black/70 backdrop-blur-md rounded-lg px-3 py-1.5 text-xs border border-white/10 flex items-center gap-2">
         <span className="status-dot" style={{ width: 6, height: 6 }} />
-        <span className="text-pri-silver">
-          {safeProvinces.filter(p => p.total_members > 0).length}/{hasCoords.length} provinsi
-        </span>
-        <span className="text-pri-silver/30">•</span>
-        <span className="text-pri-red font-mono font-semibold">
-          {safeProvinces.reduce((s, p) => s + p.total_members, 0).toLocaleString()} anggota
-        </span>
-        {selectedProvinceId && (
+        {selectedProvince ? (
           <>
+            <span className="text-green-400 font-semibold">{selectedProvince.name}</span>
             <span className="text-pri-silver/30">•</span>
-            <span className="text-pri-red font-medium">Terpilih</span>
+            <span className="text-pri-silver">
+              {selectedProvinceRegencies.length} kab/kota
+            </span>
+            <span className="text-pri-silver/30">•</span>
+            <span className="text-pri-red font-mono">
+              {selectedProvinceRegencies.reduce((s, r) => s + r.total_members, 0)} anggota
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="text-pri-silver">
+              {safeProvinces.filter(p => p.total_members > 0).length}/{hasCoords.length} provinsi
+            </span>
+            <span className="text-pri-silver/30">•</span>
+            <span className="text-pri-red font-mono font-semibold">
+              {safeProvinces.reduce((s, p) => s + p.total_members, 0).toLocaleString()} anggota
+            </span>
           </>
         )}
       </div>

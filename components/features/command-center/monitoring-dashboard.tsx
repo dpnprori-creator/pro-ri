@@ -181,7 +181,9 @@ export function MonitoringDashboard({
           <div className="xl:col-span-3">
             <IndonesiaMap
               provinces={provinces}
+              regencies={regencies}
               onProvinceSelect={(prov) => handleProvinceSelect(prov)}
+              onRegencySelect={(reg) => reg && handleRegencySelect(reg)}
               selectedProvinceId={mapSelectedProvince}
             />
           </div>
