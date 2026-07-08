@@ -24,24 +24,39 @@ export function RealtimeDashboard() {
 
     // Initial fetch
     const fetchStats = async () => {
+      // Check if activity_logs table exists by querying it
       const [
         { count: members },
         { count: events },
         { count: innovations },
       ] = await Promise.all([
-        supabase.from("members").select("*", { count: "exact", head: true }),
+        supabase.from("members").select("*", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("events").select("*", { count: "exact", head: true }),
-        supabase.from("innovations").select("*", { count: "exact", head: true }),
+        supabase.from("innovations").select("*", { count: "exact", head: true }).neq("status", "archived"),
       ]);
+
+      // Query active users from activity_logs (unique members active in last 15 min)
+      const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      const { data: recentActivity } = await supabase
+        .from("activity_logs")
+        .select("member_id")
+        .gte("created_at", fifteenMinAgo)
+        .not("member_id", "is", null);
+
+      // Count unique member_ids
+      const uniqueActive = new Set((recentActivity ?? []).map(a => a.member_id));
 
       setStats({
         totalMembers: members ?? 0,
         totalEvents: events ?? 0,
         totalInnovations: innovations ?? 0,
-        activeUsers: Math.floor((members ?? 0) * 0.15),
+        activeUsers: uniqueActive.size,
       });
       setLastUpdate(new Date());
     };
+
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchStats, 30000);
 
     fetchStats();
 
@@ -63,6 +78,7 @@ export function RealtimeDashboard() {
     return () => {
       supabase.removeChannel(membersChannel);
       supabase.removeChannel(eventsChannel);
+      clearInterval(interval);
     };
   }, []);
 

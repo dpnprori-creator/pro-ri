@@ -628,4 +628,37 @@ body {
   background: var(--leaflet-popup-bg) !important;
 }
 
+/* Custom dark tooltip for map */
+.custom-map-tooltip {
+  background: #1a1a2e !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 8px !important;
+  padding: 0 !important;
+  font-family: system-ui, sans-serif !important;
+}
+
+.custom-map-tooltip .leaflet-tooltip-content {
+  margin: 0 !important;
+  padding: 10px 12px !important;
+  line-height: 1.4 !important;
+}
+
+.custom-map-tooltip.leaflet-tooltip-top::before {
+  border-top-color: #1a1a2e !important;
+}
+
+.custom-map-tooltip.leaflet-tooltip-bottom::before {
+  border-bottom-color: #1a1a2e !important;
+}
+
+.custom-map-tooltip.leaflet-tooltip-left::before {
+  border-left-color: #1a1a2e !important;
+}
+
+.custom-map-tooltip.leaflet-tooltip-right::before {
+  border-right-color: #1a1a2e !important;
+}
+
 

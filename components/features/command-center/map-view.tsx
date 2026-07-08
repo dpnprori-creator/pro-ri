@@ -293,7 +293,7 @@ export default function MapView({
       });
     }
 
-    // Rich HTML tooltip
+    // Rich HTML tooltip with dark background class
     layer.bindTooltip(
       `<div style="min-width:160px">
         <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:#fff">
@@ -318,7 +318,7 @@ export default function MapView({
           </span>
         </div>
       </div>`,
-      { direction: "top", offset: [0, -10] }
+      { direction: "top", offset: [0, -10], className: "custom-map-tooltip" }
     );
 
     if (onProvinceSelect && stats) {
@@ -384,14 +384,14 @@ export default function MapView({
                 click: () => onProvinceSelect?.(prov),
               }}
             >
-              <Tooltip direction="top" offset={[0, -10]}>
+              <Tooltip direction="top" offset={[0, -10]} className="custom-map-tooltip">
                 <div style={{ minWidth: "160px" }}>
                   <div style={{
                     fontSize: "13px",
                     fontWeight: 700,
                     marginBottom: "6px",
                     color: "#fff",
-                    borderBottom: "1px solid rgba(255,255,255,0.1)",
+                    borderBottom: "1px solid rgba(255,255,255,0.15)",
                     paddingBottom: "4px",
                   }}>
                     {prov.name}
@@ -419,12 +419,11 @@ export default function MapView({
                       {prov.total_innovations}
                     </span>
                   </div>
-                  {/* Member count highlight */}
                   {prov.total_members > 0 && (
                     <div style={{
                       marginTop: "6px",
                       paddingTop: "4px",
-                      borderTop: "1px solid rgba(255,255,255,0.1)",
+                      borderTop: "1px solid rgba(255,255,255,0.15)",
                       fontSize: "10px",
                       color: "rgba(255,255,255,0.5)",
                       fontFamily: "monospace",
@@ -450,41 +449,59 @@ export default function MapView({
         </div>
       )}
 
-      {/* Legend */}
-      <div className="absolute bottom-3 left-3 z-[1000] bg-black/70 backdrop-blur-md rounded-lg px-3 py-2 border border-white/10">
+      {/* Legend — updated with actual member counts */}
+      <div className="absolute bottom-3 left-3 z-[1000] bg-black/80 backdrop-blur-md rounded-lg px-3 py-2.5 border border-white/10">
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-[10px] text-pri-silver font-mono">Anggota:</span>
+          <span className="text-[10px] text-pri-silver font-semibold font-mono">PETA SEBARAN</span>
           <div className="flex items-center gap-1.5">
             {[
               { color: "#1a1a2e", label: "0" },
-              { color: "#7a686a", label: "Rendah" },
-              { color: "#a0565a", label: "Sedang" },
-              { color: "#d93036", label: "Tinggi" },
-              { color: "#E31E24", label: "Tertinggi" },
+              { color: "#7a686a", label: `${Math.ceil(maxMembers * 0.05)}` },
+              { color: "#a0565a", label: `${Math.ceil(maxMembers * 0.2)}` },
+              { color: "#d93036", label: `${Math.ceil(maxMembers * 0.5)}` },
+              { color: "#E31E24", label: `${maxMembers}` },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-1">
                 <div
-                  className="w-2.5 h-2.5 rounded-sm"
-                  style={{ background: item.color }}
+                  className="w-3 h-3 rounded-sm"
+                  style={{ background: item.color, border: '1px solid rgba(255,255,255,0.1)' }}
                 />
-                <span className="text-[8px] text-pri-silver/60">{item.label}</span>
+                <span className="text-[9px] text-pri-silver/80 font-mono">{item.label}</span>
               </div>
             ))}
           </div>
+          <span className="text-[9px] text-pri-silver/40 font-mono">anggota</span>
           {!geoError && geoData && (
             <>
-              <span className="text-pri-silver/20 mx-1">|</span>
-              <span className="text-[8px] text-green-400/60">Polygon</span>
+              <span className="text-pri-silver/20 mx-0.5">|</span>
+              <span className="text-[8px] text-green-400/70 font-mono">Batas Provinsi</span>
+            </>
+          )}
+          {geoError && !geoLoading && (
+            <>
+              <span className="text-pri-silver/20 mx-0.5">|</span>
+              <span className="text-[8px] text-yellow-400/50 font-mono">Marker</span>
             </>
           )}
         </div>
       </div>
 
-      {/* Status info */}
-      <div className="absolute top-3 left-3 z-[1000] bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs text-pri-silver border border-white/10 flex items-center gap-2">
+      {/* Status info — with total member count */}
+      <div className="absolute top-3 left-3 z-[1000] bg-black/70 backdrop-blur-md rounded-lg px-3 py-1.5 text-xs border border-white/10 flex items-center gap-2">
         <span className="status-dot" style={{ width: 6, height: 6 }} />
-        {hasCoords.length} provinsi aktif
-        {selectedProvinceId && <span className="text-pri-red font-medium"> • Terpilih</span>}
+        <span className="text-pri-silver">
+          {safeProvinces.filter(p => p.total_members > 0).length}/{hasCoords.length} provinsi
+        </span>
+        <span className="text-pri-silver/30">•</span>
+        <span className="text-pri-red font-mono font-semibold">
+          {safeProvinces.reduce((s, p) => s + p.total_members, 0).toLocaleString()} anggota
+        </span>
+        {selectedProvinceId && (
+          <>
+            <span className="text-pri-silver/30">•</span>
+            <span className="text-pri-red font-medium">Terpilih</span>
+          </>
+        )}
       </div>
     </div>
   );
