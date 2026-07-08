@@ -580,16 +580,16 @@ export async function deleteHeroGalleryItem(id: string) {
 }
 
 export async function setMemberDesignation(memberId: string, designation: string, active: boolean = true) {
-  const supabase = await createServerClient();
+  const adminSupabase = createAdminClient();
   
   if (active) {
-    const { error } = await supabase.from("member_designations").insert({
+    const { error } = await adminSupabase.from("member_designations").insert({
       member_id: memberId,
       designation,
     });
     if (error) return { error: error.message };
   } else {
-    const { error } = await supabase
+    const { error } = await adminSupabase
       .from("member_designations")
       .delete()
       .eq("member_id", memberId)
@@ -597,7 +597,7 @@ export async function setMemberDesignation(memberId: string, designation: string
     if (error) return { error: error.message };
   }
   
-  revalidatePath(`/admin/members/${memberId}`);
+  revalidatePath("/admin/members");
   return { success: true };
 }
 

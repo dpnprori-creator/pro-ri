@@ -90,16 +90,16 @@ export async function getPublicStats() {
 
   const [
     { count: totalMembers },
-    { count: totalTrainers },
-    { count: totalMentors },
     { count: totalEvents },
     { count: totalInnovations },
+    { count: totalTrainers },
+    { count: totalMentors },
   ] = await Promise.all([
     supabase.from("members").select("*", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("members").select("*", { count: "exact", head: true }).eq("role_id", "trainer"),
-    supabase.from("members").select("*", { count: "exact", head: true }).eq("role_id", "mentor"),
     supabase.from("events").select("*", { count: "exact", head: true }).gte("end_date", new Date().toISOString()),
     supabase.from("innovations").select("*", { count: "exact", head: true }).neq("status", "archived"),
+    supabase.from("member_designations").select("*", { count: "exact", head: true }).eq("designation", "trainer"),
+    supabase.from("member_designations").select("*", { count: "exact", head: true }).eq("designation", "mentor"),
   ]);
 
   const { count: totalProvinces } = await supabase
