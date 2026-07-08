@@ -582,20 +582,14 @@ export async function deleteHeroGalleryItem(id: string) {
 export async function setMemberDesignation(memberId: string, designation: string, active: boolean = true) {
   const adminSupabase = createAdminClient();
   
-  if (active) {
-    const { error } = await adminSupabase.from("member_designations").insert({
-      member_id: memberId,
-      designation,
-    });
-    if (error) return { error: error.message };
-  } else {
-    const { error } = await adminSupabase
-      .from("member_designations")
-      .delete()
-      .eq("member_id", memberId)
-      .eq("designation", designation);
-    if (error) return { error: error.message };
-  }
+  const { error, data } = await (adminSupabase as any).rpc("set_member_designation", {
+    p_member_id: memberId,
+    p_designation: designation,
+    p_active: active,
+  });
+  
+  if (error) return { error: error.message };
+  if (data === false) return { error: "Gagal mengupdate designation" };
   
   revalidatePath("/admin/members");
   return { success: true };
