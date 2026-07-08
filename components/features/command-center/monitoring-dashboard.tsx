@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Target, TrendingUp, MapIcon, BarChart3, LineChart, PieChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { IndonesiaMap } from "./indonesia-map";
+import { IndonesiaSvgMap } from "./indonesia-svg-map";
 import { ProvinceDetailPanel } from "./province-detail";
 import { RegencyDetailPanel } from "./regency-detail";
 import { DistrictDetailPanel } from "./district-detail";
@@ -179,7 +179,7 @@ export function MonitoringDashboard({
         </div>
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
           <div className="xl:col-span-3">
-            <IndonesiaMap
+            <IndonesiaSvgMap
               provinces={provinces}
               onProvinceSelect={(prov) => handleProvinceSelect(prov)}
               selectedProvinceId={mapSelectedProvince}

@@ -93,13 +93,14 @@ export async function getProvinceStats() {
   if (!provinces) return [];
   
   // Get counts per province from all relevant tables in parallel
+  // Single members query with id + province_id — eliminates duplicate query
   const [
     { data: members },
     { data: events },
     { data: innovations },
     { data: designations },
   ] = await Promise.all([
-    supabase.from("members").select("province_id, role_id").eq("status", "active").not("province_id", "is", null),
+    supabase.from("members").select("id, province_id").eq("status", "active").not("province_id", "is", null),
     supabase.from("events").select("province_id").not("province_id", "is", null),
     supabase.from("innovations").select("province_id").neq("status", "archived").not("province_id", "is", null),
     supabase.from("member_designations").select("member_id, designation"),
@@ -130,17 +131,8 @@ export async function getProvinceStats() {
     }
   }
   
-  // Map member designations (trainer/mentor) to their province via member's province_id
-  const memberProvinceMap = new Map((members ?? []).map(m => [m.province_id, true]));
-  // Re-query members with their province for designation mapping
-  const { data: membersWithRole } = await supabase
-    .from("members")
-    .select("id, province_id")
-    .eq("status", "active")
-    .not("province_id", "is", null);
-  
-  // Build member_id -> province_id mapping
-  const memberToProvince = new Map((membersWithRole ?? []).map(m => [m.id, m.province_id]));
+  // Build member_id -> province_id mapping from same members data
+  const memberToProvince = new Map((members ?? []).map(m => [m.id, m.province_id]));
   
   for (const d of designations ?? []) {
     const provId = memberToProvince.get(d.member_id);
