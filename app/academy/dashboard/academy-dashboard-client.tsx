@@ -53,11 +53,15 @@ function getProgressColor(percent: number): string {
 }
 
 export function AcademyDashboardClient({ enrollments }: AcademyDashboardClientProps) {
-  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [filter, setFilter] = useState<"all" | "active" | "completed" | "incomplete">("all");
   const [search, setSearch] = useState("");
 
   const filtered = enrollments.filter((e) => {
-    const matchStatus = filter === "all" || e.status === filter;
+    let matchStatus = filter === "all" || e.status === filter;
+    // Kustom filter: progress < 100%
+    if (filter === "incomplete") {
+      matchStatus = (e.progress_percent || 0) < 100;
+    }
     const matchSearch = e.courses?.title.toLowerCase().includes(search.toLowerCase()) ?? true;
     return matchStatus && matchSearch;
   });
@@ -97,6 +101,7 @@ export function AcademyDashboardClient({ enrollments }: AcademyDashboardClientPr
           {[
             { id: "all" as const, label: "Semua" },
             { id: "active" as const, label: "Sedang Berjalan" },
+            { id: "incomplete" as const, label: "Belum Selesai" },
             { id: "completed" as const, label: "Selesai" },
           ].map((f) => (
             <button
