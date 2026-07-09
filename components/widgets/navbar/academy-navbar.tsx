@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 const navItems = [
   { label: "Beranda", href: "/academy" },
   { label: "Kursus", href: "/academy/courses" },
+  { label: "Dashboard", href: "/academy/dashboard" },
   { label: "Learning Path", href: "/academy/courses?view=path" },
 ];
 
