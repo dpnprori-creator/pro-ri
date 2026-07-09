@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus, Trash2, Edit3, ChevronDown, ChevronRight,
-  BookOpen, Video, FileText, Loader2, Image as ImageIcon
+  BookOpen, Video, FileText, Loader2, Image as ImageIcon,
+  FileUp, File, Download, ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,10 +13,22 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   updateCourse, createModule, updateModule, deleteModule,
-  createLesson, updateLesson, deleteLesson
+  createLesson, updateLesson, deleteLesson,
+  uploadLessonAttachment, deleteLessonAttachment, getLessonAttachments
 } from "@/features/academy/actions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+interface Attachment {
+  id: string;
+  lesson_id: string;
+  title: string;
+  file_url: string;
+  file_type: string;
+  file_size: number;
+  sort_order: number;
+  created_at: string;
+}
 
 interface Lesson {
   id: string;
@@ -65,6 +78,53 @@ export function TrainerCourseEditor({ course }: TrainerCourseEditorProps) {
   const [showModuleForm, setShowModuleForm] = useState(false);
   const [showLessonForm, setShowLessonForm] = useState<string | null>(null); // moduleId
   const [showCourseEdit, setShowCourseEdit] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [loadingAttachments, setLoadingAttachments] = useState(false);
+
+  // Load attachments when editing lesson changes
+  useEffect(() => {
+    if (editingLesson) {
+      loadAttachments(editingLesson.id);
+    } else {
+      setAttachments([]);
+    }
+  }, [editingLesson?.id]);
+
+  const loadAttachments = useCallback(async (lessonId: string) => {
+    setLoadingAttachments(true);
+    const data = await getLessonAttachments(lessonId);
+    setAttachments(data);
+    setLoadingAttachments(false);
+  }, []);
+
+  async function handleUploadAttachment(lessonId: string, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingFile(true);
+    const fd = new FormData();
+    fd.set("lessonId", lessonId);
+    fd.set("title", file.name);
+    fd.set("file", file);
+    const result = await uploadLessonAttachment(fd);
+    setUploadingFile(false);
+    if (result.error) toast.error(result.error);
+    else {
+      toast.success("File berhasil diupload");
+      loadAttachments(lessonId);
+    }
+    e.target.value = "";
+  }
+
+  async function handleDeleteAttachment(attachmentId: string, lessonId: string) {
+    if (!confirm("Hapus file ini?")) return;
+    const result = await deleteLessonAttachment(attachmentId);
+    if (result.error) toast.error(result.error);
+    else {
+      toast.success("File dihapus");
+      loadAttachments(lessonId);
+    }
+  }
 
   const toggleModule = (id: string) => {
     setExpandedModules(prev =>
@@ -321,6 +381,56 @@ export function TrainerCourseEditor({ course }: TrainerCourseEditorProps) {
                   </label>
                 </div>
               </div>
+
+              {/* File Attachments Section */}
+              <div className="border-t border-white/10 pt-4 mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="text-sm font-medium">Materi File (PDF, DOCX, Video, dll)</Label>
+                  <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-white/20 cursor-pointer hover:border-pri-red/40 transition-colors text-[10px] text-pri-silver/50 hover:text-pri-silver">
+                    <FileUp className="h-3 w-3" />
+                    {uploadingFile ? "Uploading..." : "Upload File"}
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.mp4,.webm,.jpg,.jpeg,.png,.webp"
+                      className="hidden"
+                      disabled={uploadingFile}
+                      onChange={(e) => handleUploadAttachment(editingLesson.id, e)}
+                    />
+                  </label>
+                </div>
+
+                {loadingAttachments ? (
+                  <div className="flex items-center gap-2 py-3">
+                    <Loader2 className="h-3 w-3 animate-spin text-pri-silver/40" />
+                    <span className="text-[10px] text-pri-silver/30">Memuat file...</span>
+                  </div>
+                ) : attachments.length === 0 ? (
+                  <p className="text-[10px] text-pri-silver/20 py-2">Belum ada file materi</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {attachments.map((att) => (
+                      <div key={att.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-pri-carbon/50 border border-white/5">
+                        <File className="h-3.5 w-3.5 text-pri-red/60 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] text-pri-silver/80 truncate">{att.title}</p>
+                          <p className="text-[8px] text-pri-silver/20 font-mono">
+                            {att.file_type.toUpperCase()} &middot; {(att.file_size / 1024).toFixed(0)} KB
+                          </p>
+                        </div>
+                        <a href={att.file_url} target="_blank" rel="noopener noreferrer"
+                          className="text-pri-silver/40 hover:text-white transition-colors">
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                        <button onClick={() => handleDeleteAttachment(att.id, editingLesson.id)}
+                          className="text-pri-silver/40 hover:text-red-400 transition-colors">
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <Button type="submit" disabled={saving} className="w-full bg-pri-red text-white">{saving ? "Menyimpan..." : "Simpan"}</Button>
             </form>
           )}

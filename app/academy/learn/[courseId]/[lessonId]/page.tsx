@@ -1,10 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CheckCircle, Play, Menu, BookOpen, GraduationCap } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { AcademyLessonCompleteButton } from "@/components/features/academy/academy-lesson-complete-button";
 import { AcademyLessonSidebar } from "@/components/features/academy/academy-lesson-sidebar";
+import { LessonContentClient } from "@/components/features/academy/lesson-content-client";
 
 export default async function LessonPage({
   params,
@@ -73,6 +71,8 @@ export default async function LessonPage({
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
 
+  // Sequential lock: current lesson is locked if previous lesson is not completed
+  // (first lesson is always unlocked)
   const { data: completions } = await supabase
     .from("lesson_completions")
     .select("lesson_id")
@@ -81,6 +81,7 @@ export default async function LessonPage({
 
   const completedIds = completions?.map(c => c.lesson_id) || [];
   const isCompleted = completedIds.includes(lessonId);
+  const isLocked = currentIndex > 0 && !completedIds.includes(allLessons[currentIndex - 1]?.id || "");
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">
@@ -93,113 +94,28 @@ export default async function LessonPage({
         enrollmentProgress={enrollment.progress_percent || 0}
       />
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar */}
-        <div className="flex items-center justify-between px-4 md:px-8 py-3 border-b border-white/10 bg-pri-carbon/80">
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/academy/courses/${course.slug}`}
-              className="text-pri-silver hover:text-white transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-            <div className="hidden sm:block">
-              <p className="text-xs font-medium text-white truncate max-w-[300px]">
-                {course.title}
-              </p>
-              <p className="text-[10px] text-pri-silver/40 font-mono">
-                {lesson.title}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Progress */}
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="h-1.5 w-20 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-pri-red to-red-400 rounded-full transition-all"
-                  style={{ width: `${enrollment.progress_percent || 0}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-pri-silver/40 font-mono">
-                {enrollment.progress_percent || 0}%
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Content area */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-4 md:px-8 py-8">
-            {/* Video */}
-            {lesson.video_url && (
-              <div className="aspect-video rounded-xl overflow-hidden bg-black mb-8 border border-white/10">
-                <iframe
-                  src={lesson.video_url.replace("watch?v=", "embed/")}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            )}
-
-            {/* Title */}
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h1 className="text-xl md:text-2xl font-bold text-white mb-2">
-                  {lesson.title}
-                </h1>
-                {lesson.description && (
-                  <p className="text-sm text-pri-silver/60">{lesson.description}</p>
-                )}
-              </div>
-              {isCompleted && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 shrink-0">
-                  <CheckCircle className="h-3.5 w-3.5 text-green-400" />
-                  <span className="text-[10px] text-green-400 font-medium">Selesai</span>
-                </div>
-              )}
-            </div>
-
-            {/* Content */}
-            {lesson.content && (
-              <div className="prose prose-invert prose-sm max-w-none mb-8">
-                <div className="text-sm text-pri-silver/80 leading-relaxed whitespace-pre-wrap">
-                  {lesson.content}
-                </div>
-              </div>
-            )}
-
-            {/* Complete button & navigation */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mt-8 pt-6 border-t border-white/10">
-              <AcademyLessonCompleteButton
-                lessonId={lessonId}
-                courseId={courseId}
-                isCompleted={isCompleted}
-              />
-
-              <div className="flex items-center gap-2">
-                {prevLesson && (
-                  <Link href={`/academy/learn/${courseId}/${prevLesson.id}`}>
-                    <Button variant="outline" size="sm" className="border-white/10 text-pri-silver hover:text-white text-xs">
-                      <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Sebelumnya
-                    </Button>
-                  </Link>
-                )}
-                {nextLesson && (
-                  <Link href={`/academy/learn/${courseId}/${nextLesson.id}`}>
-                    <Button size="sm" className="bg-pri-red hover:bg-red-700 text-white text-xs">
-                      Selanjutnya <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Main content — client component with VideoTracker + Sequential Lock */}
+      <LessonContentClient
+        lesson={{
+          id: lesson.id,
+          title: lesson.title,
+          description: lesson.description,
+          content: lesson.content,
+          video_url: lesson.video_url,
+          duration_minutes: lesson.duration_minutes,
+          is_free: lesson.is_free,
+        }}
+        course={{ id: course.id, title: course.title, slug: course.slug }}
+        courseId={courseId}
+        currentLessonId={lessonId}
+        isCompleted={isCompleted}
+        isLocked={isLocked}
+        prevLesson={prevLesson ? { id: prevLesson.id, title: prevLesson.title, sort_order: prevLesson.sort_order } : null}
+        nextLesson={nextLesson ? { id: nextLesson.id, title: nextLesson.title, sort_order: nextLesson.sort_order } : null}
+        completedIds={completedIds}
+        allLessons={allLessons.map(l => ({ id: l.id, title: l.title, sort_order: l.sort_order }))}
+        enrollmentProgress={enrollment.progress_percent || 0}
+      />
     </div>
   );
 }

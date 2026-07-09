@@ -60,6 +60,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/youtube": "^0.3.0",
     "autoprefixer": "^10.0.0",
     "marked": "^18.0.5",
     "postcss": "^8.0.0",
