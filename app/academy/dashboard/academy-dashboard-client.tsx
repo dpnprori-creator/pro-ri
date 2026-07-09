@@ -93,11 +93,19 @@ export function AcademyDashboardClient({ enrollments }: AcademyDashboardClientPr
     );
   }
 
+  // Hitung jumlah per filter tab
+  const filterCounts = {
+    all: enrollments.length,
+    active: enrollments.filter(e => e.status === "active").length,
+    incomplete: enrollments.filter(e => (e.progress_percent || 0) < 100).length,
+    completed: enrollments.filter(e => e.status === "completed").length,
+  };
+
   return (
     <div>
       {/* Filters */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {[
             { id: "all" as const, label: "Semua" },
             { id: "active" as const, label: "Sedang Berjalan" },
@@ -108,13 +116,21 @@ export function AcademyDashboardClient({ enrollments }: AcademyDashboardClientPr
               key={f.id}
               onClick={() => setFilter(f.id)}
               className={cn(
-                "px-3 py-1.5 text-xs rounded-full transition-all",
+                "px-3 py-1.5 text-xs rounded-full transition-all inline-flex items-center gap-1.5",
                 filter === f.id
                   ? "bg-pri-red text-white"
                   : "bg-white/5 text-pri-silver hover:text-white hover:bg-white/10"
               )}
             >
               {f.label}
+              <span className={cn(
+                "text-[9px] font-mono tabular-nums",
+                filter === f.id
+                  ? "text-white/70"
+                  : "text-pri-silver/30"
+              )}>
+                {filterCounts[f.id]}
+              </span>
             </button>
           ))}
         </div>
