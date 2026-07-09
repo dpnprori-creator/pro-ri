@@ -28,6 +28,7 @@ interface Enrollment {
   progress_percent: number;
   enrolled_at: string;
   completed_at: string | null;
+  next_lesson_id: string | null;
   courses: Course | null;
 }
 
@@ -225,8 +226,14 @@ export function AcademyDashboardClient({ enrollments }: AcademyDashboardClientPr
                     )}
                   </div>
 
-                  {/* Action */}
-                  <Link href={`/academy/courses/${course.slug}`}>
+                  {/* Smart action link: langsung ke lesson pertama yang belum selesai */}
+                  <Link
+                    href={
+                      isCompleted || !enrollment.next_lesson_id
+                        ? `/academy/courses/${course.slug}`
+                        : `/academy/learn/${course.id}/${enrollment.next_lesson_id}`
+                    }
+                  >
                     <Button
                       size="sm"
                       className={cn(

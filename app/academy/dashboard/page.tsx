@@ -26,6 +26,51 @@ async function getDashboardData() {
     .eq("member_id", member.id)
     .order("enrolled_at", { ascending: false });
 
+  // Fetch next lesson for each enrollment
+  const enrollmentWithLesson = await Promise.all(
+    (enrollments || []).map(async (enr) => {
+      let nextLessonId: string | null = null;
+
+      if (enr.status === "active" && enr.courses) {
+        // Get all modules with lessons for this course
+        const { data: modules } = await supabase
+          .from("course_modules")
+          .select(`
+            id,
+            course_lessons (id, sort_order)
+          `)
+          .eq("course_id", enr.course_id)
+          .order("sort_order", { ascending: true });
+
+        if (modules && modules.length > 0) {
+          // Flatten and sort all lessons
+          const allLessons = modules
+            .flatMap(m => m.course_lessons)
+            .sort((a, b) => a.sort_order - b.sort_order);
+
+          const lessonIds = allLessons.map(l => l.id);
+
+          // Get completed lessons for this course
+          const { data: completions } = await supabase
+            .from("lesson_completions")
+            .select("lesson_id")
+            .in("lesson_id", lessonIds)
+            .eq("member_id", member.id);
+
+          const completedIds = new Set(completions?.map(c => c.lesson_id) || []);
+
+          // Find first incomplete lesson
+          const firstIncomplete = allLessons.find(l => !completedIds.has(l.id));
+          if (firstIncomplete) {
+            nextLessonId = firstIncomplete.id;
+          }
+        }
+      }
+
+      return { ...enr, next_lesson_id: nextLessonId };
+    })
+  );
+
   // Calculate stats
   const total = enrollments?.length || 0;
   const completed = enrollments?.filter(e => e.status === "completed").length || 0;
@@ -34,7 +79,7 @@ async function getDashboardData() {
 
   return {
     memberName: member.full_name,
-    enrollments: enrollments || [],
+    enrollments: enrollmentWithLesson,
     stats: { total, completed, inProgress, notStarted },
   };
 }
