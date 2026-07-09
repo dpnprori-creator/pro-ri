@@ -177,7 +177,6 @@ export default async function LessonPage({
               <AcademyLessonCompleteButton
                 lessonId={lessonId}
                 courseId={courseId}
-                moduleId={lesson.module_id}
                 isCompleted={isCompleted}
               />
 

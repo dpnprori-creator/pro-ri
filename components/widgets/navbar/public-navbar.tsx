@@ -99,6 +99,14 @@ export function PublicNavbar() {
             </Link>
           ))}
           <hr className="border-white/10 my-2" />
+          <Link
+            href="/academy"
+            className="px-3 py-2.5 text-sm text-pri-red hover:text-red-400 transition-colors rounded-md hover:bg-white/5"
+            onClick={() => setMobileOpen(false)}
+          >
+            <GraduationCap className="h-4 w-4 inline mr-1" />
+            Academy
+          </Link>
           <Link href="/login" className="px-3 py-2.5 text-sm text-pri-silver hover:text-white">
             Masuk
           </Link>

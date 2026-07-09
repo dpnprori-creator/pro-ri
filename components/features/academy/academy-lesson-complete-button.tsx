@@ -10,14 +10,12 @@ import { toast } from "sonner";
 interface AcademyLessonCompleteButtonProps {
   lessonId: string;
   courseId: string;
-  moduleId: string;
   isCompleted: boolean;
 }
 
 export function AcademyLessonCompleteButton({
   lessonId,
   courseId,
-  moduleId,
   isCompleted: initialCompleted,
 }: AcademyLessonCompleteButtonProps) {
   const [loading, setLoading] = useState(false);
@@ -31,7 +29,7 @@ export function AcademyLessonCompleteButton({
     if (isCompleted) {
       result = await uncompleteLesson(lessonId, courseId);
     } else {
-      result = await completeLesson(lessonId, courseId, moduleId);
+      result = await completeLesson(lessonId, courseId);
     }
 
     setLoading(false);

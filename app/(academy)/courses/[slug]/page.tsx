@@ -125,6 +125,7 @@ export default async function CourseDetailPage({
 
           <AcademyEnrollButton
             courseId={course.id}
+            courseSlug={course.slug}
             isEnrolled={isEnrolled}
             progress={enrollmentProgress}
           />

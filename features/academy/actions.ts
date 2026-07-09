@@ -129,7 +129,7 @@ export async function enrollInCourse(courseId: string) {
 // PROGRESS - Lesson Completion
 // ============================================
 
-export async function completeLesson(lessonId: string, courseId: string, moduleId: string) {
+export async function completeLesson(lessonId: string, courseId: string) {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -153,49 +153,20 @@ export async function completeLesson(lessonId: string, courseId: string, moduleI
 
   if (completeError) return { error: completeError.message };
 
-  // Recalculate progress
-  const { data: modules } = await supabase
-    .from("course_modules")
-    .select("id")
-    .eq("course_id", courseId);
-
-  if (!modules) return { error: "Module not found" };
-
-  const moduleIds = modules.map(m => m.id);
-
-  const { data: allLessons } = await supabase
-    .from("course_lessons")
-    .select("id")
-    .in("module_id", moduleIds);
-
-  if (!allLessons) return { error: "Lessons not found" };
-
-  const lessonIds = allLessons.map(l => l.id);
-
-  const { data: completions } = await supabase
-    .from("lesson_completions")
-    .select("lesson_id")
-    .in("lesson_id", lessonIds)
-    .eq("member_id", member.id);
-
-  const totalLessons = lessonIds.length || 1;
-  const completedLessons = completions?.length || 0;
-  const progress = Math.round((completedLessons / totalLessons) * 100);
-
-  const newStatus = progress >= 100 ? "completed" : "active";
-
-  await supabase
+  // Progress recalculation is handled by SQL trigger: trg_lesson_completion_progress
+  // Just fetch the updated enrollment to return progress
+  const { data: enrollment } = await supabase
     .from("course_enrollments")
-    .update({
-      progress_percent: progress,
-      status: newStatus,
-      completed_at: newStatus === "completed" ? new Date().toISOString() : null,
-    })
+    .select("progress_percent, status")
     .eq("course_id", courseId)
-    .eq("member_id", member.id);
+    .eq("member_id", member.id)
+    .single();
+
+  const progress = enrollment?.progress_percent ?? 0;
+  const isCompleted = enrollment?.status === "completed";
 
   revalidatePath(`/academy/learn/${courseId}/${lessonId}`);
-  return { success: true, progress, completed: newStatus === "completed" };
+  return { success: true, progress, completed: isCompleted };
 }
 
 export async function uncompleteLesson(lessonId: string, courseId: string) {
@@ -218,43 +189,16 @@ export async function uncompleteLesson(lessonId: string, courseId: string) {
     .eq("lesson_id", lessonId)
     .eq("member_id", member.id);
 
-  // Recalculate progress
-  const { data: modules } = await supabase
-    .from("course_modules")
-    .select("id")
-    .eq("course_id", courseId);
-
-  if (!modules) return {};
-
-  const moduleIds = modules.map(m => m.id);
-
-  const { data: allLessons } = await supabase
-    .from("course_lessons")
-    .select("id")
-    .in("module_id", moduleIds);
-
-  if (!allLessons) return {};
-
-  const lessonIds = allLessons.map(l => l.id);
-
-  const { data: completions } = await supabase
-    .from("lesson_completions")
-    .select("lesson_id")
-    .in("lesson_id", lessonIds)
-    .eq("member_id", member.id);
-
-  const totalLessons = lessonIds.length || 1;
-  const completedLessons = completions?.length || 0;
-  const progress = Math.round((completedLessons / totalLessons) * 100);
-
-  await supabase
+  // Progress recalculation is handled by SQL trigger: trg_lesson_completion_progress
+  // Just fetch the updated enrollment to return progress
+  const { data: enrollment } = await supabase
     .from("course_enrollments")
-    .update({
-      progress_percent: progress,
-      status: progress >= 100 ? "completed" : "active",
-    })
+    .select("progress_percent")
     .eq("course_id", courseId)
-    .eq("member_id", member.id);
+    .eq("member_id", member.id)
+    .single();
+
+  const progress = enrollment?.progress_percent ?? 0;
 
   revalidatePath(`/academy/learn/${courseId}/${lessonId}`);
   return { success: true, progress };

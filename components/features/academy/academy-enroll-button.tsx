@@ -9,11 +9,12 @@ import { toast } from "sonner";
 
 interface AcademyEnrollButtonProps {
   courseId: string;
+  courseSlug: string;
   isEnrolled: boolean;
   progress: number;
 }
 
-export function AcademyEnrollButton({ courseId, isEnrolled, progress }: AcademyEnrollButtonProps) {
+export function AcademyEnrollButton({ courseId, courseSlug, isEnrolled, progress }: AcademyEnrollButtonProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -44,7 +45,7 @@ export function AcademyEnrollButton({ courseId, isEnrolled, progress }: AcademyE
             size="sm"
             variant="outline"
             className="border-white/10 text-pri-silver hover:text-white text-xs"
-            onClick={() => router.push(`/academy/learn/${courseId}/start`)}
+            onClick={() => router.push(`/academy/courses/${courseSlug}`)}
           >
             Lanjutkan <ArrowRight className="ml-1 h-3 w-3" />
           </Button>

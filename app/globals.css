@@ -578,6 +578,18 @@ body {
   animation: scanline 2s ease-in-out infinite;
 }
 
+/* Loading bar animation — for Academy and general loading states */
+@keyframes loadingBar {
+  0% { left: -40%; }
+  50% { left: 100%; }
+  100% { left: -40%; }
+}
+
+.animate-loading-bar {
+  position: relative;
+  animation: loadingBar 1.5s ease-in-out infinite;
+}
+
 /* Corner bracket decorations */
 .corner-bracket {
   position: absolute;
