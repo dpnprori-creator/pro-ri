@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -45,6 +45,22 @@ export function AdminAcademyClient({ courses }: AdminAcademyClientProps) {
   const [filterStatus, setFilterStatus] = useState("all");
   const [creating, setCreating] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Revoke ObjectURL on unmount
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
+  }, [previewUrl]);
+
+  // Reset preview when dialog closes
+  function handleOpenCreateChange(open: boolean) {
+    setOpenCreate(open);
+    if (!open) {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+  }
 
   const filtered = courses.filter((c) => {
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase());
@@ -63,6 +79,8 @@ export function AdminAcademyClient({ courses }: AdminAcademyClientProps) {
       toast.error(result.error);
     } else {
       toast.success("Kursus berhasil dibuat!");
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
       setOpenCreate(false);
       router.refresh();
     }
@@ -114,7 +132,7 @@ export function AdminAcademyClient({ courses }: AdminAcademyClientProps) {
           </select>
         </div>
 
-        <Dialog open={openCreate} onOpenChange={setOpenCreate}>
+        <Dialog open={openCreate} onOpenChange={handleOpenCreateChange}>
           <DialogTrigger asChild>
             <Button size="sm" className="bg-pri-red hover:bg-red-700 text-white">
               <Plus className="h-4 w-4 mr-1" /> Buat Kursus
@@ -157,10 +175,41 @@ export function AdminAcademyClient({ courses }: AdminAcademyClientProps) {
               </div>
               <div className="space-y-2">
                 <Label>Thumbnail Kursus</Label>
+                {previewUrl && (
+                  <div className="relative mb-2 rounded-lg overflow-hidden aspect-video bg-pri-carbon/50 border border-white/10">
+                    <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (previewUrl) URL.revokeObjectURL(previewUrl);
+                        setPreviewUrl(null);
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                      }}
+                      className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/80 transition-colors"
+                    >
+                      <XCircle className="h-3.5 w-3.5 text-white" />
+                    </button>
+                  </div>
+                )}
                 <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-white/10 rounded-lg cursor-pointer hover:border-pri-red/30 transition-colors">
                   <ImageIcon className="h-5 w-5 text-pri-silver/40" />
-                  <span className="text-xs text-pri-silver/40">Upload gambar (max 5MB, JPG/PNG/WebP)</span>
-                  <input type="file" name="image" accept="image/jpeg,image/png,image/webp" className="hidden" />
+                  <span className="text-xs text-pri-silver/40">
+                    {previewUrl ? "Ganti gambar (max 5MB)" : "Upload gambar (max 5MB, JPG/PNG/WebP)"}
+                  </span>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    name="image"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (previewUrl) URL.revokeObjectURL(previewUrl);
+                        setPreviewUrl(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
                 </label>
               </div>
               <Button type="submit" disabled={creating} className="w-full bg-pri-red hover:bg-red-700 text-white">

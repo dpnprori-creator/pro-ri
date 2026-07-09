@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus, Trash2, Edit3, ChevronDown, ChevronRight,
-  BookOpen, Video, FileText, Loader2, Image as ImageIcon,
+  BookOpen, Video, FileText, Loader2, Image as ImageIcon, XCircle,
   FileUp, File, Download, ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -78,9 +78,16 @@ export function TrainerCourseEditor({ course }: TrainerCourseEditorProps) {
   const [showModuleForm, setShowModuleForm] = useState(false);
   const [showLessonForm, setShowLessonForm] = useState<string | null>(null); // moduleId
   const [showCourseEdit, setShowCourseEdit] = useState(false);
+  const [courseImagePreview, setCourseImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [loadingAttachments, setLoadingAttachments] = useState(false);
+
+  // Revoke ObjectURL on unmount
+  useEffect(() => {
+    return () => { if (courseImagePreview) URL.revokeObjectURL(courseImagePreview); };
+  }, [courseImagePreview]);
 
   // Load attachments when editing lesson changes
   useEffect(() => {
@@ -126,6 +133,14 @@ export function TrainerCourseEditor({ course }: TrainerCourseEditorProps) {
     }
   }
 
+  function handleCourseEditChange(open: boolean) {
+    if (!open) {
+      if (courseImagePreview) URL.revokeObjectURL(courseImagePreview);
+      setCourseImagePreview(null);
+    }
+    setShowCourseEdit(open);
+  }
+
   const toggleModule = (id: string) => {
     setExpandedModules(prev =>
       prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
@@ -140,7 +155,13 @@ export function TrainerCourseEditor({ course }: TrainerCourseEditorProps) {
     const result = await updateCourse(course.id, formData);
     setSaving(false);
     if (result.error) toast.error(result.error);
-    else { toast.success("Kursus diupdate"); setShowCourseEdit(false); router.refresh(); }
+    else {
+      toast.success("Kursus diupdate");
+      if (courseImagePreview) URL.revokeObjectURL(courseImagePreview);
+      setCourseImagePreview(null);
+      setShowCourseEdit(false);
+      router.refresh();
+    }
   }
 
   // Module Create
@@ -438,7 +459,7 @@ export function TrainerCourseEditor({ course }: TrainerCourseEditorProps) {
       </Dialog>
 
       {/* Edit Course Dialog */}
-      <Dialog open={showCourseEdit} onOpenChange={setShowCourseEdit}>
+      <Dialog open={showCourseEdit} onOpenChange={handleCourseEditChange}>
         <DialogContent className="border-white/10 bg-pri-dark max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="text-white">Edit Informasi Kursus</DialogTitle></DialogHeader>
           <form onSubmit={handleUpdateCourse} className="space-y-4">
@@ -461,17 +482,47 @@ export function TrainerCourseEditor({ course }: TrainerCourseEditorProps) {
             {/* Thumbnail upload */}
             <div className="space-y-2">
               <Label>Thumbnail Kursus</Label>
-              {course.image_url && (
+              {(courseImagePreview || course.image_url) && (
                 <div className="relative mb-2 rounded-lg overflow-hidden aspect-video bg-pri-carbon/50 border border-white/10">
-                  <img src={course.image_url} alt={course.title} className="w-full h-full object-cover" />
+                  <img
+                    src={courseImagePreview || course.image_url || ""}
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                  />
+                  {courseImagePreview && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (courseImagePreview) URL.revokeObjectURL(courseImagePreview);
+                        setCourseImagePreview(null);
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                      }}
+                      className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/80 transition-colors"
+                    >
+                      <XCircle className="h-3.5 w-3.5 text-white" />
+                    </button>
+                  )}
                 </div>
               )}
               <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-white/10 rounded-lg cursor-pointer hover:border-pri-red/30 transition-colors">
                 <ImageIcon className="h-5 w-5 text-pri-silver/40" />
                 <span className="text-xs text-pri-silver/40">
-                  {course.image_url ? "Ganti gambar (max 5MB)" : "Upload gambar (max 5MB, JPG/PNG/WebP)"}
+                  {courseImagePreview || course.image_url ? "Ganti gambar (max 5MB)" : "Upload gambar (max 5MB, JPG/PNG/WebP)"}
                 </span>
-                <input type="file" name="image" accept="image/jpeg,image/png,image/webp" className="hidden" />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  name="image"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (courseImagePreview) URL.revokeObjectURL(courseImagePreview);
+                      setCourseImagePreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
               </label>
             </div>
             <div><Label>Deskripsi Singkat</Label><Input name="short_description" defaultValue={course.short_description || ""} className="bg-pri-carbon/50" /></div>
