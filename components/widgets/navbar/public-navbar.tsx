@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, GraduationCap } from "lucide-react";
 import { NAV_PUBLIC, APP_NAME_SHORT } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -52,6 +52,12 @@ export function PublicNavbar() {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-2">
+            <Link href="/academy">
+              <Button variant="ghost" size="sm" className="text-pri-red hover:text-red-400">
+                <GraduationCap className="h-4 w-4 mr-1" />
+                Academy
+              </Button>
+            </Link>
             <Link href="/login">
               <Button variant="ghost" size="sm" className="text-pri-silver hover:text-white">
                 Masuk

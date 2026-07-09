@@ -1291,12 +1291,161 @@ WHERE member_number LIKE 'PRORI-%';
 SELECT recalculate_province_counters();
 
 -- ====================================================================
+-- PHASE 10: ACADEMY TABLES (PRO RI Academy LMS)
+-- ====================================================================
+
+-- 10.1 COURSES
+CREATE TABLE IF NOT EXISTS courses (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title VARCHAR(200) NOT NULL,
+  slug VARCHAR(200) UNIQUE NOT NULL,
+  description TEXT,
+  short_description TEXT,
+  category VARCHAR(50) DEFAULT 'programming' CHECK (category IN ('robotics', 'ai', 'iot', 'programming', 'robotik', 'technology', 'other')),
+  level VARCHAR(20) DEFAULT 'beginner' CHECK (level IN ('beginner', 'intermediate', 'advanced', 'all')),
+  learning_path VARCHAR(100),
+  image_url TEXT,
+  duration_hours INTEGER DEFAULT 0,
+  total_lessons INTEGER DEFAULT 0,
+  status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
+  created_by UUID REFERENCES members(id),
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 10.2 COURSE MODULES
+CREATE TABLE IF NOT EXISTS course_modules (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  title VARCHAR(200) NOT NULL,
+  description TEXT,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 10.3 COURSE LESSONS
+CREATE TABLE IF NOT EXISTS course_lessons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  module_id UUID NOT NULL REFERENCES course_modules(id) ON DELETE CASCADE,
+  title VARCHAR(200) NOT NULL,
+  description TEXT,
+  content TEXT,
+  video_url TEXT,
+  duration_minutes INTEGER DEFAULT 0,
+  is_free BOOLEAN DEFAULT FALSE,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 10.4 COURSE ENROLLMENTS
+CREATE TABLE IF NOT EXISTS course_enrollments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  member_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'dropped')),
+  progress_percent INTEGER DEFAULT 0,
+  enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ,
+  UNIQUE(course_id, member_id)
+);
+
+-- 10.5 LESSON COMPLETIONS
+CREATE TABLE IF NOT EXISTS lesson_completions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  lesson_id UUID NOT NULL REFERENCES course_lessons(id) ON DELETE CASCADE,
+  member_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  completed_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(lesson_id, member_id)
+);
+
+-- 10.6 ACADEMY CERTIFICATES
+CREATE TABLE IF NOT EXISTS course_certificates (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  certificate_number VARCHAR(30) UNIQUE NOT NULL,
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  member_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  issued_at TIMESTAMPTZ DEFAULT NOW(),
+  verified BOOLEAN DEFAULT FALSE,
+  pdf_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(course_id, member_id)
+);
+
+-- Indexes for Academy
+CREATE INDEX IF NOT EXISTS idx_courses_status ON courses(status);
+CREATE INDEX IF NOT EXISTS idx_courses_category ON courses(category);
+CREATE INDEX IF NOT EXISTS idx_courses_sort ON courses(sort_order);
+CREATE INDEX IF NOT EXISTS idx_courses_created_by ON courses(created_by);
+
+CREATE INDEX IF NOT EXISTS idx_course_modules_course ON course_modules(course_id);
+CREATE INDEX IF NOT EXISTS idx_course_modules_sort ON course_modules(sort_order);
+
+CREATE INDEX IF NOT EXISTS idx_course_lessons_module ON course_lessons(module_id);
+CREATE INDEX IF NOT EXISTS idx_course_lessons_sort ON course_lessons(sort_order);
+
+CREATE INDEX IF NOT EXISTS idx_course_enrollments_course ON course_enrollments(course_id);
+CREATE INDEX IF NOT EXISTS idx_course_enrollments_member ON course_enrollments(member_id);
+CREATE INDEX IF NOT EXISTS idx_course_enrollments_status ON course_enrollments(status);
+
+CREATE INDEX IF NOT EXISTS idx_lesson_completions_lesson ON lesson_completions(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_lesson_completions_member ON lesson_completions(member_id);
+
+CREATE INDEX IF NOT EXISTS idx_course_certificates_course ON course_certificates(course_id);
+CREATE INDEX IF NOT EXISTS idx_course_certificates_member ON course_certificates(member_id);
+
+-- RLS for Courses
+ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Published courses are publicly viewable" ON courses FOR SELECT USING (status = 'published');
+CREATE POLICY "Authenticated users can view all courses" ON courses FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Admins can manage courses" ON courses FOR ALL USING (is_admin_or_super());
+
+-- RLS for Course Modules
+ALTER TABLE course_modules ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Course modules are viewable" ON course_modules FOR SELECT USING (TRUE);
+CREATE POLICY "Admins can manage course modules" ON course_modules FOR ALL USING (is_admin_or_super());
+
+-- RLS for Course Lessons
+ALTER TABLE course_lessons ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Course lessons are viewable" ON course_lessons FOR SELECT USING (TRUE);
+CREATE POLICY "Admins can manage course lessons" ON course_lessons FOR ALL USING (is_admin_or_super());
+
+-- RLS for Course Enrollments
+ALTER TABLE course_enrollments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Members can view own enrollments" ON course_enrollments FOR SELECT
+  USING (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+CREATE POLICY "Members can enroll" ON course_enrollments FOR INSERT
+  WITH CHECK (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+CREATE POLICY "Members can update own enrollment" ON course_enrollments FOR UPDATE
+  USING (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+CREATE POLICY "Admins can manage enrollments" ON course_enrollments FOR ALL
+  USING (is_admin_or_super());
+
+-- RLS for Lesson Completions
+ALTER TABLE lesson_completions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Members can view own completions" ON lesson_completions FOR SELECT
+  USING (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+CREATE POLICY "Members can complete lessons" ON lesson_completions FOR INSERT
+  WITH CHECK (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+CREATE POLICY "Admins can manage completions" ON lesson_completions FOR ALL
+  USING (is_admin_or_super());
+
+-- RLS for Course Certificates
+ALTER TABLE course_certificates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Certificates are viewable by owner" ON course_certificates FOR SELECT
+  USING (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+CREATE POLICY "Admins can manage course certificates" ON course_certificates FOR ALL
+  USING (is_admin_or_super());
+
+-- ====================================================================
 -- ✅ MIGRATION COMPLETE
 -- ====================================================================
--- 22 tables, 51 indexes, 17 functions, 20 triggers,
--- 64+ RLS policies, 8 storage buckets, seed data (roles, 38 provinces,
--- 6 programs, hero gallery, activity gallery, system settings),
--- province coordinates, data prefix fix, counters recalculated.
+-- 28 tables, 65+ indexes, 17 functions, 20 triggers,
+-- 80+ RLS policies, 8 storage buckets, seed data,
+-- province coordinates, data prefix fix, counters recalculated,
+-- Academy LMS (courses, modules, lessons, enrollments, completions).
 -- ====================================================================
 
 -- ====================================================================

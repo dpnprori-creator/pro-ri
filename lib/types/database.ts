@@ -1068,6 +1068,282 @@ export interface Database {
           }
         ];
       };
+      // ============================
+      // ACADEMY TABLES
+      // ============================
+      courses: {
+        Row: {
+          id: string;
+          title: string;
+          slug: string;
+          description: string | null;
+          short_description: string | null;
+          category: string;
+          level: string;
+          learning_path: string | null;
+          image_url: string | null;
+          duration_hours: number;
+          total_lessons: number;
+          status: string;
+          created_by: string | null;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          slug: string;
+          description?: string | null;
+          short_description?: string | null;
+          category?: string;
+          level?: string;
+          learning_path?: string | null;
+          image_url?: string | null;
+          duration_hours?: number;
+          total_lessons?: number;
+          status?: string;
+          created_by?: string | null;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          slug?: string;
+          description?: string | null;
+          short_description?: string | null;
+          category?: string;
+          level?: string;
+          learning_path?: string | null;
+          image_url?: string | null;
+          duration_hours?: number;
+          total_lessons?: number;
+          status?: string;
+          created_by?: string | null;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "courses_created_by_fkey";
+            columns: ["created_by"];
+            referencedRelation: "members";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      course_modules: {
+        Row: {
+          id: string;
+          course_id: string;
+          title: string;
+          description: string | null;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          course_id: string;
+          title: string;
+          description?: string | null;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          course_id?: string;
+          title?: string;
+          description?: string | null;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "course_modules_course_id_fkey";
+            columns: ["course_id"];
+            referencedRelation: "courses";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      course_lessons: {
+        Row: {
+          id: string;
+          module_id: string;
+          title: string;
+          description: string | null;
+          content: string | null;
+          video_url: string | null;
+          duration_minutes: number;
+          is_free: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          module_id: string;
+          title: string;
+          description?: string | null;
+          content?: string | null;
+          video_url?: string | null;
+          duration_minutes?: number;
+          is_free?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          module_id?: string;
+          title?: string;
+          description?: string | null;
+          content?: string | null;
+          video_url?: string | null;
+          duration_minutes?: number;
+          is_free?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "course_lessons_module_id_fkey";
+            columns: ["module_id"];
+            referencedRelation: "course_modules";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      course_enrollments: {
+        Row: {
+          id: string;
+          course_id: string;
+          member_id: string;
+          status: string;
+          progress_percent: number;
+          enrolled_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          course_id: string;
+          member_id: string;
+          status?: string;
+          progress_percent?: number;
+          enrolled_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          course_id?: string;
+          member_id?: string;
+          status?: string;
+          progress_percent?: number;
+          enrolled_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "course_enrollments_course_id_fkey";
+            columns: ["course_id"];
+            referencedRelation: "courses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "course_enrollments_member_id_fkey";
+            columns: ["member_id"];
+            referencedRelation: "members";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      lesson_completions: {
+        Row: {
+          id: string;
+          lesson_id: string;
+          member_id: string;
+          completed_at: string;
+        };
+        Insert: {
+          id?: string;
+          lesson_id: string;
+          member_id: string;
+          completed_at?: string;
+        };
+        Update: {
+          id?: string;
+          lesson_id?: string;
+          member_id?: string;
+          completed_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lesson_completions_lesson_id_fkey";
+            columns: ["lesson_id"];
+            referencedRelation: "course_lessons";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lesson_completions_member_id_fkey";
+            columns: ["member_id"];
+            referencedRelation: "members";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      course_certificates: {
+        Row: {
+          id: string;
+          certificate_number: string;
+          course_id: string;
+          member_id: string;
+          issued_at: string;
+          verified: boolean;
+          pdf_url: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          certificate_number: string;
+          course_id: string;
+          member_id: string;
+          issued_at?: string;
+          verified?: boolean;
+          pdf_url?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          certificate_number?: string;
+          course_id?: string;
+          member_id?: string;
+          issued_at?: string;
+          verified?: boolean;
+          pdf_url?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "course_certificates_course_id_fkey";
+            columns: ["course_id"];
+            referencedRelation: "courses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "course_certificates_member_id_fkey";
+            columns: ["member_id"];
+            referencedRelation: "members";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
