@@ -355,6 +355,29 @@ export async function createCourse(formData: FormData) {
 
   if (error) return { error: error.message };
 
+  // Handle image upload after course is created (so we have course ID for path)
+  const imageFile = formData.get("image") as File | null;
+  if (imageFile && imageFile.size > 0 && imageFile.name) {
+    try {
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `courses/${data.id}/${Date.now()}.${ext}`;
+      const { data: uploadData, error: uploadError } = await adminSupabase.storage
+        .from("academy")
+        .upload(path, imageFile, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+      if (!uploadError && uploadData) {
+        const { data: urlData } = adminSupabase.storage
+          .from("academy")
+          .getPublicUrl(uploadData.path);
+        await adminSupabase.from("courses").update({ image_url: urlData.publicUrl }).eq("id", data.id);
+      }
+    } catch (err) {
+      console.error("Course image upload error on create:", err);
+    }
+  }
+
   revalidatePath("/academy/courses");
   revalidatePath("/admin/academy");
   return { success: true, course: data };
@@ -362,6 +385,33 @@ export async function createCourse(formData: FormData) {
 
 export async function updateCourse(id: string, formData: FormData) {
   const supabase = await createServerClient();
+  const adminSupabase = createAdminClient();
+
+  // Handle image upload
+  let imageUrl = formData.get("image_url") as string || null;
+  const imageFile = formData.get("image") as File | null;
+
+  if (!imageUrl && imageFile && imageFile.size > 0 && imageFile.name) {
+    try {
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `courses/${id}/${Date.now()}.${ext}`;
+      const { data: uploadData, error: uploadError } = await adminSupabase.storage
+        .from("academy")
+        .upload(path, imageFile, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+      if (!uploadError && uploadData) {
+        const { data: urlData } = adminSupabase.storage
+          .from("academy")
+          .getPublicUrl(uploadData.path);
+        imageUrl = urlData.publicUrl;
+      }
+    } catch (err) {
+      console.error("Course image upload error:", err);
+      return { error: "Gagal mengupload gambar: " + (err instanceof Error ? err.message : "Unknown error") };
+    }
+  }
 
   const updateData: CourseUpdate = {
     title: formData.get("title") as string,
@@ -371,7 +421,7 @@ export async function updateCourse(id: string, formData: FormData) {
     level: formData.get("level") as string,
     status: formData.get("status") as string,
     learning_path: formData.get("learningPath") as string || null,
-    image_url: formData.get("image_url") as string || null,
+    image_url: imageUrl,
     duration_hours: parseInt(formData.get("duration_hours") as string) || 0,
     sort_order: parseInt(formData.get("sort_order") as string) || 0,
   };

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Plus, Edit3, Trash2, Eye, BookOpen, Clock, GraduationCap,
-  CheckCircle, XCircle, Loader2, Search
+  CheckCircle, XCircle, Loader2, Search, Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -156,6 +156,14 @@ export function AdminAcademyClient({ courses }: AdminAcademyClientProps) {
               <div className="space-y-2">
                 <Label htmlFor="description">Deskripsi</Label>
                 <textarea id="description" name="description" rows={3} className="w-full px-3 py-2 text-sm bg-pri-carbon/50 border border-white/10 rounded-lg text-white resize-none" />
+              </div>
+              <div className="space-y-2">
+                <Label>Thumbnail Kursus</Label>
+                <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-white/10 rounded-lg cursor-pointer hover:border-pri-red/30 transition-colors">
+                  <ImageIcon className="h-5 w-5 text-pri-silver/40" />
+                  <span className="text-xs text-pri-silver/40">Upload gambar (max 5MB, JPG/PNG/WebP)</span>
+                  <input type="file" name="image" accept="image/jpeg,image/png,image/webp" className="hidden" />
+                </label>
               </div>
               <Button type="submit" disabled={creating} className="w-full bg-pri-red hover:bg-red-700 text-white">
                 {creating ? "Membuat..." : "Buat Kursus"}

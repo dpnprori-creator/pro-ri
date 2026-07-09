@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus, Trash2, Edit3, ChevronDown, ChevronRight,
-  BookOpen, Video, FileText, Loader2
+  BookOpen, Video, FileText, Loader2, Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,6 +154,13 @@ export function TrainerCourseEditor({ course }: TrainerCourseEditorProps) {
 
   return (
     <div className="space-y-6">
+      {/* Thumbnail */}
+      {course.image_url && (
+        <div className="rounded-xl overflow-hidden max-w-lg border border-white/10">
+          <img src={course.image_url} alt={course.title} className="w-full h-48 object-cover" />
+        </div>
+      )}
+
       {/* Quick stats */}
       <div className="grid grid-cols-3 gap-3 max-w-lg">
         <div className="glass-card p-3 border-white/5 text-center">
@@ -322,7 +329,7 @@ export function TrainerCourseEditor({ course }: TrainerCourseEditorProps) {
 
       {/* Edit Course Dialog */}
       <Dialog open={showCourseEdit} onOpenChange={setShowCourseEdit}>
-        <DialogContent className="border-white/10 bg-pri-dark max-w-lg">
+        <DialogContent className="border-white/10 bg-pri-dark max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="text-white">Edit Informasi Kursus</DialogTitle></DialogHeader>
           <form onSubmit={handleUpdateCourse} className="space-y-4">
             <div><Label>Judul</Label><Input name="title" defaultValue={course.title} required className="bg-pri-carbon/50" /></div>
@@ -340,6 +347,22 @@ export function TrainerCourseEditor({ course }: TrainerCourseEditorProps) {
                   <option value="beginner">Pemula</option><option value="intermediate">Menengah</option><option value="advanced">Mahir</option>
                 </select>
               </div>
+            </div>
+            {/* Thumbnail upload */}
+            <div className="space-y-2">
+              <Label>Thumbnail Kursus</Label>
+              {course.image_url && (
+                <div className="relative mb-2 rounded-lg overflow-hidden aspect-video bg-pri-carbon/50 border border-white/10">
+                  <img src={course.image_url} alt={course.title} className="w-full h-full object-cover" />
+                </div>
+              )}
+              <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-white/10 rounded-lg cursor-pointer hover:border-pri-red/30 transition-colors">
+                <ImageIcon className="h-5 w-5 text-pri-silver/40" />
+                <span className="text-xs text-pri-silver/40">
+                  {course.image_url ? "Ganti gambar (max 5MB)" : "Upload gambar (max 5MB, JPG/PNG/WebP)"}
+                </span>
+                <input type="file" name="image" accept="image/jpeg,image/png,image/webp" className="hidden" />
+              </label>
             </div>
             <div><Label>Deskripsi Singkat</Label><Input name="short_description" defaultValue={course.short_description || ""} className="bg-pri-carbon/50" /></div>
             <div><Label>Deskripsi</Label>

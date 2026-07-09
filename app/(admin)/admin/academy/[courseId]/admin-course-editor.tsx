@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus, Trash2, Edit3, ChevronDown, ChevronRight,
-  BookOpen, Video, FileText, GripVertical, Loader2, CheckCircle
+  BookOpen, Video, FileText, Loader2, Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -158,8 +158,17 @@ export function AdminCourseEditor({ course }: AdminCourseEditorProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left: Course Info */}
-      <div className="lg:col-span-1 space-y-4">
-        <div className="glass-card p-5 border-white/5">
+      <div className="lg:col-span-1 space-y-4">                <div className="glass-card p-5 border-white/5">
+          {/* Thumbnail preview */}
+          {course.image_url ? (
+            <div className="relative mb-4 rounded-lg overflow-hidden aspect-video bg-pri-carbon/50">
+              <img src={course.image_url} alt={course.title} className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className="mb-4 rounded-lg aspect-video bg-pri-carbon/50 flex items-center justify-center border border-dashed border-white/5">
+              <ImageIcon className="h-8 w-8 text-pri-silver/20" />
+            </div>
+          )}
           <h2 className="text-sm font-semibold text-white mb-3">Informasi Kursus</h2>
           <div className="space-y-2 text-xs text-pri-silver/60">
             <p><span className="text-pri-silver/40">Status:</span> <span className="text-white">{course.status}</span></p>
@@ -405,7 +414,7 @@ export function AdminCourseEditor({ course }: AdminCourseEditorProps) {
 
       {/* Edit Course Info Dialog */}
       <Dialog open={openCourseDialog} onOpenChange={setOpenCourseDialog}>
-        <DialogContent className="border-white/10 bg-pri-dark max-w-lg">
+        <DialogContent className="border-white/10 bg-pri-dark max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white">Edit Informasi Kursus</DialogTitle>
           </DialogHeader>
@@ -435,6 +444,22 @@ export function AdminCourseEditor({ course }: AdminCourseEditorProps) {
                   <option value="advanced">Mahir</option>
                 </select>
               </div>
+            </div>
+            {/* Thumbnail upload */}
+            <div className="space-y-2">
+              <Label>Thumbnail Kursus</Label>
+              {course.image_url && (
+                <div className="relative mb-2 rounded-lg overflow-hidden aspect-video bg-pri-carbon/50 border border-white/10">
+                  <img src={course.image_url} alt={course.title} className="w-full h-full object-cover" />
+                </div>
+              )}
+              <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-white/10 rounded-lg cursor-pointer hover:border-pri-red/30 transition-colors">
+                <ImageIcon className="h-5 w-5 text-pri-silver/40" />
+                <span className="text-xs text-pri-silver/40">
+                  {course.image_url ? "Ganti gambar (max 5MB)" : "Upload gambar (max 5MB, JPG/PNG/WebP)"}
+                </span>
+                <input type="file" name="image" accept="image/jpeg,image/png,image/webp" className="hidden" />
+              </label>
             </div>
             <div className="space-y-2">
               <Label>Deskripsi Singkat</Label>
