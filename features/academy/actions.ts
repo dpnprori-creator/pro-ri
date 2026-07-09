@@ -380,6 +380,7 @@ export async function createCourse(formData: FormData) {
 
   revalidatePath("/academy/courses");
   revalidatePath("/admin/academy");
+  revalidatePath("/academy/trainer");
   return { success: true, course: data };
 }
 
@@ -436,6 +437,22 @@ export async function updateCourse(id: string, formData: FormData) {
   revalidatePath("/academy/courses");
   revalidatePath("/admin/academy");
   revalidatePath(`/admin/academy/${id}`);
+  revalidatePath(`/academy/trainer/${id}`);
+  return { success: true };
+}
+
+export async function updateCourseStatus(id: string, status: string) {
+  const supabase = await createServerClient();
+
+  const { error } = await supabase
+    .from("courses")
+    .update({ status })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/academy/courses");
+  revalidatePath("/admin/academy");
   return { success: true };
 }
 
@@ -451,6 +468,7 @@ export async function deleteCourse(id: string) {
 
   revalidatePath("/academy/courses");
   revalidatePath("/admin/academy");
+  revalidatePath("/academy/trainer");
   return { success: true };
 }
 
@@ -691,7 +709,8 @@ export async function createModule(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  revalidatePath(`/admin/academy/courses/${courseId}`);
+  revalidatePath(`/admin/academy/${courseId}`);
+  revalidatePath(`/academy/trainer/${courseId}`);
   return { success: true, module: data };
 }
 
@@ -711,6 +730,17 @@ export async function createLesson(formData: FormData) {
 
   if (error) return { error: error.message };
 
+  // Get course_id for revalidation
+  const { data: modData } = await adminSupabase
+    .from("course_modules")
+    .select("course_id")
+    .eq("id", moduleId)
+    .single();
+  
+  if (modData?.course_id) {
+    revalidatePath(`/academy/trainer/${modData.course_id}`);
+    revalidatePath(`/admin/academy/${modData.course_id}`);
+  }
   revalidatePath("/admin/academy");
   return { success: true, lesson: data };
 }

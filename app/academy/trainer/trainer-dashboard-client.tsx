@@ -81,14 +81,20 @@ export function TrainerDashboardClient({ courses }: TrainerDashboardClientProps)
   return (
     <div>
       {/* Search */}
-      <div className="relative mb-6 max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pri-silver/40" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Cari kursus..."
-          className="pl-9 pr-3 py-2 text-sm bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-pri-silver/30 focus:outline-none focus:border-pri-red/50 w-full"
-        />
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pri-silver/40" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cari kursus..."
+            className="pl-9 pr-3 py-2 text-sm bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-pri-silver/30 focus:outline-none focus:border-pri-red/50 w-full"
+          />
+        </div>
+        <Button onClick={handleCreate} disabled={creating} size="sm" className="bg-pri-red hover:bg-red-700 text-white shrink-0">
+          {creating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
+          Buat Kursus
+        </Button>
       </div>
 
       {/* List */}

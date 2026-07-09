@@ -1,8 +1,5 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { GraduationCap, Plus, Edit3, Eye, ArrowLeft, BookOpen, Users, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { GraduationCap } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isCurrentUserTrainer } from "@/features/academy/actions";
 import { TrainerDashboardClient } from "./trainer-dashboard-client";
@@ -47,11 +44,7 @@ export default async function TrainerDashboardPage() {
           <h1 className="text-2xl font-bold text-white">Kursus Saya</h1>
           <p className="text-sm text-pri-silver/60">Kelola kursus dan materi pembelajaran Anda</p>
         </div>
-        <Link href="/academy/trainer/new">
-          <Button className="bg-pri-red hover:bg-red-700 text-white">
-            <Plus className="h-4 w-4 mr-1" /> Buat Kursus
-          </Button>
-        </Link>
+        {/* Tombol Buat Kursus ada di TrainerDashboardClient */}
       </div>
 
       <TrainerDashboardClient courses={courses} />

@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { createCourse, updateCourse, deleteCourse } from "@/features/academy/actions";
+import { createCourse, updateCourse, updateCourseStatus, deleteCourse } from "@/features/academy/actions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -80,9 +80,7 @@ export function AdminAcademyClient({ courses }: AdminAcademyClientProps) {
 
   async function handleToggleStatus(courseId: string, currentStatus: string) {
     const newStatus = currentStatus === "draft" ? "published" : currentStatus === "published" ? "archived" : "draft";
-    const formData = new FormData();
-    formData.set("status", newStatus);
-    const result = await updateCourse(courseId, formData);
+    const result = await updateCourseStatus(courseId, newStatus);
     if (result.error) toast.error(result.error);
     else {
       toast.success(`Status diubah ke ${newStatus}`);
