@@ -71,6 +71,15 @@ async function getDashboardData() {
     })
   );
 
+  // Fetch certificate map for completed courses
+  const { data: certData } = await supabase
+    .from("course_certificates")
+    .select("course_id, id")
+    .eq("member_id", member.id);
+
+  const certMap: Record<string, string> = {};
+  (certData || []).forEach(c => { certMap[c.course_id] = c.id; });
+
   // Calculate stats
   const total = enrollments?.length || 0;
   const completed = enrollments?.filter(e => e.status === "completed").length || 0;
@@ -80,6 +89,7 @@ async function getDashboardData() {
   return {
     memberName: member.full_name,
     enrollments: enrollmentWithLesson,
+    certificateMap: certMap,
     stats: { total, completed, inProgress, notStarted },
   };
 }
@@ -147,7 +157,7 @@ export default async function AcademyDashboardPage() {
       </div>
 
       {/* Enrollment List */}
-      <AcademyDashboardClient enrollments={data.enrollments} />
+      <AcademyDashboardClient enrollments={data.enrollments} certificateMap={data.certificateMap} />
     </div>
   );
 }

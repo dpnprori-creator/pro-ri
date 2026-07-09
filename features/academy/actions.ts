@@ -205,6 +205,74 @@ export async function uncompleteLesson(lessonId: string, courseId: string) {
 }
 
 // ============================================
+// COURSE CERTIFICATES
+// ============================================
+
+export async function getMyCourseCertificates() {
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: member } = await supabase
+    .from("members")
+    .select("id")
+    .eq("auth_id", user.id)
+    .single();
+
+  if (!member) return [];
+
+  const { data } = await supabase
+    .from("course_certificates")
+    .select(`
+      *,
+      courses!inner(title, slug, category, level, total_lessons, duration_hours, image_url)
+    `)
+    .eq("member_id", member.id)
+    .order("issued_at", { ascending: false });
+
+  return data ?? [];
+}
+
+export async function getCourseCertificate(certificateId: string) {
+  const supabase = await createServerClient();
+
+  const { data } = await supabase
+    .from("course_certificates")
+    .select(`
+      *,
+      courses!inner(title, slug, category, level, total_lessons, duration_hours, image_url),
+      members!inner(full_name, member_id)
+    `)
+    .eq("id", certificateId)
+    .single();
+
+  return data;
+}
+
+export async function getMyCertificateMap(): Promise<Record<string, string>> {
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return {};
+
+  const { data: member } = await supabase
+    .from("members")
+    .select("id")
+    .eq("auth_id", user.id)
+    .single();
+
+  if (!member) return {};
+
+  const { data } = await supabase
+    .from("course_certificates")
+    .select("course_id, id")
+    .eq("member_id", member.id);
+
+  const map: Record<string, string> = {};
+  (data || []).forEach(c => { map[c.course_id] = c.id; });
+  return map;
+}
+
+// ============================================
 // COURSES - Admin/Trainer Read
 // ============================================
 

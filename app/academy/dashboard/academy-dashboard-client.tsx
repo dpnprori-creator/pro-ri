@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   BookOpen, Play, CheckCircle, Clock, Lock,
-  GraduationCap, Search, ArrowRight,
+  GraduationCap, Search, ArrowRight, Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,7 @@ interface Enrollment {
 
 interface AcademyDashboardClientProps {
   enrollments: Enrollment[];
+  certificateMap?: Record<string, string>;
 }
 
 const levelLabels: Record<string, string> = {
@@ -52,7 +53,7 @@ function getProgressColor(percent: number): string {
   return "from-pri-silver/40 to-pri-silver/20";
 }
 
-export function AcademyDashboardClient({ enrollments }: AcademyDashboardClientProps) {
+export function AcademyDashboardClient({ enrollments, certificateMap = {} }: AcademyDashboardClientProps) {
   const [filter, setFilter] = useState<"all" | "active" | "completed" | "incomplete">("all");
   const [search, setSearch] = useState("");
 
@@ -247,32 +248,58 @@ export function AcademyDashboardClient({ enrollments }: AcademyDashboardClientPr
                     )}
                   </div>
 
-                  {/* Smart action link: langsung ke lesson pertama yang belum selesai */}
-                  <Link
-                    href={
-                      isCompleted || !enrollment.next_lesson_id
-                        ? `/academy/courses/${course.slug}`
-                        : `/academy/learn/${course.id}/${enrollment.next_lesson_id}`
-                    }
-                  >
-                    <Button
-                      size="sm"
-                      className={cn(
-                        "w-full text-xs",
-                        isCompleted
-                          ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20"
-                          : "bg-pri-red hover:bg-red-700 text-white"
-                      )}
-                    >
-                      {isCompleted ? (
-                        <>Lihat Detail <ArrowRight className="h-3 w-3 ml-1" /></>
-                      ) : progress > 0 ? (
-                        <>Lanjutkan <ArrowRight className="h-3 w-3 ml-1" /></>
-                      ) : (
-                        <>Mulai Belajar <ArrowRight className="h-3 w-3 ml-1" /></>
-                      )}
-                    </Button>
-                  </Link>
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-2">
+                    {isCompleted && certificateMap[course.id] ? (
+                      <>
+                        <Link href={`/academy/certificates/${certificateMap[course.id]}`} className="flex-1">
+                          <Button
+                            size="sm"
+                            className="w-full text-xs bg-pri-red hover:bg-red-700 text-white"
+                          >
+                            <Award className="h-3 w-3 mr-1" />
+                            Sertifikat
+                          </Button>
+                        </Link>
+                        <Link href={`/academy/courses/${course.slug}`} className="flex-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full text-xs border-white/10 text-pri-silver hover:text-white"
+                          >
+                            Lihat Detail <ArrowRight className="h-3 w-3 ml-1" />
+                          </Button>
+                        </Link>
+                      </>
+                    ) : (
+                      <Link
+                        href={
+                          isCompleted || !enrollment.next_lesson_id
+                            ? `/academy/courses/${course.slug}`
+                            : `/academy/learn/${course.id}/${enrollment.next_lesson_id}`
+                        }
+                        className="flex-1"
+                      >
+                        <Button
+                          size="sm"
+                          className={cn(
+                            "w-full text-xs",
+                            isCompleted
+                              ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20"
+                              : "bg-pri-red hover:bg-red-700 text-white"
+                          )}
+                        >
+                          {isCompleted ? (
+                            <>Lihat Detail <ArrowRight className="h-3 w-3 ml-1" /></>
+                          ) : progress > 0 ? (
+                            <>Lanjutkan <ArrowRight className="h-3 w-3 ml-1" /></>
+                          ) : (
+                            <>Mulai Belajar <ArrowRight className="h-3 w-3 ml-1" /></>
+                          )}
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             );
