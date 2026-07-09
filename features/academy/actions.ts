@@ -205,7 +205,113 @@ export async function uncompleteLesson(lessonId: string, courseId: string) {
 }
 
 // ============================================
-// COURSES - Admin CRUD
+// COURSES - Admin/Trainer Read
+// ============================================
+
+export async function getAllCourses() {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("courses")
+    .select("*, created_by!inner(full_name)")
+    .order("created_at", { ascending: false });
+
+  return data ?? [];
+}
+
+export async function getMyCourses() {
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: member } = await supabase
+    .from("members")
+    .select("id")
+    .eq("auth_id", user.id)
+    .single();
+
+  if (!member) return [];
+
+  const { data } = await supabase
+    .from("courses")
+    .select("*, created_by!inner(full_name)")
+    .eq("created_by", member.id)
+    .order("created_at", { ascending: false });
+
+  return data ?? [];
+}
+
+export async function getCourseWithModules(courseId: string) {
+  const supabase = await createServerClient();
+  
+  const { data: course } = await supabase
+    .from("courses")
+    .select("*")
+    .eq("id", courseId)
+    .single();
+
+  if (!course) return null;
+
+  const { data: modules } = await supabase
+    .from("course_modules")
+    .select(`
+      *,
+      course_lessons (*)
+    `)
+    .eq("course_id", courseId)
+    .order("sort_order", { ascending: true });
+
+  return { ...course, modules: modules || [] };
+}
+
+export async function getCourseStats(courseId: string) {
+  const supabase = await createServerClient();
+
+  const { count: totalEnrollments } = await supabase
+    .from("course_enrollments")
+    .select("*", { count: "exact", head: true })
+    .eq("course_id", courseId);
+
+  const { count: completedEnrollments } = await supabase
+    .from("course_enrollments")
+    .select("*", { count: "exact", head: true })
+    .eq("course_id", courseId)
+    .eq("status", "completed");
+
+  return {
+    totalEnrollments: totalEnrollments ?? 0,
+    completedEnrollments: completedEnrollments ?? 0,
+  };
+}
+
+export async function isCurrentUserTrainer() {
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data: member } = await supabase
+    .from("members")
+    .select("id, role_id(name)")
+    .eq("auth_id", user.id)
+    .single();
+
+  if (!member) return false;
+  const roleObj = member.role_id as { name: string } | null;
+  
+  // Check if admin or super_admin
+  if (roleObj?.name === "admin" || roleObj?.name === "super_admin") return true;
+
+  // Check if has trainer/mentor designation
+  const { data: designations } = await supabase
+    .from("member_designations")
+    .select("designation")
+    .eq("member_id", member.id)
+    .in("designation", ["trainer", "mentor"]);
+
+  return (designations?.length ?? 0) > 0;
+}
+
+// ============================================
+// COURSES - Admin/Trainer CRUD
 // ============================================
 
 export async function createCourse(formData: FormData) {
@@ -255,18 +361,22 @@ export async function createCourse(formData: FormData) {
 }
 
 export async function updateCourse(id: string, formData: FormData) {
-  const adminSupabase = createAdminClient();
+  const supabase = await createServerClient();
 
   const updateData: CourseUpdate = {
     title: formData.get("title") as string,
+    short_description: formData.get("short_description") as string || null,
     description: formData.get("description") as string,
     category: formData.get("category") as string,
     level: formData.get("level") as string,
     status: formData.get("status") as string,
     learning_path: formData.get("learningPath") as string || null,
+    image_url: formData.get("image_url") as string || null,
+    duration_hours: parseInt(formData.get("duration_hours") as string) || 0,
+    sort_order: parseInt(formData.get("sort_order") as string) || 0,
   };
 
-  const { error } = await adminSupabase
+  const { error } = await supabase
     .from("courses")
     .update(updateData)
     .eq("id", id);
@@ -275,13 +385,14 @@ export async function updateCourse(id: string, formData: FormData) {
 
   revalidatePath("/academy/courses");
   revalidatePath("/admin/academy");
+  revalidatePath(`/admin/academy/${id}`);
   return { success: true };
 }
 
 export async function deleteCourse(id: string) {
-  const adminSupabase = createAdminClient();
+  const supabase = await createServerClient();
 
-  const { error } = await adminSupabase
+  const { error } = await supabase
     .from("courses")
     .delete()
     .eq("id", id);
@@ -294,8 +405,85 @@ export async function deleteCourse(id: string) {
 }
 
 // ============================================
-// MODULES & LESSONS - Admin CRUD
+// MODULES & LESSONS - Admin/Trainer CRUD
 // ============================================
+
+export async function updateModule(formData: FormData) {
+  const supabase = await createServerClient();
+  const moduleId = formData.get("moduleId") as string;
+  const title = formData.get("title") as string;
+  const description = formData.get("description") as string || null;
+
+  const { data, error } = await supabase
+    .from("course_modules")
+    .update({ title, description })
+    .eq("id", moduleId)
+    .select()
+    .single();
+
+  if (error) return { error: error.message };
+
+  return { success: true, module: data };
+}
+
+export async function deleteModule(moduleId: string, courseId: string) {
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("course_modules")
+    .delete()
+    .eq("id", moduleId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/academy/${courseId}`);
+  revalidatePath(`/academy/trainer/${courseId}`);
+  return { success: true };
+}
+
+export async function updateLesson(formData: FormData) {
+  const supabase = await createServerClient();
+  const lessonId = formData.get("lessonId") as string;
+  const title = formData.get("title") as string;
+  const content = formData.get("content") as string;
+  const videoUrl = formData.get("videoUrl") as string;
+  const description = formData.get("description") as string;
+  const durationMinutes = parseInt(formData.get("durationMinutes") as string) || 0;
+  const isFree = formData.get("isFree") === "true";
+
+  const { data, error } = await supabase
+    .from("course_lessons")
+    .update({
+      title,
+      content,
+      video_url: videoUrl,
+      description,
+      duration_minutes: durationMinutes,
+      is_free: isFree,
+    })
+    .eq("id", lessonId)
+    .select()
+    .single();
+
+  if (error) return { error: error.message };
+
+  return { success: true, lesson: data };
+}
+
+export async function deleteLesson(lessonId: string, courseId: string) {
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("course_lessons")
+    .delete()
+    .eq("id", lessonId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/academy/${courseId}`);
+  revalidatePath(`/academy/trainer/${courseId}`);
+  return { success: true };
+}
+
+// Original createModule and createLesson remain below
 
 export async function createModule(formData: FormData) {
   const adminSupabase = createAdminClient();

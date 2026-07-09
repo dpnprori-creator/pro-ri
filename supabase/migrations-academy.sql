@@ -318,6 +318,18 @@ BEGIN
     CREATE POLICY "Admins can manage courses" ON courses
       FOR ALL USING (is_admin_or_super());
   END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'courses' AND policyname = 'Trainers can manage own courses') THEN
+    CREATE POLICY "Trainers can manage own courses" ON courses
+      FOR ALL USING (
+        created_by IN (SELECT id FROM members WHERE auth_id = auth.uid())
+        AND (
+          EXISTS (SELECT 1 FROM member_designations md WHERE md.member_id = created_by AND md.designation IN ('trainer', 'mentor'))
+          OR
+          is_admin_or_super()
+        )
+      );
+  END IF;
 END $$;
 
 -- 5.2 COURSE MODULES RLS
@@ -334,6 +346,18 @@ BEGIN
     CREATE POLICY "Admins can manage course modules" ON course_modules
       FOR ALL USING (is_admin_or_super());
   END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'course_modules' AND policyname = 'Trainers can manage own course modules') THEN
+    CREATE POLICY "Trainers can manage own course modules" ON course_modules
+      FOR ALL USING (
+        course_id IN (SELECT id FROM courses WHERE created_by IN (SELECT id FROM members WHERE auth_id = auth.uid()))
+        AND (
+          EXISTS (SELECT 1 FROM member_designations md JOIN members m ON m.id = md.member_id WHERE m.auth_id = auth.uid() AND md.designation IN ('trainer', 'mentor'))
+          OR
+          is_admin_or_super()
+        )
+      );
+  END IF;
 END $$;
 
 -- 5.3 COURSE LESSONS RLS
@@ -349,6 +373,22 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'course_lessons' AND policyname = 'Admins can manage course lessons') THEN
     CREATE POLICY "Admins can manage course lessons" ON course_lessons
       FOR ALL USING (is_admin_or_super());
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'course_lessons' AND policyname = 'Trainers can manage own course lessons') THEN
+    CREATE POLICY "Trainers can manage own course lessons" ON course_lessons
+      FOR ALL USING (
+        module_id IN (
+          SELECT cm.id FROM course_modules cm
+          JOIN courses c ON c.id = cm.course_id
+          WHERE c.created_by IN (SELECT id FROM members WHERE auth_id = auth.uid())
+        )
+        AND (
+          EXISTS (SELECT 1 FROM member_designations md JOIN members m ON m.id = md.member_id WHERE m.auth_id = auth.uid() AND md.designation IN ('trainer', 'mentor'))
+          OR
+          is_admin_or_super()
+        )
+      );
   END IF;
 END $$;
 
