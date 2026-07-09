@@ -1344,6 +1344,46 @@ export interface Database {
           }
         ];
       };
+      lesson_attachments: {
+        Row: {
+          id: string;
+          lesson_id: string;
+          title: string;
+          file_url: string;
+          file_type: string;
+          file_size: number;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lesson_id: string;
+          title: string;
+          file_url: string;
+          file_type?: string;
+          file_size?: number;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          lesson_id?: string;
+          title?: string;
+          file_url?: string;
+          file_type?: string;
+          file_size?: number;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lesson_attachments_lesson_id_fkey";
+            columns: ["lesson_id"];
+            referencedRelation: "course_lessons";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

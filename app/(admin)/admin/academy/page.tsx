@@ -7,7 +7,7 @@ async function getAcademyData() {
 
   const { data: courses } = await supabase
     .from("courses")
-    .select("*, created_by!full_name(full_name)")
+    .select("*, created_by!left(full_name)")
     .order("created_at", { ascending: false });
 
   const { count: totalEnrollments } = await supabase

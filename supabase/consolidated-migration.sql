@@ -1446,12 +1446,62 @@ CREATE POLICY "Admins can manage course certificates" ON course_certificates FOR
   USING (is_admin_or_super());
 
 -- ====================================================================
+-- PHASE 11: ACADEMY LESSON ATTACHMENTS & SEQUENTIAL LEARNING
+-- ====================================================================
+
+-- 11.1 LESSON ATTACHMENTS — File materi tambahan (PDF, DOCX, video, dll)
+CREATE TABLE IF NOT EXISTS lesson_attachments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  lesson_id UUID NOT NULL REFERENCES course_lessons(id) ON DELETE CASCADE,
+  title VARCHAR(200) NOT NULL,
+  file_url TEXT NOT NULL,
+  file_type VARCHAR(50) NOT NULL DEFAULT 'other'
+    CHECK (file_type IN ('pdf', 'docx', 'video', 'image', 'other')),
+  file_size BIGINT DEFAULT 0,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_lesson_attachments_lesson ON lesson_attachments(lesson_id);
+
+ALTER TABLE lesson_attachments ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'lesson_attachments' AND policyname = 'Lesson attachments are viewable') THEN
+    CREATE POLICY "Lesson attachments are viewable" ON lesson_attachments
+      FOR SELECT USING (TRUE);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'lesson_attachments' AND policyname = 'Admins can manage lesson attachments') THEN
+    CREATE POLICY "Admins can manage lesson attachments" ON lesson_attachments
+      FOR ALL USING (is_admin_or_super());
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'lesson_attachments' AND policyname = 'Trainers can manage own lesson attachments') THEN
+    CREATE POLICY "Trainers can manage own lesson attachments" ON lesson_attachments
+      FOR ALL USING (
+        lesson_id IN (
+          SELECT cl.id FROM course_lessons cl
+          JOIN course_modules cm ON cm.id = cl.module_id
+          JOIN courses c ON c.id = cm.course_id
+          WHERE c.created_by IN (SELECT id FROM members WHERE auth_id = auth.uid())
+        )
+        AND (
+          EXISTS (SELECT 1 FROM member_designations md JOIN members m ON m.id = md.member_id WHERE m.auth_id = auth.uid() AND md.designation IN ('trainer', 'mentor'))
+          OR is_admin_or_super()
+        )
+      );
+  END IF;
+END $$;
+
+-- ====================================================================
 -- ✅ MIGRATION COMPLETE
 -- ====================================================================
--- 28 tables, 65+ indexes, 17 functions, 20 triggers,
--- 80+ RLS policies, 8 storage buckets, seed data,
+-- 29 tables, 66+ indexes, 17 functions, 20 triggers,
+-- 83+ RLS policies, 8 storage buckets, seed data,
 -- province coordinates, data prefix fix, counters recalculated,
--- Academy LMS (courses, modules, lessons, enrollments, completions).
+-- Academy LMS (courses, modules, lessons, enrollments, completions, attachments).
 -- ====================================================================
 
 -- ====================================================================

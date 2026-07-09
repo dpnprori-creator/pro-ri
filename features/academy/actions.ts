@@ -212,7 +212,7 @@ export async function getAllCourses() {
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("courses")
-    .select("*, created_by!inner(full_name)")
+    .select("*, created_by!left(full_name)")
     .order("created_at", { ascending: false });
 
   return data ?? [];
@@ -233,7 +233,7 @@ export async function getMyCourses() {
 
   const { data } = await supabase
     .from("courses")
-    .select("*, created_by!inner(full_name)")
+    .select("*, created_by!left(full_name)")
     .eq("created_by", member.id)
     .order("created_at", { ascending: false });
 
@@ -531,6 +531,149 @@ export async function deleteLesson(lessonId: string, courseId: string) {
   revalidatePath(`/admin/academy/${courseId}`);
   revalidatePath(`/academy/trainer/${courseId}`);
   return { success: true };
+}
+
+// ============================================
+// LESSON ATTACHMENTS - File Upload & CRUD
+// ============================================
+
+export async function uploadLessonAttachment(formData: FormData) {
+  const supabase = await createServerClient();
+  const adminSupabase = createAdminClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const lessonId = formData.get("lessonId") as string;
+  const title = formData.get("title") as string;
+  const file = formData.get("file") as File | null;
+
+  if (!lessonId || !file || !file.name) return { error: "Data tidak lengkap" };
+
+  // Determine file type
+  const ext = file.name.split(".").pop()?.toLowerCase() || "";
+  let fileType = "other";
+  if (["pdf"].includes(ext)) fileType = "pdf";
+  else if (["doc", "docx"].includes(ext)) fileType = "docx";
+  else if (["mp4", "webm", "mov", "avi"].includes(ext)) fileType = "video";
+  else if (["jpg", "jpeg", "png", "webp", "gif"].includes(ext)) fileType = "image";
+
+  // Upload file to storage
+  const path = `academy/attachments/${lessonId}/${Date.now()}.${ext}`;
+  const { data: uploadData, error: uploadError } = await adminSupabase.storage
+    .from("academy")
+    .upload(path, file, { cacheControl: "3600", upsert: true });
+
+  if (uploadError) return { error: "Gagal upload file: " + uploadError.message };
+
+  const { data: urlData } = adminSupabase.storage.from("academy").getPublicUrl(uploadData.path);
+
+  // Save to database
+  const { data, error } = await adminSupabase
+    .from("lesson_attachments")
+    .insert({
+      lesson_id: lessonId,
+      title: title || file.name,
+      file_url: urlData.publicUrl,
+      file_type: fileType,
+      file_size: file.size,
+    })
+    .select()
+    .single();
+
+  if (error) return { error: error.message };
+
+  const cid = await courseIdFromLesson(lessonId);
+  if (cid) revalidatePath(`/academy/trainer/${cid}`);
+  return { success: true, attachment: data };
+}
+
+async function courseIdFromLesson(lessonId: string): Promise<string> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("course_lessons")
+    .select("module:module_id!inner(course_id)")
+    .eq("id", lessonId)
+    .single();
+  const mod = data?.module as { course_id: string } | undefined;
+  return mod?.course_id || "";
+}
+
+export async function deleteLessonAttachment(attachmentId: string) {
+  const supabase = await createServerClient();
+  const adminSupabase = createAdminClient();
+
+  const { data: att } = await supabase
+    .from("lesson_attachments")
+    .select("file_url")
+    .eq("id", attachmentId)
+    .single();
+
+  if (att?.file_url) {
+    // Extract path from URL and delete from storage
+    try {
+      const urlParts = att.file_url.split("/academy/");
+      if (urlParts.length > 1) {
+        await adminSupabase.storage.from("academy").remove([urlParts[1]]);
+      }
+    } catch {}
+  }
+
+  const { error } = await supabase.from("lesson_attachments").delete().eq("id", attachmentId);
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function getLessonAttachments(lessonId: string) {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("lesson_attachments")
+    .select("*")
+    .eq("lesson_id", lessonId)
+    .order("sort_order", { ascending: true });
+
+  return data ?? [];
+}
+
+// ============================================
+// SEQUENTIAL LEARNING - Get next/prev lesson info
+// ============================================
+
+export async function getSequentialLessonInfo(courseId: string, currentLessonId: string, memberId: string) {
+  const supabase = await createServerClient();
+
+  // Get all lessons in order
+  const { data: modules } = await supabase
+    .from("course_modules")
+    .select(`
+      id,
+      course_lessons!inner(id, title, sort_order)
+    `)
+    .eq("course_id", courseId)
+    .order("sort_order", { ascending: true });
+
+  if (!modules) return { isLocked: false, nextLesson: null, prevLesson: null, allLessons: [], completedIds: [] };
+
+  const allLessons = modules.flatMap(m => m.course_lessons).sort((a, b) => a.sort_order - b.sort_order);
+
+  // Get completed lessons
+  const lessonIds = allLessons.map(l => l.id);
+  const { data: completions } = await supabase
+    .from("lesson_completions")
+    .select("lesson_id")
+    .in("lesson_id", lessonIds)
+    .eq("member_id", memberId);
+
+  const completedIds = completions?.map(c => c.lesson_id) || [];
+
+  const currentIndex = allLessons.findIndex(l => l.id === currentLessonId);
+  const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
+  const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
+
+  // Sequential lock: current lesson is locked if previous lesson is not completed
+  // (first lesson is always unlocked)
+  const isLocked = currentIndex > 0 && !completedIds.includes(allLessons[currentIndex - 1]?.id || "");
+
+  return { isLocked, nextLesson, prevLesson, allLessons, completedIds };
 }
 
 // Original createModule and createLesson remain below
