@@ -615,7 +615,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 3.9 Recalculate all counters (comprehensive)
+-- 3.9 Recalculate province counters (for triggers)
 CREATE OR REPLACE FUNCTION recalculate_province_counters()
 RETURNS void AS $$
 BEGIN
@@ -625,20 +625,23 @@ BEGIN
     total_trainers = (SELECT COUNT(DISTINCT m.id)::INTEGER FROM members m JOIN member_designations md ON md.member_id = m.id WHERE m.province_id::text = p.id::text AND m.status = 'active' AND md.designation = 'trainer'),
     total_mentors = (SELECT COUNT(DISTINCT m.id)::INTEGER FROM members m JOIN member_designations md ON md.member_id = m.id WHERE m.province_id::text = p.id::text AND m.status = 'active' AND md.designation = 'mentor'),
     total_events = (SELECT COUNT(*)::INTEGER FROM events e WHERE e.province_id::text = p.id::text AND e.status IN ('published', 'ongoing', 'completed')),
-    total_innovations = (SELECT COUNT(*)::INTEGER FROM innovations i WHERE i.province_id::text = p.id::text AND i.status IN ('published', 'featured'));
+    total_innovations = (SELECT COUNT(*)::INTEGER FROM innovations i WHERE i.province_id::text = p.id::text AND i.status IN ('published', 'featured'))
+  WHERE TRUE;
 
   -- REGENCIES
   UPDATE regencies r SET
     total_members = (SELECT COUNT(*)::INTEGER FROM members m WHERE m.regency_id::text = r.id::text AND m.status = 'active'),
-    total_trainers = (SELECT COUNT(DISTINCT m.id)::INTEGER FROM members m JOIN member_designations md ON md.member_id = m.id WHERE m.regency_id::text = r.id::text AND m.status = 'active' AND md.designation = 'trainer');
+    total_trainers = (SELECT COUNT(DISTINCT m.id)::INTEGER FROM members m JOIN member_designations md ON md.member_id = m.id WHERE m.regency_id::text = r.id::text AND m.status = 'active' AND md.designation = 'trainer')
+  WHERE TRUE;
 
   -- DISTRICTS
   UPDATE districts d SET
-    total_members = (SELECT COUNT(*)::INTEGER FROM members m WHERE m.district_id::text = d.id::text AND m.status = 'active');
+    total_members = (SELECT COUNT(*)::INTEGER FROM members m WHERE m.district_id::text = d.id::text AND m.status = 'active')
+  WHERE TRUE;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 3.10 Alternative recalculate (all at once)
+-- 3.10 Alternative recalculate (all at once, with WHERE TRUE for safety)
 CREATE OR REPLACE FUNCTION recalculate_all_counters()
 RETURNS void
 LANGUAGE plpgsql
@@ -650,16 +653,19 @@ BEGIN
     total_members = (SELECT COUNT(*) FROM members WHERE province_id::text = p.id::text AND status = 'active'),
     total_trainers = (SELECT COUNT(*) FROM member_designations md JOIN members m2 ON m2.id = md.member_id WHERE m2.province_id::text = p.id::text AND md.designation = 'trainer'),
     total_events = (SELECT COUNT(*) FROM events WHERE province_id::text = p.id::text),
-    total_innovations = (SELECT COUNT(*) FROM innovations WHERE province_id::text = p.id::text AND status != 'archived');
+    total_innovations = (SELECT COUNT(*) FROM innovations WHERE province_id::text = p.id::text AND status != 'archived')
+  WHERE TRUE;
 
   UPDATE regencies r SET
     total_members = (SELECT COUNT(*) FROM members WHERE regency_id::text = r.id::text AND status = 'active'),
     total_trainers = (SELECT COUNT(*) FROM member_designations md JOIN members m2 ON m2.id = md.member_id WHERE m2.regency_id::text = r.id::text AND md.designation = 'trainer'),
     total_events = 0,
-    total_innovations = 0;
+    total_innovations = 0
+  WHERE TRUE;
 
   UPDATE districts d SET
-    total_members = (SELECT COUNT(*) FROM members WHERE district_id::text = d.id::text AND status = 'active');
+    total_members = (SELECT COUNT(*) FROM members WHERE district_id::text = d.id::text AND status = 'active')
+  WHERE TRUE;
 END;
 $$;
 
