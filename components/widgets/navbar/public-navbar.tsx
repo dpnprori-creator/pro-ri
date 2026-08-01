@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, GraduationCap } from "lucide-react";
-import { NAV_PUBLIC, APP_NAME_SHORT } from "@/lib/constants";
+import { NAV_PUBLIC, APP_NAME_SHORT, ACADEMY_URL } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -52,12 +52,12 @@ export function PublicNavbar() {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-2">
-            <Link href="/academy">
+            <a href={ACADEMY_URL} target="_blank" rel="noopener noreferrer">
               <Button variant="ghost" size="sm" className="text-pri-red hover:text-red-400">
                 <GraduationCap className="h-4 w-4 mr-1" />
                 Academy
               </Button>
-            </Link>
+            </a>
             <Link href="/login">
               <Button variant="ghost" size="sm" className="text-pri-silver hover:text-white">
                 Masuk
@@ -99,14 +99,16 @@ export function PublicNavbar() {
             </Link>
           ))}
           <hr className="border-white/10 my-2" />
-          <Link
-            href="/academy"
+          <a
+            href={ACADEMY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-3 py-2.5 text-sm text-pri-red hover:text-red-400 transition-colors rounded-md hover:bg-white/5"
             onClick={() => setMobileOpen(false)}
           >
             <GraduationCap className="h-4 w-4 inline mr-1" />
             Academy
-          </Link>
+          </a>
           <Link href="/login" className="px-3 py-2.5 text-sm text-pri-silver hover:text-white">
             Masuk
           </Link>

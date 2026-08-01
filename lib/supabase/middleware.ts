@@ -44,7 +44,7 @@ export async function updateSession(request: NextRequest) {
 
   // Path definitions
   const protectedPaths = [
-    "/dashboard", "/membership", "/profile", "/academy", "/members",
+    "/dashboard", "/membership", "/profile", "/members",
   ];
   const authPaths = ["/login", "/register"];
   const adminPaths = ["/admin"];

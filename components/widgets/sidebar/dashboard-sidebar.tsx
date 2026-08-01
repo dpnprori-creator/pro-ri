@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { APP_NAME_SHORT } from "@/lib/constants";
+import { APP_NAME_SHORT, ACADEMY_URL } from "@/lib/constants";
 import { logout, getCurrentUserRole } from "@/features/auth/actions";
 
 const navItems = [
@@ -32,7 +32,7 @@ const navItems = [
   { label: "Direktori", href: "/members", icon: Users },
   { label: "Events", href: "/dashboard/events", icon: Calendar },
   { label: "Inovasi", href: "/dashboard/innovations", icon: Lightbulb },
-  { label: "Akademi", href: "/academy", icon: GraduationCap },
+  { label: "Akademi", href: ACADEMY_URL, icon: GraduationCap },
   { label: "Sertifikat", href: "/membership/certificates", icon: Award },
   { label: "Profil", href: "/profile", icon: User },
 ];
@@ -84,20 +84,38 @@ export function DashboardSidebar({ onClose }: DashboardSidebarProps) {
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
-          return (
+          const isExternal = item.href.startsWith("http");
+          const itemClasses = cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
+            isActive
+              ? "bg-pri-red/10 text-pri-red border border-pri-red/20"
+              : "text-pri-silver hover:text-white hover:bg-white/5"
+          );
+          const itemContent = (
+            <>
+              <item.icon className="h-4 w-4" />
+              {item.label}
+            </>
+          );
+          return isExternal ? (
+            <a
+              key={item.href}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onClose}
+              className={itemClasses}
+            >
+              {itemContent}
+            </a>
+          ) : (
             <Link
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
-                isActive
-                  ? "bg-pri-red/10 text-pri-red border border-pri-red/20"
-                  : "text-pri-silver hover:text-white hover:bg-white/5"
-              )}
+              className={itemClasses}
             >
-              <item.icon className="h-4 w-4" />
-              {item.label}
+              {itemContent}
             </Link>
           );
         })}

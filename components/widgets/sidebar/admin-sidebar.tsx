@@ -20,7 +20,6 @@ import {
   LogOut,
   Video,
   BookOpen,
-  GraduationCap,
 } from "lucide-react";
 import { getPendingVerificationCount } from "@/features/events/actions";
 import { cn } from "@/lib/utils";
@@ -34,7 +33,6 @@ const adminNavItems = [
   { label: "Programs", href: "/admin/programs", icon: BookOpen },
   { label: "Events", href: "/admin/events", icon: Calendar },
   { label: "Inovasi", href: "/admin/innovations", icon: Lightbulb },
-  { label: "Academy", href: "/admin/academy", icon: GraduationCap },
   { label: "Sertifikat", href: "/admin/certificates", icon: Award },
   { label: "Verifikasi", href: "/admin/verification", icon: UserCheck },
   { label: "Berita", href: "/admin/news", icon: Newspaper },

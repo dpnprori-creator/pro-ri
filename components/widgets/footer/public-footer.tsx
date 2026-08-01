@@ -106,7 +106,7 @@ export function PublicFooter() {
                 </div>
                 <div>
                   <p>pro-ri.online</p>
-                  <p className="text-xs text-pri-silver/40">academy.pro-ri.online</p>
+                  <p className="text-xs text-pri-silver/40">pro-ri-acedemy.vercel.app</p>
                 </div>
               </li>
               <li className="flex items-start gap-2.5">

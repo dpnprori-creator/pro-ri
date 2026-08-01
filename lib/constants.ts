@@ -1,7 +1,7 @@
 export const APP_NAME = "PRO RI Digital Command Center";
 export const APP_NAME_SHORT = "PRO RI";
 
-export const ACADEMY_URL = process.env.NEXT_PUBLIC_ACADEMY_URL || "https://academy.prori.id";
+export const ACADEMY_URL = process.env.NEXT_PUBLIC_ACADEMY_URL || "https://pro-ri-acedemy.vercel.app";
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 export const TARGET_MEMBERS = 10000;
@@ -61,7 +61,7 @@ export const NAV_DASHBOARD = [
   { label: "Direktori", href: "/members", icon: "Users" },
   { label: "Events", href: "/dashboard/events", icon: "Calendar" },
   { label: "Inovasi", href: "/dashboard/innovations", icon: "Lightbulb" },
-  { label: "Akademi", href: "/academy", icon: "GraduationCap" },
+  { label: "Akademi", href: ACADEMY_URL, icon: "GraduationCap" },
   { label: "Profil", href: "/profile", icon: "User" },
 ] as const;
 
