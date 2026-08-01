@@ -808,7 +808,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ====================================================================
--- PHASE 4: TRIGGERS — 23 triggers
+-- PHASE 4: TRIGGERS — 19 triggers (4 trigger updated_at tambahan ada di PHASE 10)
 -- ====================================================================
 
 -- 4.1 Member updated_at
@@ -921,30 +921,6 @@ DROP TRIGGER IF EXISTS trg_designations_recalculate ON member_designations;
 CREATE TRIGGER trg_designations_recalculate
   AFTER INSERT OR UPDATE OR DELETE ON member_designations
   FOR EACH STATEMENT EXECUTE FUNCTION trigger_recalculate_counters();
-
--- 4.17 News comments updated_at
-DROP TRIGGER IF EXISTS update_news_comments_updated_at ON news_comments;
-CREATE TRIGGER update_news_comments_updated_at
-  BEFORE UPDATE ON news_comments
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- 4.18 Contact messages updated_at
-DROP TRIGGER IF EXISTS update_contact_messages_updated_at ON contact_messages;
-CREATE TRIGGER update_contact_messages_updated_at
-  BEFORE UPDATE ON contact_messages
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- 4.19 Member designations updated_at
-DROP TRIGGER IF EXISTS update_member_designations_updated_at ON member_designations;
-CREATE TRIGGER update_member_designations_updated_at
-  BEFORE UPDATE ON member_designations
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- 4.20 Program registrations updated_at
-DROP TRIGGER IF EXISTS update_program_registrations_updated_at ON program_registrations;
-CREATE TRIGGER update_program_registrations_updated_at
-  BEFORE UPDATE ON program_registrations
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ====================================================================
 -- PHASE 5: RLS POLICIES — 66 policies
@@ -1338,6 +1314,28 @@ ALTER TABLE contact_messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEF
 ALTER TABLE member_designations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE program_registrations ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE program_registrations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Trigger updated_at untuk tabel yang kolomnya ditambahkan di atas
+-- (ditempatkan SETELAH ALTER TABLE agar kolom sudah ada saat trigger dipasang)
+DROP TRIGGER IF EXISTS update_news_comments_updated_at ON news_comments;
+CREATE TRIGGER update_news_comments_updated_at
+  BEFORE UPDATE ON news_comments
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_contact_messages_updated_at ON contact_messages;
+CREATE TRIGGER update_contact_messages_updated_at
+  BEFORE UPDATE ON contact_messages
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_member_designations_updated_at ON member_designations;
+CREATE TRIGGER update_member_designations_updated_at
+  BEFORE UPDATE ON member_designations
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_program_registrations_updated_at ON program_registrations;
+CREATE TRIGGER update_program_registrations_updated_at
+  BEFORE UPDATE ON program_registrations
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ====================================================================
 -- ✅ MIGRATION COMPLETE
