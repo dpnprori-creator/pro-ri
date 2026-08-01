@@ -16,13 +16,14 @@
 --   PHASE 0  : Extensions + UUID
 --   PHASE 1  : Schema (22 tables + constraints)
 --   PHASE 2  : Indexes (51 indexes)
---   PHASE 3  : Functions (17 functions)
---   PHASE 4  : Triggers (12 triggers)
---   PHASE 5  : RLS Policies (64+ policies)
+--   PHASE 3  : Functions (19 functions)
+--   PHASE 4  : Triggers (23 triggers)
+--   PHASE 5  : RLS Policies (66 policies)
 --   PHASE 6  : Storage Buckets + RLS (8 buckets)
 --   PHASE 7  : Seed Data (roles, provinces, programs, hero/activity gallery)
 --   PHASE 8  : Data Migrations (existing data fixes, province coordinates)
 --   PHASE 9  : Initial Recalculation
+--   PHASE 10 : Schema Reconciliation (kolom yang kurang di DB lama)
 --   APPENDIX : Verify Database Health (opsional — read-only)
 -- ====================================================================
 
@@ -259,7 +260,8 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   phone VARCHAR(50),
   message TEXT NOT NULL,
   is_read BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ===========================================
@@ -289,7 +291,8 @@ CREATE TABLE IF NOT EXISTS news_comments (
   email VARCHAR(255),
   content TEXT NOT NULL,
   is_approved BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ===========================================
@@ -321,6 +324,7 @@ CREATE TABLE IF NOT EXISTS member_designations (
   certified_at TIMESTAMPTZ DEFAULT NOW(),
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(member_id, designation)
 );
 
@@ -361,6 +365,8 @@ CREATE TABLE IF NOT EXISTS program_registrations (
   status VARCHAR(20) DEFAULT 'registered' CHECK (status IN ('registered', 'approved', 'rejected', 'cancelled', 'completed')),
   notes TEXT,
   registered_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(program_id, member_id)
 );
 
@@ -509,7 +515,7 @@ CREATE INDEX IF NOT EXISTS idx_program_registrations_member ON program_registrat
 CREATE INDEX IF NOT EXISTS idx_program_registrations_status ON program_registrations(status);
 
 -- ====================================================================
--- PHASE 3: FUNCTIONS — 17 functions
+-- PHASE 3: FUNCTIONS — 19 functions
 -- ====================================================================
 
 -- 3.1 Auto-update updated_at column
@@ -802,7 +808,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ====================================================================
--- PHASE 4: TRIGGERS — 16 triggers
+-- PHASE 4: TRIGGERS — 23 triggers
 -- ====================================================================
 
 -- 4.1 Member updated_at
@@ -916,8 +922,32 @@ CREATE TRIGGER trg_designations_recalculate
   AFTER INSERT OR UPDATE OR DELETE ON member_designations
   FOR EACH STATEMENT EXECUTE FUNCTION trigger_recalculate_counters();
 
+-- 4.17 News comments updated_at
+DROP TRIGGER IF EXISTS update_news_comments_updated_at ON news_comments;
+CREATE TRIGGER update_news_comments_updated_at
+  BEFORE UPDATE ON news_comments
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 4.18 Contact messages updated_at
+DROP TRIGGER IF EXISTS update_contact_messages_updated_at ON contact_messages;
+CREATE TRIGGER update_contact_messages_updated_at
+  BEFORE UPDATE ON contact_messages
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 4.19 Member designations updated_at
+DROP TRIGGER IF EXISTS update_member_designations_updated_at ON member_designations;
+CREATE TRIGGER update_member_designations_updated_at
+  BEFORE UPDATE ON member_designations
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 4.20 Program registrations updated_at
+DROP TRIGGER IF EXISTS update_program_registrations_updated_at ON program_registrations;
+CREATE TRIGGER update_program_registrations_updated_at
+  BEFORE UPDATE ON program_registrations
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- ====================================================================
--- PHASE 5: RLS POLICIES — 64+ policies
+-- PHASE 5: RLS POLICIES — 66 policies
 -- ====================================================================
 
 -- 5.1 MEMBERS
@@ -1296,12 +1326,24 @@ WHERE member_number LIKE 'PRORI-%';
 
 SELECT recalculate_province_counters();
 
+-- ====================================================================
+-- PHASE 10: SCHEMA RECONCILIATION (idempotent untuk DB yang sudah ada)
+-- ====================================================================
+-- CREATE TABLE IF NOT EXISTS tidak mengubah tabel yang sudah dibuat
+-- sebelumnya. Blok ini menambahkan kolom yang kurang pada database
+-- yang sudah ada — aman dijalankan berulang kali (IF NOT EXISTS).
+
+ALTER TABLE news_comments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE contact_messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE member_designations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE program_registrations ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE program_registrations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- ====================================================================
 -- ✅ MIGRATION COMPLETE
 -- ====================================================================
--- 22 tables, 51 indexes, 17 functions, 20 triggers,
--- 64+ RLS policies, 8 storage buckets, seed data,
+-- 22 tables, 51 indexes, 19 functions, 23 triggers,
+-- 66 RLS policies, 8 storage buckets, seed data,
 -- province coordinates, data prefix fix, counters recalculated.
 -- ====================================================================
 
