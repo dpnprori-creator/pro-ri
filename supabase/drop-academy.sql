@@ -3,7 +3,7 @@
 -- DROP ACADEMY — Hapus semua objek database terkait Academy
 -- ====================================================================
 -- Academy sudah dipindahkan ke platform terpisah:
---   https://pro-ri-acedemy.vercel.app
+--   https://pro-ri-academy.vercel.app
 --
 -- File ini menghapus SEMUA yang berhubungan dengan Academy dari
 -- database project ini, yaitu:

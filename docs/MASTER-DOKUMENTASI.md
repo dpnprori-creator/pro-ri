@@ -687,7 +687,7 @@ Komponen utama yang menyusun seluruh halaman monitoring:
 - **Certificate Verification** (public): `/verify/certificate/[id]`
 
 ### 7.12 Academy Gateway
-- Redirect ke LMS eksternal: `https://academy.prori.id`
+- Redirect ke LMS eksternal: `https://pro-ri-academy.vercel.app`
 
 ### 7.13 Profile Settings
 - Edit profil: full_name, phone, occupation, technology_interest, photo upload
@@ -1054,7 +1054,7 @@ NEXT_PUBLIC_APP_URL=
 NEXT_PUBLIC_APP_NAME=PRO RI Digital Command Center
 
 # Academy (redirect)
-NEXT_PUBLIC_ACADEMY_URL=https://academy.prori.id
+NEXT_PUBLIC_ACADEMY_URL=https://pro-ri-academy.vercel.app
 ```
 
 ---
