@@ -2,7 +2,12 @@
 -- PRO RI DIGITAL COMMAND CENTER
 -- Self-Hosted Supabase — MASTER CONSOLIDATED MIGRATION
 -- ====================================================================
--- Eksekusi SEKALI pada Supabase instance baru.
+-- Dijalankan SEKALI pada Supabase instance baru.
+-- Aman pula dijalankan ulang di database yang sudah ada — seluruh objek
+-- dibuat idempotent:
+--   tabel (IF NOT EXISTS), fungsi (OR REPLACE), trigger/index
+--   (DROP IF EXISTS + CREATE), policy (DROP POLICY IF EXISTS + CREATE),
+--   bucket (ON CONFLICT), seed data (ON CONFLICT / WHERE NOT EXISTS).
 --
 -- Cara pakai:
 --   psql -h <host> -d <db> -f consolidated-migration.sql
@@ -929,55 +934,79 @@ CREATE TRIGGER trg_designations_recalculate
 -- 5.1 MEMBERS
 ALTER TABLE members ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Members are publicly viewable" ON members;
 CREATE POLICY "Members are publicly viewable" ON members FOR SELECT USING (status = 'active');
+DROP POLICY IF EXISTS "Members can view own profile" ON members;
 CREATE POLICY "Members can view own profile" ON members FOR SELECT USING (auth_id = auth.uid());
+DROP POLICY IF EXISTS "Admins can view all members" ON members;
 CREATE POLICY "Admins can view all members" ON members FOR SELECT USING (is_admin_or_super());
+DROP POLICY IF EXISTS "Members can update own profile" ON members;
 CREATE POLICY "Members can update own profile" ON members FOR UPDATE USING (auth_id = auth.uid()) WITH CHECK (auth_id = auth.uid());
+DROP POLICY IF EXISTS "Admins can update any member" ON members;
 CREATE POLICY "Admins can update any member" ON members FOR UPDATE USING (is_admin_or_super());
+DROP POLICY IF EXISTS "Super admin can delete members" ON members;
 CREATE POLICY "Super admin can delete members" ON members FOR DELETE USING (get_current_member_role() = 'super_admin');
 
 -- 5.2 EVENTS
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Published events are publicly viewable" ON events;
 CREATE POLICY "Published events are publicly viewable" ON events FOR SELECT USING (status = 'published');
+DROP POLICY IF EXISTS "Members can view all events" ON events;
 CREATE POLICY "Members can view all events" ON events FOR SELECT USING (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "Admins can create events" ON events;
 CREATE POLICY "Admins can create events" ON events FOR INSERT WITH CHECK (is_admin_or_super());
+DROP POLICY IF EXISTS "Admins can update events" ON events;
 CREATE POLICY "Admins can update events" ON events FOR UPDATE USING (is_admin_or_super());
 
 -- 5.3 EVENT REGISTRATIONS
 ALTER TABLE event_registrations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Members can view own registrations" ON event_registrations;
 CREATE POLICY "Members can view own registrations" ON event_registrations FOR SELECT
   USING (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+DROP POLICY IF EXISTS "Members can register for events" ON event_registrations;
 CREATE POLICY "Members can register for events" ON event_registrations FOR INSERT
   WITH CHECK (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+DROP POLICY IF EXISTS "Admins can manage event registrations" ON event_registrations;
 CREATE POLICY "Admins can manage event registrations" ON event_registrations FOR ALL
   USING (is_admin_or_super());
 
 -- 5.4 INNOVATIONS
 ALTER TABLE innovations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Published innovations are publicly viewable" ON innovations;
 CREATE POLICY "Published innovations are publicly viewable" ON innovations FOR SELECT
   USING (status IN ('published', 'featured'));
+DROP POLICY IF EXISTS "Members can view all innovations" ON innovations;
 CREATE POLICY "Members can view all innovations" ON innovations FOR SELECT USING (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "Members can create innovations" ON innovations;
 CREATE POLICY "Members can create innovations" ON innovations FOR INSERT
   WITH CHECK (creator_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+DROP POLICY IF EXISTS "Creators can update own innovations" ON innovations;
 CREATE POLICY "Creators can update own innovations" ON innovations FOR UPDATE
   USING (creator_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+DROP POLICY IF EXISTS "Admins can moderate innovations" ON innovations;
 CREATE POLICY "Admins can moderate innovations" ON innovations FOR UPDATE USING (is_admin_or_super());
 
 -- 5.5 CERTIFICATES
 ALTER TABLE certificates ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Certificates are verifiable" ON certificates;
 CREATE POLICY "Certificates are verifiable" ON certificates FOR SELECT USING (TRUE);
+DROP POLICY IF EXISTS "Admins can insert certificates" ON certificates;
 CREATE POLICY "Admins can insert certificates" ON certificates FOR INSERT WITH CHECK (is_admin_or_super());
+DROP POLICY IF EXISTS "Admins can update certificates" ON certificates;
 CREATE POLICY "Admins can update certificates" ON certificates FOR UPDATE USING (is_admin_or_super());
+DROP POLICY IF EXISTS "Admins can delete certificates" ON certificates;
 CREATE POLICY "Admins can delete certificates" ON certificates FOR DELETE USING (is_admin_or_super());
 
 -- 5.6 NEWS
 ALTER TABLE news ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Published news are publicly viewable" ON news;
 CREATE POLICY "Published news are publicly viewable" ON news FOR SELECT USING (status = 'published');
+DROP POLICY IF EXISTS "Admins can manage news" ON news;
 CREATE POLICY "Admins can manage news" ON news FOR ALL USING (is_admin_or_super());
 
 -- 5.7 REGIONS
@@ -986,102 +1015,144 @@ ALTER TABLE regencies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE districts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE villages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Regions are publicly viewable" ON provinces;
 CREATE POLICY "Regions are publicly viewable" ON provinces FOR SELECT USING (TRUE);
+DROP POLICY IF EXISTS "Regencies are publicly viewable" ON regencies;
 CREATE POLICY "Regencies are publicly viewable" ON regencies FOR SELECT USING (TRUE);
+DROP POLICY IF EXISTS "Districts are publicly viewable" ON districts;
 CREATE POLICY "Districts are publicly viewable" ON districts FOR SELECT USING (TRUE);
+DROP POLICY IF EXISTS "Villages are publicly viewable" ON villages;
 CREATE POLICY "Villages are publicly viewable" ON villages FOR SELECT USING (TRUE);
 
 -- 5.8 ACTIVITY LOGS
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Members can view own logs" ON activity_logs;
 CREATE POLICY "Members can view own logs" ON activity_logs FOR SELECT
   USING (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+DROP POLICY IF EXISTS "Admins can view all logs" ON activity_logs;
 CREATE POLICY "Admins can view all logs" ON activity_logs FOR SELECT USING (is_admin_or_super());
+DROP POLICY IF EXISTS "System can insert logs" ON activity_logs;
 CREATE POLICY "System can insert logs" ON activity_logs FOR INSERT WITH CHECK (TRUE);
 
 -- 5.9 HERO GALLERY
 ALTER TABLE hero_gallery ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Hero gallery is publicly viewable" ON hero_gallery;
 CREATE POLICY "Hero gallery is publicly viewable" ON hero_gallery FOR SELECT USING (is_active = TRUE);
+DROP POLICY IF EXISTS "Admins can manage hero gallery" ON hero_gallery;
 CREATE POLICY "Admins can manage hero gallery" ON hero_gallery FOR ALL USING (is_admin_or_super());
 
 -- 5.10 ACTIVITY GALLERY
 ALTER TABLE activity_gallery ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Activity gallery is publicly viewable" ON activity_gallery;
 CREATE POLICY "Activity gallery is publicly viewable" ON activity_gallery FOR SELECT USING (is_active = TRUE);
+DROP POLICY IF EXISTS "Admins can manage activity gallery" ON activity_gallery;
 CREATE POLICY "Admins can manage activity gallery" ON activity_gallery FOR ALL USING (is_admin_or_super());
 
 -- 5.11 CONTACT MESSAGES
 ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can submit contact messages" ON contact_messages;
 CREATE POLICY "Anyone can submit contact messages" ON contact_messages FOR INSERT WITH CHECK (TRUE);
+DROP POLICY IF EXISTS "Admins can view contact messages" ON contact_messages;
 CREATE POLICY "Admins can view contact messages" ON contact_messages FOR SELECT USING (is_admin_or_super());
+DROP POLICY IF EXISTS "Admins can manage contact messages" ON contact_messages;
 CREATE POLICY "Admins can manage contact messages" ON contact_messages FOR UPDATE USING (is_admin_or_super());
+DROP POLICY IF EXISTS "Admins can delete contact messages" ON contact_messages;
 CREATE POLICY "Admins can delete contact messages" ON contact_messages FOR DELETE USING (is_admin_or_super());
 
 -- 5.12 VIDEOS
 ALTER TABLE videos ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "videos_select_public" ON videos;
 CREATE POLICY "videos_select_public" ON videos FOR SELECT USING (is_active = TRUE);
+DROP POLICY IF EXISTS "videos_select_admin" ON videos;
 CREATE POLICY "videos_select_admin" ON videos FOR SELECT USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "videos_insert_admin" ON videos;
 CREATE POLICY "videos_insert_admin" ON videos FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "videos_update_admin" ON videos;
 CREATE POLICY "videos_update_admin" ON videos FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "videos_delete_admin" ON videos;
 CREATE POLICY "videos_delete_admin" ON videos FOR DELETE USING (auth.role() = 'authenticated');
 
 -- 5.13 NEWS COMMENTS
 ALTER TABLE news_comments ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can insert news comments" ON news_comments;
 CREATE POLICY "Anyone can insert news comments" ON news_comments FOR INSERT WITH CHECK (TRUE);
+DROP POLICY IF EXISTS "Approved comments are publicly viewable" ON news_comments;
 CREATE POLICY "Approved comments are publicly viewable" ON news_comments FOR SELECT USING (is_approved = TRUE);
+DROP POLICY IF EXISTS "Admins can manage news comments" ON news_comments;
 CREATE POLICY "Admins can manage news comments" ON news_comments FOR ALL USING (is_admin_or_super());
 
 -- 5.14 MEMBER DESIGNATIONS
 ALTER TABLE member_designations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admins can manage designations" ON member_designations;
 CREATE POLICY "Admins can manage designations" ON member_designations FOR ALL
   USING (is_admin_or_super()) WITH CHECK (is_admin_or_super());
+DROP POLICY IF EXISTS "Members can view own designations" ON member_designations;
 CREATE POLICY "Members can view own designations" ON member_designations FOR SELECT
   USING (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+DROP POLICY IF EXISTS "Public can view designations" ON member_designations;
 CREATE POLICY "Public can view designations" ON member_designations FOR SELECT USING (TRUE);
 
 -- 5.15 PROGRAMS
 ALTER TABLE programs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE program_registrations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Published programs are publicly viewable" ON programs;
 CREATE POLICY "Published programs are publicly viewable" ON programs FOR SELECT USING (status = 'published');
+DROP POLICY IF EXISTS "Authenticated users can view all programs" ON programs;
 CREATE POLICY "Authenticated users can view all programs" ON programs FOR SELECT USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Admins can manage programs" ON programs;
 CREATE POLICY "Admins can manage programs" ON programs FOR ALL USING (is_admin_or_super());
 
+DROP POLICY IF EXISTS "Members can view own program registrations" ON program_registrations;
 CREATE POLICY "Members can view own program registrations" ON program_registrations FOR SELECT
   USING (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()) OR is_admin_or_super());
+DROP POLICY IF EXISTS "Members can register for programs" ON program_registrations;
 CREATE POLICY "Members can register for programs" ON program_registrations FOR INSERT
   WITH CHECK (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+DROP POLICY IF EXISTS "Members can cancel own program registration" ON program_registrations;
 CREATE POLICY "Members can cancel own program registration" ON program_registrations FOR UPDATE
   USING (member_id IN (SELECT id FROM members WHERE auth_id = auth.uid()));
+DROP POLICY IF EXISTS "Admins can manage program registrations" ON program_registrations;
 CREATE POLICY "Admins can manage program registrations" ON program_registrations FOR ALL
   USING (is_admin_or_super());
 
 -- 5.16 MEMBER CARDS
 ALTER TABLE member_cards ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own member card" ON member_cards;
 CREATE POLICY "Users can view own member card" ON member_cards FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "Users can create own member card" ON member_cards;
 CREATE POLICY "Users can create own member card" ON member_cards FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "Users can update own pending card" ON member_cards;
 CREATE POLICY "Users can update own pending card" ON member_cards FOR UPDATE
   USING (user_id = auth.uid() AND status IN ('pending', 'rejected'))
   WITH CHECK (user_id = auth.uid() AND status IN ('pending', 'rejected'));
+DROP POLICY IF EXISTS "Admins can view all member cards" ON member_cards;
 CREATE POLICY "Admins can view all member cards" ON member_cards FOR SELECT USING (is_admin_or_super());
+DROP POLICY IF EXISTS "Admins can update member cards" ON member_cards;
 CREATE POLICY "Admins can update member cards" ON member_cards FOR UPDATE USING (is_admin_or_super());
+DROP POLICY IF EXISTS "Public can verify approved cards" ON member_cards;
 CREATE POLICY "Public can verify approved cards" ON member_cards FOR SELECT USING (status = 'approved');
 
 -- 5.17 ROLES
 ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can read roles" ON roles;
 CREATE POLICY "Anyone can read roles" ON roles FOR SELECT USING (TRUE);
+DROP POLICY IF EXISTS "Admins can manage roles" ON roles;
 CREATE POLICY "Admins can manage roles" ON roles FOR ALL USING (is_admin_or_super());
 
 -- 5.18 SYSTEM SETTINGS
 ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Super admin can manage system settings" ON public.system_settings;
 CREATE POLICY "Super admin can manage system settings" ON public.system_settings
   FOR ALL USING (get_current_member_role() = 'super_admin')
   WITH CHECK (get_current_member_role() = 'super_admin');
